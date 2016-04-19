@@ -35,17 +35,29 @@ The library implements the following operations:
 
 # How to use
 
-Build the library using the "mvn clean install" command at the repository root directory, where the pom.xml file is located. This produces a google-cloud-app-0.1-SNAPSHOT.jar file in the "target" directory that you can import to your application's class path.
+Build the library using the "mvn clean install" command at the repository root directory, where the pom.xml file is located. This produces a app-tools-lib-for-java-0.3-SNAPSHOT.jar file in the "target" directory that you can import to your application's class path.
 
 To deploy a new version, a client calls the library in the following way:
 
-// Example optional flags.
-Map<Option, String> flags = new HashMap<>();
-flags.put(Option.PROMOTE, "true");
-flags.put(Option.FORCE, "true);
+// Create action configuration. For example:
+
+Path appYaml = Paths.get("path", "to", "appYaml");
+
+DeployConfiguration configuration = DefaultDeployConfiguration.newBuilder(appYaml)
+
+  .bucket("gs://my-gcs-bucket")
+  
+  .force(true)
+  
+  .promote(true)
+  
+  .build();
 
 // Create an action object.
-Action deployAction = new DeployAction(sourceDirectory, stagingDirectory, AppType.CLASSIC_APP_ENGINE, sdkRoot, flags);
+
+AppAction deployAction = new DeployAction(configuration);
 
 // Execute the action.
+
 deployAction.execute();
+

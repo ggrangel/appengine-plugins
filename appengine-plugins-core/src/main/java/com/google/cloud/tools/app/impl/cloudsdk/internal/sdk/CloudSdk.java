@@ -17,15 +17,19 @@ package com.google.cloud.tools.app.impl.cloudsdk.internal.sdk;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessRunner;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessRunnerException;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.process.SimpleProcessRunner;
+import com.google.common.base.Joiner;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Cloud SDK CLI wrapper.
  */
 public class CloudSdk {
+
+  private final static Logger log = Logger.getLogger(CloudSdk.class.toString());
 
   // TODO : does this continue to work on windows?
   static final String GCLOUD = "bin/gcloud";
@@ -55,6 +59,8 @@ public class CloudSdk {
     command.add("app");
     command.addAll(args);
 
+    outputCommand(command);
+
     return processRunner.run(command.toArray(new String[command.size()]));
   }
 
@@ -64,7 +70,14 @@ public class CloudSdk {
     command.add(getDevAppServerPath().toString());
     command.addAll(args);
 
+    outputCommand(command);
+
     return processRunner.run(command.toArray(new String[command.size()]));
+  }
+
+  private void outputCommand(List<String> command) {
+    Joiner joiner = Joiner.on(" ");
+    log.info("submitting command: " + joiner.join(command));
   }
 
   private Path getSdkPath() {

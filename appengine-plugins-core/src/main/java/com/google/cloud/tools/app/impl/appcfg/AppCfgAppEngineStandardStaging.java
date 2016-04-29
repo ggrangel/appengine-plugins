@@ -90,7 +90,7 @@ public class AppCfgAppEngineStandardStaging implements AppEngineStandardStaging 
 
       appEngineSdk.runCommand(arguments);
 
-      if (dockerfile != null && dockerfileDestination != null) {
+      if (dockerfile != null) {
         Files.copy(dockerfile, dockerfileDestination, StandardCopyOption.REPLACE_EXISTING);
       }
 

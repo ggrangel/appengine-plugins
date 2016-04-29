@@ -19,6 +19,7 @@ import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessRunnerEx
 import com.google.cloud.tools.app.impl.cloudsdk.internal.process.SimpleProcessRunner;
 import com.google.common.base.Joiner;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class CloudSdk {
   private Path sdkPath = null;
   private ProcessRunner processRunner = null;
 
-  public CloudSdk(Path sdkPath) {
+  public CloudSdk(File sdkPath) {
     this(sdkPath, new SimpleProcessRunner());
   }
 
@@ -50,11 +51,11 @@ public class CloudSdk {
    *
    * @param sdkPath The home directory of Google Cloud SDK
    */
-  public CloudSdk(Path sdkPath, ProcessRunner processRunner) {
+  public CloudSdk(File sdkPath, ProcessRunner processRunner) {
     if (sdkPath == null) {
       throw new NullPointerException("sdkPath cannot be null - use PathResolver for defaults");
     }
-    this.sdkPath = sdkPath;
+    this.sdkPath = sdkPath.toPath();
     this.processRunner = processRunner;
   }
 
@@ -78,6 +79,7 @@ public class CloudSdk {
 
   /**
    * Uses the process runner to execute a dev_appserver.py command.
+   *
    * @param args The arguments to pass to dev_appserver.py.
    * @return The result of the process execution. 0 = successful.
    * @throws ProcessRunnerException When process runner encounters an error.

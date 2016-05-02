@@ -15,15 +15,19 @@
 package com.google.cloud.tools.app.impl.appcfg;
 
 import com.google.appengine.tools.admin.AppCfg;
+import com.google.common.base.Joiner;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * App Engine SDK CLI wrapper.
  */
 public class AppEngineSdk {
+
+  private static final Logger log = Logger.getLogger(AppEngineSdk.class.toString());
 
   private final Path appengineSdkPath;
 
@@ -35,6 +39,7 @@ public class AppEngineSdk {
    * Executes an App Engine SDK CLI command synchronously.
    */
   public void runCommand(List<String> args) {
+    log.info("submitting args: " + Joiner.on(" ").join(args));
     // AppEngineSdk requires this system property to be set.
     System.setProperty("appengine.sdk.root", appengineSdkPath.toString());
     AppCfg.main(args.toArray(new String[args.size()]));

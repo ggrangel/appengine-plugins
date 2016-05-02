@@ -71,7 +71,8 @@ public class CloudSdkAppEngineDeploymentTest {
     configuration.setDockerBuild("cloud");
     configuration.setForce(true);
     configuration.setImageUrl("imageUrl");
-    configuration.setPromote(false);
+    configuration.setProject("project");
+    configuration.setPromote(true);
     configuration.setServer("appengine.google.com");
     configuration.setStopPreviousVersion(true);
     configuration.setVersion("v1");
@@ -79,9 +80,9 @@ public class CloudSdkAppEngineDeploymentTest {
     deployment.deploy(configuration);
 
     List<String> expectedCommand = ImmutableList
-        .of("deploy", appYaml1.toString(), "--bucket", "gs://a-bucket", "--docker-build",
-            "cloud", "--force", "--image-url", "imageUrl", "--server", "appengine.google.com",
-            "--stop-previous-version", "--version", "v1", "--quiet");
+        .of("deploy", appYaml1.toString(), "--bucket", "gs://a-bucket", "--docker-build", "cloud",
+            "--force", "--image-url", "imageUrl", "--project", "project", "--promote", "--server",
+            "appengine.google.com", "--stop-previous-version", "--version", "v1", "--quiet");
 
     verify(sdk, times(1)).runAppCommand(eq(expectedCommand));
   }

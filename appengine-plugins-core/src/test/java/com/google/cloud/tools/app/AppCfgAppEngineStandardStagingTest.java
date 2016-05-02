@@ -79,7 +79,6 @@ public class AppCfgAppEngineStandardStagingTest {
     configuration.setEnableQuickstart(true);
     configuration.setDisableUpdateCheck(true);
     configuration.setVersion("v1");
-    configuration.setApplicationId("project");
     configuration.setEnableJarSplitting(true);
     configuration.setJarSplittingExcludes("suffix1,suffix2");
     configuration.setCompileEncoding("UTF8");
@@ -87,11 +86,11 @@ public class AppCfgAppEngineStandardStagingTest {
     configuration.setEnableJarClasses(true);
 
     List<String> expected = ImmutableList
-        .of("stage", source.toPath().toString(), destination.toPath().toString(),
-            "--enable_quickstart", "--disable_update_check", "--version",
-            "v1", "-A", "project", "--enable_jar_splitting", "--jar_splitting_excludes",
-            "suffix1,suffix2", "--compile_encoding", "UTF8", "--delete_jsps",
-            "--enable_jar_classes");
+        .of("--enable_quickstart", "--disable_update_check", "--version=v1",
+            "--enable_jar_splitting", "--jar_splitting_excludes=suffix1,suffix2",
+            "--compile_encoding=UTF8", "--delete_jsps", "--enable_jar_classes", "stage",
+            source.toPath().toString(),
+            destination.toPath().toString());
 
     staging.stageStandard(configuration);
 

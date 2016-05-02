@@ -32,6 +32,8 @@ public interface DeployConfiguration {
 
   String getImageUrl();
 
+  String getProject();
+
   boolean isPromote();
 
   String getServer();
@@ -39,4 +41,5 @@ public interface DeployConfiguration {
   boolean isStopPreviousVersion();
 
   String getVersion();
+
 }

@@ -47,9 +47,6 @@ public class AppCfgAppEngineStandardStaging implements AppEngineStandardStaging 
     Preconditions.checkNotNull(appEngineSdk);
 
     List<String> arguments = new ArrayList<>();
-    arguments.add(0, "stage");
-    arguments.add(configuration.getSourceDirectory().toPath().toString());
-    arguments.add(configuration.getStagingDirectory().toPath().toString());
     if (configuration.isEnableQuickstart()) {
       arguments.add("--enable_quickstart");
     }
@@ -57,23 +54,16 @@ public class AppCfgAppEngineStandardStaging implements AppEngineStandardStaging 
       arguments.add("--disable_update_check");
     }
     if (!Strings.isNullOrEmpty(configuration.getVersion())) {
-      arguments.add("--version");
-      arguments.add(configuration.getVersion());
-    }
-    if (!Strings.isNullOrEmpty(configuration.getApplicationId())) {
-      arguments.add("-A");
-      arguments.add(configuration.getApplicationId());
+      arguments.add("--version=" + configuration.getVersion().trim());
     }
     if (configuration.isEnableJarSplitting()) {
       arguments.add("--enable_jar_splitting");
     }
     if (!Strings.isNullOrEmpty(configuration.getJarSplittingExcludes())) {
-      arguments.add("--jar_splitting_excludes");
-      arguments.add(configuration.getJarSplittingExcludes());
+      arguments.add("--jar_splitting_excludes=" + configuration.getJarSplittingExcludes());
     }
     if (!Strings.isNullOrEmpty(configuration.getCompileEncoding())) {
-      arguments.add("--compile_encoding");
-      arguments.add(configuration.getCompileEncoding());
+      arguments.add("--compile_encoding=" + configuration.getCompileEncoding());
     }
     if (configuration.isDeleteJsps()) {
       arguments.add("--delete_jsps");
@@ -81,6 +71,10 @@ public class AppCfgAppEngineStandardStaging implements AppEngineStandardStaging 
     if (configuration.isEnableJarClasses()) {
       arguments.add("--enable_jar_classes");
     }
+
+    arguments.add("stage");
+    arguments.add(configuration.getSourceDirectory().toPath().toString());
+    arguments.add(configuration.getStagingDirectory().toPath().toString());
 
     Path dockerfile =
         configuration.getDockerfile() == null ? null : configuration.getDockerfile().toPath();

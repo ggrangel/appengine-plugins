@@ -29,6 +29,7 @@ public class DefaultDeployConfiguration implements DeployConfiguration {
   private String dockerBuild;
   private boolean force;
   private String imageUrl;
+  private String project;
   private boolean promote;
   private String server;
   private boolean stopPreviousVersion;
@@ -77,6 +78,15 @@ public class DefaultDeployConfiguration implements DeployConfiguration {
 
   public void setImageUrl(String imageUrl) {
     this.imageUrl = imageUrl;
+  }
+
+  @Override
+  public String getProject() {
+    return project;
+  }
+
+  public void setProject(String project) {
+    this.project = project;
   }
 
   @Override

@@ -74,6 +74,15 @@ public class CloudSdkAppEngineDeployment implements AppEngineDeployment {
       arguments.add(configuration.getImageUrl());
     }
 
+    if (!Strings.isNullOrEmpty(configuration.getProject())) {
+      arguments.add("--project");
+      arguments.add(configuration.getProject());
+    }
+
+    if (configuration.isPromote()) {
+      arguments.add("--promote");
+    }
+
     if (!Strings.isNullOrEmpty(configuration.getServer())) {
       arguments.add("--server");
       arguments.add(configuration.getServer());

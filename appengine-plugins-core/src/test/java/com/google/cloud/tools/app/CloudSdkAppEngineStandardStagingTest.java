@@ -78,7 +78,6 @@ public class CloudSdkAppEngineStandardStagingTest {
     configuration.setDockerfile(dockerfile);
     configuration.setEnableQuickstart(true);
     configuration.setDisableUpdateCheck(true);
-    configuration.setVersion("v1");
     configuration.setEnableJarSplitting(true);
     configuration.setJarSplittingExcludes("suffix1,suffix2");
     configuration.setCompileEncoding("UTF8");
@@ -86,7 +85,7 @@ public class CloudSdkAppEngineStandardStagingTest {
     configuration.setEnableJarClasses(true);
 
     List<String> expected = ImmutableList
-        .of("--enable_quickstart", "--disable_update_check", "--version=v1",
+        .of("--enable_quickstart", "--disable_update_check",
             "--enable_jar_splitting", "--jar_splitting_excludes=suffix1,suffix2",
             "--compile_encoding=UTF8", "--delete_jsps", "--enable_jar_classes", "stage",
             source.toPath().toString(),

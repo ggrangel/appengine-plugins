@@ -57,9 +57,6 @@ public class CloudSdkAppEngineStandardStaging implements AppEngineStandardStagin
     if (configuration.isDisableUpdateCheck()) {
       arguments.add("--disable_update_check");
     }
-    if (!Strings.isNullOrEmpty(configuration.getVersion())) {
-      arguments.add("--version=" + configuration.getVersion().trim());
-    }
     if (configuration.isEnableJarSplitting()) {
       arguments.add("--enable_jar_splitting");
     }

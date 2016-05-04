@@ -31,8 +31,6 @@ public interface StageStandardConfiguration {
 
   boolean isDisableUpdateCheck();
 
-  String getVersion();
-
   boolean isEnableJarSplitting();
 
   String getJarSplittingExcludes();

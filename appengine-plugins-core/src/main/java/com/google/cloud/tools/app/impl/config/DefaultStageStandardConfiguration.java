@@ -28,7 +28,6 @@ public class DefaultStageStandardConfiguration implements StageStandardConfigura
   private File dockerfile;
   private boolean enableQuickstart;
   private boolean disableUpdateCheck;
-  private String version;
   private boolean enableJarSplitting;
   private String jarSplittingExcludes;
   private String compileEncoding;
@@ -78,15 +77,6 @@ public class DefaultStageStandardConfiguration implements StageStandardConfigura
 
   public void setDisableUpdateCheck(boolean disableUpdateCheck) {
     this.disableUpdateCheck = disableUpdateCheck;
-  }
-
-  @Override
-  public String getVersion() {
-    return version;
-  }
-
-  public void setVersion(String version) {
-    this.version = version;
   }
 
   @Override

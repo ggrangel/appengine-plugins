@@ -52,11 +52,14 @@ public class DefaultProcessRunner implements ProcessRunner {
    * @param command The shell command to execute
    */
   public void run(String[] command) throws ProcessRunnerException {
-    
+
     processBuilder.command(makeOsSpecific(command));
 
     try {
       final Process process = processBuilder.start();
+
+      handleStdOut(process);
+      handleErrOut(process);
 
       if (async) {
         asyncRun(process);
@@ -65,8 +68,6 @@ public class DefaultProcessRunner implements ProcessRunner {
         syncRun(process);
       }
 
-      handleStdOut(process);
-      handleErrOut(process);
 
     } catch (IOException | InterruptedException e) {
       throw new ProcessRunnerException(e);
@@ -83,7 +84,8 @@ public class DefaultProcessRunner implements ProcessRunner {
   }
 
   /**
-   * Set the listener for standard output of the subprocess.
+   * Set the listener for standard output of the subprocess. Note that this will not work if you set
+   * inheritIO.
    *
    * @param stdOutLineListener Can be null.
    */
@@ -92,7 +94,8 @@ public class DefaultProcessRunner implements ProcessRunner {
   }
 
   /**
-   * Set the listener for standard error output of the subprocess.
+   * Set the listener for standard error output of the subprocess. Note that this will not work if
+   * you set inheritIO.
    *
    * @param stdErrLineListener Can be null.
    */

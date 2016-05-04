@@ -215,8 +215,7 @@ public class CloudSdkAppEngineModuleService implements AppEngineModuleService {
     arguments.add("modules");
     arguments.add("list");
     arguments.addAll(configuration.getModules());
-    if (!com.google.appengine.repackaged.com.google.api.client.util.Strings
-        .isNullOrEmpty(configuration.getServer())) {
+    if (!Strings.isNullOrEmpty(configuration.getServer())) {
       arguments.add("--server");
       arguments.add(configuration.getServer());
     }

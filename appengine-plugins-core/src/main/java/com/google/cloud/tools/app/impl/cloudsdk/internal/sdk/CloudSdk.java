@@ -14,7 +14,6 @@
 
 package com.google.cloud.tools.app.impl.cloudsdk.internal.sdk;
 
-import com.google.appengine.tools.admin.AppCfg;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.process.DefaultProcessRunner;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessRunner;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessRunnerException;
@@ -22,6 +21,7 @@ import com.google.common.base.Joiner;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -94,12 +94,23 @@ public class CloudSdk {
   }
 
   /**
-   * Executes an App Engine SDK CLI command synchronously.
+   * Executes an App Engine SDK CLI command.
    */
-  public void runAppCfgCommand(List<String> args) {
+  public void runAppCfgCommand(List<String> args) throws ProcessRunnerException {
     // AppEngineSdk requires this system property to be set.
     System.setProperty("appengine.sdk.root", getJavaAppEngineSdkPath().toString());
-    AppCfg.main(args.toArray(new String[args.size()]));
+
+    List<String> command = new ArrayList<>();
+    command.add(
+        Paths.get(System.getProperty("java.home")).resolve("bin/java").toAbsolutePath().toString());
+    command.add("-cp");
+    command.add(getJavaToolsJar().toAbsolutePath().toString());
+    command.add("com.google.appengine.tools.admin.AppCfg");
+    command.addAll(args);
+
+    outputCommand(command);
+
+    processRunner.run(command.toArray(new String[command.size()]));
   }
 
   private void outputCommand(List<String> command) {

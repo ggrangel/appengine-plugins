@@ -16,6 +16,7 @@ package com.google.cloud.tools.app;
 
 import com.google.cloud.tools.app.api.AppEngineException;
 import com.google.cloud.tools.app.impl.cloudsdk.CloudSdkAppEngineStandardStaging;
+import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessRunnerException;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.sdk.CloudSdk;
 import com.google.cloud.tools.app.impl.config.DefaultStageStandardConfiguration;
 import com.google.common.collect.ImmutableList;
@@ -70,7 +71,8 @@ public class CloudSdkAppEngineStandardStagingTest {
   }
 
   @Test
-  public void testCheckFlags_allFlags() throws IOException, AppEngineException {
+  public void testCheckFlags_allFlags()
+      throws IOException, AppEngineException, ProcessRunnerException {
 
     DefaultStageStandardConfiguration configuration = new DefaultStageStandardConfiguration();
     configuration.setSourceDirectory(source);
@@ -97,7 +99,8 @@ public class CloudSdkAppEngineStandardStagingTest {
   }
 
   @Test
-  public void testCheckFlags_noFlags() throws IOException, AppEngineException {
+  public void testCheckFlags_noFlags()
+      throws IOException, AppEngineException, ProcessRunnerException {
 
     DefaultStageStandardConfiguration configuration = new DefaultStageStandardConfiguration();
     configuration.setSourceDirectory(source);

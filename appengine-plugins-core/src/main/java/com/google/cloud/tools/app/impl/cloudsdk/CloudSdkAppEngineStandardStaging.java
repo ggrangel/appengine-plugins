@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.app.impl.cloudsdk;
 
-import com.google.appengine.repackaged.com.google.api.client.util.Strings;
 import com.google.cloud.tools.app.api.AppEngineException;
 import com.google.cloud.tools.app.api.deploy.AppEngineStandardStaging;
 import com.google.cloud.tools.app.api.deploy.StageStandardConfiguration;
+import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessRunnerException;
 import com.google.cloud.tools.app.impl.cloudsdk.internal.sdk.CloudSdk;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -89,7 +90,7 @@ public class CloudSdkAppEngineStandardStaging implements AppEngineStandardStagin
         Files.copy(dockerfile, dockerfileDestination, StandardCopyOption.REPLACE_EXISTING);
       }
 
-    } catch (IOException e) {
+    } catch (IOException | ProcessRunnerException e) {
       throw new AppEngineException(e);
     }
 

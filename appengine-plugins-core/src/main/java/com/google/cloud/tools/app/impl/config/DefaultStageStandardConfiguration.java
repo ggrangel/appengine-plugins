@@ -26,13 +26,14 @@ public class DefaultStageStandardConfiguration implements StageStandardConfigura
   private File sourceDirectory;
   private File stagingDirectory;
   private File dockerfile;
-  private boolean enableQuickstart;
-  private boolean disableUpdateCheck;
-  private boolean enableJarSplitting;
+  private Boolean enableQuickstart;
+  private Boolean disableUpdateCheck;
+  private Boolean enableJarSplitting;
   private String jarSplittingExcludes;
   private String compileEncoding;
-  private boolean deleteJsps;
-  private boolean enableJarClasses;
+  private Boolean deleteJsps;
+  private Boolean enableJarClasses;
+  private Boolean disableJarJsps;
 
   @Override
   public File getSourceDirectory() {
@@ -62,29 +63,29 @@ public class DefaultStageStandardConfiguration implements StageStandardConfigura
   }
 
   @Override
-  public boolean isEnableQuickstart() {
+  public Boolean getEnableQuickstart() {
     return enableQuickstart;
   }
 
-  public void setEnableQuickstart(boolean enableQuickstart) {
+  public void setEnableQuickstart(Boolean enableQuickstart) {
     this.enableQuickstart = enableQuickstart;
   }
 
   @Override
-  public boolean isDisableUpdateCheck() {
+  public Boolean getDisableUpdateCheck() {
     return disableUpdateCheck;
   }
 
-  public void setDisableUpdateCheck(boolean disableUpdateCheck) {
+  public void setDisableUpdateCheck(Boolean disableUpdateCheck) {
     this.disableUpdateCheck = disableUpdateCheck;
   }
 
   @Override
-  public boolean isEnableJarSplitting() {
+  public Boolean getEnableJarSplitting() {
     return enableJarSplitting;
   }
 
-  public void setEnableJarSplitting(boolean enableJarSplitting) {
+  public void setEnableJarSplitting(Boolean enableJarSplitting) {
     this.enableJarSplitting = enableJarSplitting;
   }
 
@@ -107,20 +108,29 @@ public class DefaultStageStandardConfiguration implements StageStandardConfigura
   }
 
   @Override
-  public boolean isDeleteJsps() {
+  public Boolean getDeleteJsps() {
     return deleteJsps;
   }
 
-  public void setDeleteJsps(boolean deleteJsps) {
+  public void setDeleteJsps(Boolean deleteJsps) {
     this.deleteJsps = deleteJsps;
   }
 
   @Override
-  public boolean isEnableJarClasses() {
+  public Boolean getEnableJarClasses() {
     return enableJarClasses;
   }
 
-  public void setEnableJarClasses(boolean enableJarClasses) {
+  public void setEnableJarClasses(Boolean enableJarClasses) {
     this.enableJarClasses = enableJarClasses;
+  }
+
+  @Override
+  public Boolean getDisableJarJsps() {
+    return disableJarJsps;
+  }
+
+  public void setDisableJarJsps(Boolean disableJarJsps) {
+    this.disableJarJsps = disableJarJsps;
   }
 }

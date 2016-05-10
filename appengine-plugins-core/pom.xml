@@ -70,6 +70,12 @@
             <version>2.0.5</version>
           </dependency>
         </dependencies>
+        <configuration>
+          <archive>
+            <!-- include manifest produced by maven-bundle-plugin -->
+            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
       </plugin>
 
       <plugin>
@@ -86,6 +92,27 @@
           <execution>
             <goals>
               <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>3.0.1</version>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>com.google.cloud.tools.app.lib</Bundle-SymbolicName>
+            <Bundle-RequiredExecutionEnvironment>JavaSE-1.7</Bundle-RequiredExecutionEnvironment>
+          </instructions>
+        </configuration>
+        <executions>
+          <execution>
+            <id>bundle-manifest</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
             </goals>
           </execution>
         </executions>

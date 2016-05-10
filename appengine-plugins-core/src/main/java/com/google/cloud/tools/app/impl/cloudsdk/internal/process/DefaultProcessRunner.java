@@ -31,6 +31,8 @@ public class DefaultProcessRunner implements ProcessRunner {
   private ProcessOutputLineListener stdErrLineListener;
   private ProcessExitListener exitListener;
 
+  private Process process;
+
   /**
    * Create the process runner with a default process builder, with inheritIO enabled.
    */
@@ -52,11 +54,19 @@ public class DefaultProcessRunner implements ProcessRunner {
    * @param command The shell command to execute
    */
   public void run(String[] command) throws ProcessRunnerException {
-
-    processBuilder.command(makeOsSpecific(command));
-
     try {
-      final Process process = processBuilder.start();
+
+      processBuilder.command(makeOsSpecific(command));
+
+      synchronized (this) {
+        // check if the previous process is still executing
+        if (process != null) {
+          // will throw IllegalThreadStateException, if process is still running
+          process.exitValue();
+        }
+
+        process = processBuilder.start();
+      }
 
       handleStdOut(process);
       handleErrOut(process);
@@ -69,7 +79,7 @@ public class DefaultProcessRunner implements ProcessRunner {
       }
 
 
-    } catch (IOException | InterruptedException e) {
+    } catch (IOException | InterruptedException | IllegalThreadStateException e) {
       throw new ProcessRunnerException(e);
     }
   }
@@ -110,6 +120,14 @@ public class DefaultProcessRunner implements ProcessRunner {
    */
   public void setExitListener(ProcessExitListener exitListener) {
     this.exitListener = exitListener;
+  }
+
+  /**
+   * @return The process that is currently executing or was the last one to be started using the run
+   *     method.
+   */
+  public Process getProcess() {
+    return this.process;
   }
 
   private void handleErrOut(final Process process) {

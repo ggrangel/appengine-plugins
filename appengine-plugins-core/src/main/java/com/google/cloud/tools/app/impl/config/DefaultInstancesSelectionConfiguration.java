@@ -16,26 +16,24 @@
 
 package com.google.cloud.tools.app.impl.config;
 
-import com.google.cloud.tools.app.api.module.ModuleSelectionConfiguration;
-
-import java.util.Collection;
+import com.google.cloud.tools.app.api.instances.InstancesSelectionConfiguration;
 
 /**
- * Plain Java bean implementation of {@link ModuleSelectionConfiguration}.
+ * Plain Java bean implementation of {@link InstancesSelectionConfiguration}.
  */
-public class DefaultModuleSelectionConfiguration implements ModuleSelectionConfiguration {
+public class DefaultInstancesSelectionConfiguration implements InstancesSelectionConfiguration {
 
-  private String server;
+  private String service;
+
   private String version;
-  private Collection<String> modules;
 
   @Override
-  public String getServer() {
-    return server;
+  public String getService() {
+    return service;
   }
 
-  public void setServer(String server) {
-    this.server = server;
+  public void setService(String service) {
+    this.service = service;
   }
 
   @Override
@@ -45,14 +43,5 @@ public class DefaultModuleSelectionConfiguration implements ModuleSelectionConfi
 
   public void setVersion(String version) {
     this.version = version;
-  }
-
-  @Override
-  public Collection<String> getModules() {
-    return modules;
-  }
-
-  public void setModules(Collection<String> modules) {
-    this.modules = modules;
   }
 }

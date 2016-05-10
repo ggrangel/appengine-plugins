@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.app.impl.cloudsdk.util;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
@@ -23,6 +24,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Command Line argument helper.
@@ -93,6 +95,22 @@ public class Args {
     if (Boolean.TRUE.equals(value)) {
       return Collections.singletonList("--" + name);
     }
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return [key1=value1,key2=value2,...], [] if keyValueMapping=empty/null
+   */
+  public static List<String> keyValues(Map<?, ?> keyValueMapping) {
+    List<String> result = Lists.newArrayList();
+    if (keyValueMapping != null && keyValueMapping.size() > 0) {
+      for (Map.Entry<?, ?> entry : keyValueMapping.entrySet()) {
+        result.add(entry.getKey() + "=" + entry.getValue());
+      }
+      Joiner joiner = Joiner.on(",");
+      return Collections.singletonList(joiner.join(result));
+    }
+
     return Collections.emptyList();
   }
 

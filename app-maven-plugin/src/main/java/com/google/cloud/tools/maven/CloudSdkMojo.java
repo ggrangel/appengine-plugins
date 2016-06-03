@@ -16,9 +16,6 @@
 
 package com.google.cloud.tools.maven;
 
-import com.google.cloud.tools.app.impl.cloudsdk.internal.process.ProcessOutputLineListener;
-import com.google.cloud.tools.app.impl.cloudsdk.internal.sdk.CloudSdk;
-
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -34,33 +31,26 @@ public abstract class CloudSdkMojo extends AbstractMojo {
    * Optional parameter to configure the location of the Google Cloud SDK.
    */
   @Parameter(property = "cloudSdkPath", required = false)
-  protected File cloudSdkPath;
-
-  protected CloudSdk.Builder cloudSdkBuilder;
-
-  private final ProcessOutputLineListener gcloudOutputListener = new ProcessOutputLineListener() {
-    @Override
-    public void outputLine(String line) {
-      getLog().info("GCLOUD: " + line);
-    }
-  };
+  private File cloudSdkPath;
 
   @Parameter(defaultValue = "${pluginDescriptor}", readonly = true)
   private PluginDescriptor pluginDescriptor;
 
-  protected CloudSdkMojo() {
-    super();
+  private AppEngineFactory factory = new CloudSdkAppEngineFactory(this);
 
-    cloudSdkBuilder = new CloudSdk.Builder()
-        .addStdOutLineListener(gcloudOutputListener)
-        .addStdErrLineListener(gcloudOutputListener);
+  public String getArtifactId() {
+    return pluginDescriptor.getArtifactId();
   }
 
-  protected CloudSdk getCloudSdk() {
-    return cloudSdkBuilder
-        .sdkPath(cloudSdkPath)
-        .appCommandMetricsEnvironment(pluginDescriptor.getArtifactId())
-        .appCommandMetricsEnvironmentVersion(pluginDescriptor.getVersion())
-        .build();
+  public String getArtifactVersion() {
+    return pluginDescriptor.getVersion();
+  }
+
+  public File getCloudSdkPath() {
+    return cloudSdkPath;
+  }
+
+  public AppEngineFactory getAppEngineFactory() {
+    return factory;
   }
 }

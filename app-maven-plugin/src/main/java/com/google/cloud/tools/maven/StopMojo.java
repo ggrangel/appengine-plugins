@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.maven;
 
-import com.google.cloud.tools.app.api.devserver.AppEngineDevServer;
 import com.google.cloud.tools.app.api.devserver.StopConfiguration;
-import com.google.cloud.tools.app.impl.cloudsdk.CloudSdkAppEngineDevServer;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -35,19 +33,16 @@ public class StopMojo extends CloudSdkMojo implements StopConfiguration {
    * Host name to which the admin server was bound. (default: localhost)
    */
   @Parameter(alias = "devserver.adminHost", property = "app.devserver.adminHost")
-  private String adminHost;
+  protected String adminHost;
 
   /**
    * Port to which the admin server was bound. (default: 8000)
    */
   @Parameter(alias = "devserver.adminPort", property = "app.devserver.adminPort")
-  private Integer adminPort;
+  protected Integer adminPort;
 
-  @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    AppEngineDevServer devServer = new CloudSdkAppEngineDevServer(getCloudSdk());
-
-    devServer.stop(this);
+    getAppEngineFactory().devServerStop().stop(this);
   }
 
   @Override

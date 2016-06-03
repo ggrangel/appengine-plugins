@@ -16,11 +16,8 @@
 
 package com.google.cloud.tools.maven;
 
-import com.google.cloud.tools.app.api.deploy.AppEngineFlexibleStaging;
 import com.google.cloud.tools.app.api.deploy.StageFlexibleConfiguration;
 import com.google.cloud.tools.app.api.deploy.StageStandardConfiguration;
-import com.google.cloud.tools.app.impl.cloudsdk.CloudSdkAppEngineFlexibleStaging;
-import com.google.cloud.tools.app.impl.cloudsdk.CloudSdkAppEngineStandardStaging;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -51,7 +48,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    */
   @Parameter(required = true, defaultValue = "${project.build.directory}/appengine-staging",
       alias = "stage.stagingDirectory", property = "app.stage.stagingDirectory")
-  private File stagingDirectory;
+  protected File stagingDirectory;
 
   /**
    * The location of the dockerfile to use for App Engine flexible environment. This also applies to
@@ -60,7 +57,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
   @Parameter(
       defaultValue = "${basedir}/src/main/appengine/Dockerfile",
       alias = "stage.dockerfile", property = "app.stage.dockerfile")
-  private File dockerfile;
+  protected File dockerfile;
 
   ///////////////////////////////////
   // Standard-only params
@@ -75,7 +72,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
   @Parameter(required = true,
       defaultValue = "${project.build.directory}/${project.build.finalName}",
       alias = "stage.sourceDirectory", property = "app.stage.sourceDirectory")
-  private File sourceDirectory;
+  protected File sourceDirectory;
 
 
   /**
@@ -84,7 +81,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    * <p>Applies to App Engine standard environment only.
    */
   @Parameter(alias = "stage.enableQuickstart", property = "app.stage.enableQuickstart")
-  private boolean enableQuickstart;
+  protected boolean enableQuickstart;
 
   /**
    * Split large jar files (> 10M) into smaller fragments.
@@ -92,7 +89,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    * <p>Applies to App Engine standard environment only.
    */
   @Parameter(alias = "stage.enableJarSplitting", property = "app.stage.enableJarSplitting")
-  private boolean enableJarSplitting;
+  protected boolean enableJarSplitting;
 
   /**
    * Files that match the list of comma separated SUFFIXES will be excluded from all jars.
@@ -100,7 +97,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    * <p>Applies to App Engine standard environment only.
    */
   @Parameter(alias = "stage.jarSplittingExcludes", property = "app.stage.jarSplittingExcludes")
-  private String jarSplittingExcludes;
+  protected String jarSplittingExcludes;
 
   /**
    * The character encoding to use when compiling JSPs.
@@ -108,7 +105,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    * <p>Applies to App Engine standard environment only.
    */
   @Parameter(alias = "stage.compileEncoding", property = "app.stage.compileEncoding")
-  private String compileEncoding;
+  protected String compileEncoding;
 
   /**
    * Delete the JSP source files after compilation.
@@ -116,7 +113,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    * <p>Applies to App Engine standard environment only.
    */
   @Parameter(alias = "stage.deleteJsps", property = "app.stage.deleteJsps")
-  private boolean deleteJsps;
+  protected boolean deleteJsps;
 
   /**
    * Do not jar the classes generated from JSPs.
@@ -124,7 +121,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    * <p>Applies to App Engine standard environment only.
    */
   @Parameter(alias = "stage.disableJarJsps", property = "app.stage.disableJarJsps")
-  private boolean disableJarJsps;
+  protected boolean disableJarJsps;
 
   /**
    * Jar the WEB-INF/classes content.
@@ -132,10 +129,10 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    * <p>Applies to App Engine standard environment only.
    */
   @Parameter(alias = "stage.enableJarClasses", property = "app.stage.enableJarClasses")
-  private boolean enableJarClasses;
+  protected boolean enableJarClasses;
 
   // always disable update check and do not expose this as a parameter
-  private boolean disableUpdateCheck = true;
+  protected boolean disableUpdateCheck = true;
 
   ///////////////////////////////////
   // Flexible-only params
@@ -148,7 +145,7 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
    */
   @Parameter(defaultValue = "${basedir}/src/main/appengine/app.yaml",
       alias = "stage.appYaml", property = "app.stage.appYaml")
-  private File appYaml;
+  protected File appYaml;
 
   /**
    * The location of the JAR or WAR archive to deploy.
@@ -158,11 +155,10 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
   @Parameter(defaultValue =
       "${project.build.directory}/${project.build.finalName}.${project.packaging}",
       alias = "stage.artifact", property = "app.stage.artifact")
-  private File artifact;
+  protected File artifact;
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-
     // delete staging directory if it exists
     if (stagingDirectory.exists()) {
       getLog().info("Deleting the staging directory: " + stagingDirectory);
@@ -180,24 +176,11 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
 
     if (new File(sourceDirectory.toString() + "/WEB-INF/appengine-web.xml").exists()) {
       getLog().info("Detected App Engine standard environment application.");
-      stageStandard();
+      getAppEngineFactory().standardStaging().stageStandard(this);
     } else {
       getLog().info("Detected App Engine flexible environment application.");
-      stageFlexible();
+      getAppEngineFactory().flexibleStaging().stageFlexible(this);
     }
-  }
-
-  private void stageStandard() {
-    CloudSdkAppEngineStandardStaging staging = new CloudSdkAppEngineStandardStaging(getCloudSdk());
-
-    // execute the staging
-    staging.stageStandard(this);
-  }
-
-  private void stageFlexible() {
-    getLog().info(artifact.toString());
-    AppEngineFlexibleStaging staging = new CloudSdkAppEngineFlexibleStaging();
-    staging.stageFlexible(this);
   }
 
   @Override

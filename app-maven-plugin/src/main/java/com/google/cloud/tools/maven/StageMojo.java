@@ -50,16 +50,18 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
       alias = "stage.stagingDirectory", property = "app.stage.stagingDirectory")
   protected File stagingDirectory;
 
-  /**
-   * The location of the dockerfile to use for App Engine flexible environment. This also applies to
-   * App Engine Standard applications running on the flexible environment.
-   */
-  @Parameter(alias = "stage.dockerfile", property = "app.stage.dockerfile")
-  protected File dockerfile;
-
   ///////////////////////////////////
   // Standard-only params
   ///////////////////////////////////
+
+  /**
+   * The location of the dockerfile to use for App Engine Standard applications running on the
+   * flexible environment.
+   *
+   * <p>Applies to App Engine standard environment only.
+   */
+  @Parameter(alias = "stage.dockerfile", property = "app.stage.dockerfile")
+  protected File dockerfile;
 
   /**
    * The location of the compiled web application files, or the exploded WAR. This will be used as
@@ -152,6 +154,16 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
   protected File appYaml;
 
   /**
+   * The directory containing the Dockerfile and other Docker resources.
+   *
+   * <p>Applies to App Engine flexible environment only.
+   */
+  @Parameter(defaultValue = "${basedir}/src/main/docker/",
+      alias = "stage.dockerDirectory", property = "app.stage.dockerDirectory")
+  protected File dockerDirectory;
+
+
+  /**
    * The location of the JAR or WAR archive to deploy.
    *
    * <p>Applies to App Engine flexible environment only.
@@ -176,13 +188,14 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
       throw new MojoExecutionException("Unable to create staging directory");
     }
 
-    // Dockerfile default location
-    configureDockerfileDefaultLocation();
-
     getLog().info("Staging the application to: " + stagingDirectory);
 
     if (new File(sourceDirectory.toString() + "/WEB-INF/appengine-web.xml").exists()) {
       getLog().info("Detected App Engine standard environment application.");
+
+      // Dockerfile default location
+      configureDockerfileDefaultLocation();
+
       getAppEngineFactory().standardStaging().stageStandard(this);
     } else {
       getLog().info("Detected App Engine flexible environment application.");
@@ -265,5 +278,10 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
   @Override
   public Boolean getDisableJarJsps() {
     return disableJarJsps;
+  }
+
+  @Override
+  public File getDockerDirectory() {
+    return dockerDirectory;
   }
 }

@@ -81,7 +81,8 @@ public class DefaultProcessRunner implements ProcessRunner {
       if (environment != null) {
         processBuilder.environment().putAll(environment);
       }
-      processBuilder.command(makeOsSpecific(command));
+
+      processBuilder.command(command);
 
       Process process = processBuilder.start();
 
@@ -178,18 +179,5 @@ public class DefaultProcessRunner implements ProcessRunner {
         }
       }
     });
-  }
-
-  protected String[] makeOsSpecific(String[] command) {
-    String[] osCommand = command;
-
-    if (System.getProperty("os.name").startsWith("Windows")) {
-      List<String> windowsCommand = new ArrayList<>();
-      windowsCommand.add("cmd.exe");
-      windowsCommand.add("/c");
-      windowsCommand.addAll(Arrays.asList(command));
-      osCommand = windowsCommand.toArray(new String[windowsCommand.size()]);
-    }
-    return osCommand;
   }
 }

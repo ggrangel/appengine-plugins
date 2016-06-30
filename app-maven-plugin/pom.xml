@@ -255,6 +255,29 @@
         </executions>
       </plugin>
 
+      <!-- PMD -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.6</version>
+        <configuration>
+          <linkXRef>false</linkXRef>
+          <printFailingErrors>true</printFailingErrors>
+          <excludes>
+            <exclude>**/HelpMojo.java</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+              <goal>cpd-check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Unit Testing -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

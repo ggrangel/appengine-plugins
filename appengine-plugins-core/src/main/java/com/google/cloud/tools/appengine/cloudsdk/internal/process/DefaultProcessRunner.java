@@ -21,8 +21,6 @@ import com.google.cloud.tools.appengine.cloudsdk.process.ProcessOutputLineListen
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessStartListener;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -36,8 +34,8 @@ public class DefaultProcessRunner implements ProcessRunner {
   private final boolean async;
   private final List<ProcessOutputLineListener> stdOutLineListeners;
   private final List<ProcessOutputLineListener> stdErrLineListeners;
-  private final ProcessExitListener exitListener;
-  private final ProcessStartListener startListener;
+  private final List<ProcessExitListener> exitListeners;
+  private final List<ProcessStartListener> startListeners;
 
   private Map<String, String> environment;
 
@@ -47,17 +45,18 @@ public class DefaultProcessRunner implements ProcessRunner {
    *                            be inherited by parent process.
    * @param stdErrLineListeners Client consumers of process error output. If empty, output will be
    *                            inherited by parent process.
-   * @param exitListener        Client consumer of process onExit event.
+   * @param exitListeners       Client consumers of process onExit event.
+   * @param startListeners      Client consumers of process onStart event.
    */
   public DefaultProcessRunner(boolean async, List<ProcessOutputLineListener> stdOutLineListeners,
                               List<ProcessOutputLineListener> stdErrLineListeners,
-                              ProcessExitListener exitListener,
-                              ProcessStartListener startListener) {
+                              List<ProcessExitListener> exitListeners,
+                              List<ProcessStartListener> startListeners) {
     this.async = async;
     this.stdOutLineListeners = stdOutLineListeners;
     this.stdErrLineListeners = stdErrLineListeners;
-    this.exitListener = exitListener;
-    this.startListener = startListener;
+    this.exitListeners = exitListeners;
+    this.startListeners = startListeners;
   }
 
   /**
@@ -89,7 +88,7 @@ public class DefaultProcessRunner implements ProcessRunner {
       handleStdOut(process);
       handleErrOut(process);
 
-      if (startListener != null) {
+      for (ProcessStartListener startListener : startListeners) {
         startListener.onStart(process);
       }
 
@@ -146,13 +145,13 @@ public class DefaultProcessRunner implements ProcessRunner {
 
   private void syncRun(final Process process) throws InterruptedException {
     int exitCode = process.waitFor();
-    if (exitListener != null) {
+    for (ProcessExitListener exitListener : exitListeners) {
       exitListener.onExit(exitCode);
     }
   }
 
   private void asyncRun(final Process process) throws InterruptedException {
-    if (exitListener != null) {
+    if (exitListeners.size() > 0) {
       Thread exitThread = new Thread("wait-for-exit") {
         @Override
         public void run() {
@@ -161,7 +160,10 @@ public class DefaultProcessRunner implements ProcessRunner {
           } catch (InterruptedException e) {
             e.printStackTrace();
           } finally {
-            exitListener.onExit(process.exitValue());
+            int exitCode = process.exitValue();
+            for (ProcessExitListener exitListener : exitListeners) {
+              exitListener.onExit(process.exitValue());
+            }
           }
         }
       };

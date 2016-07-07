@@ -68,7 +68,8 @@ public class CloudSdk {
                    boolean async,
                    List<ProcessOutputLineListener> stdOutLineListeners,
                    List<ProcessOutputLineListener> stdErrLineListeners,
-                   ProcessExitListener exitListener, ProcessStartListener startListener,
+                   List<ProcessExitListener> exitListeners,
+                   List<ProcessStartListener> startListeners,
                    int runDevAppServerWaitSeconds) {
     this.sdkPath = sdkPath;
     this.appCommandMetricsEnvironment = appCommandMetricsEnvironment;
@@ -83,13 +84,14 @@ public class CloudSdk {
 
       stdOutLineListeners.add(runDevAppServerWaitListener);
       stdErrLineListeners.add(runDevAppServerWaitListener);
+      exitListeners.add(0, runDevAppServerWaitListener);
     } else {
       this.runDevAppServerWaitListener = null;
     }
 
     // create process runner
     this.processRunner = new DefaultProcessRunner(async, stdOutLineListeners, stdErrLineListeners,
-        exitListener, startListener);
+        exitListeners, startListeners);
 
   }
 
@@ -243,8 +245,8 @@ public class CloudSdk {
     private boolean async = false;
     private List<ProcessOutputLineListener> stdOutLineListeners = new ArrayList<>();
     private List<ProcessOutputLineListener> stdErrLineListeners = new ArrayList<>();
-    private ProcessExitListener exitListener;
-    private ProcessStartListener startListener;
+    private List<ProcessExitListener> exitListeners = new ArrayList<>();
+    private List<ProcessStartListener> startListeners = new ArrayList<>();
     private int runDevAppServerWaitSeconds;
 
     /**
@@ -323,7 +325,8 @@ public class CloudSdk {
      * The client listener of the process exit with code.
      */
     public Builder exitListener(ProcessExitListener exitListener) {
-      this.exitListener = exitListener;
+      this.exitListeners.clear();
+      this.exitListeners.add(exitListener);
       return this;
     }
 
@@ -331,7 +334,8 @@ public class CloudSdk {
      * The client listener of the process start. Allows access to the underlying process.
      */
     public Builder startListener(ProcessStartListener startListener) {
-      this.startListener = startListener;
+      this.startListeners.clear();
+      this.startListeners.add(startListener);
       return this;
     }
 
@@ -363,8 +367,8 @@ public class CloudSdk {
 
       return new CloudSdk(sdkPath, appCommandMetricsEnvironment,
           appCommandMetricsEnvironmentVersion, appCommandCredentialFile,
-          appCommandOutputFormat, async, stdOutLineListeners, stdErrLineListeners, exitListener,
-          startListener, runDevAppServerWaitSeconds);
+          appCommandOutputFormat, async, stdOutLineListeners, stdErrLineListeners, exitListeners,
+          startListeners, runDevAppServerWaitSeconds);
     }
 
   }

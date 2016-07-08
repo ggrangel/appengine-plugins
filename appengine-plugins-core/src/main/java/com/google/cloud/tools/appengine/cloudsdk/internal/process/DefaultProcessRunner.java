@@ -20,6 +20,8 @@ import com.google.cloud.tools.appengine.cloudsdk.process.ProcessExitListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessOutputLineListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessStartListener;
 
+import com.google.common.base.Charsets;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +114,7 @@ public class DefaultProcessRunner implements ProcessRunner {
   }
 
   private void handleStdOut(final Process process) {
-    final Scanner stdOut = new Scanner(process.getInputStream());
+    final Scanner stdOut = new Scanner(process.getInputStream(), Charsets.UTF_8.name());
     Thread stdOutThread = new Thread("standard-out") {
       public void run() {
         while (stdOut.hasNextLine() && !Thread.interrupted()) {
@@ -128,7 +130,7 @@ public class DefaultProcessRunner implements ProcessRunner {
   }
 
   private void handleErrOut(final Process process) {
-    final Scanner stdErr = new Scanner(process.getErrorStream());
+    final Scanner stdErr = new Scanner(process.getErrorStream(), Charsets.UTF_8.name());
     Thread stdErrThread = new Thread("standard-err") {
       public void run() {
         while (stdErr.hasNextLine() && !Thread.interrupted()) {

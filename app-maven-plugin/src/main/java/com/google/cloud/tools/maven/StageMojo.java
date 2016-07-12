@@ -134,6 +134,9 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
   // always disable update check and do not expose this as a parameter
   private boolean disableUpdateCheck = true;
 
+  // allows forcing runtime to 'java' for compat Java 8 projects
+  private String runtime;
+
   @Parameter(defaultValue = "${basedir}/src/main/docker/Dockerfile", readonly = true)
   private File dockerfilePrimaryDefaultLocation;
 
@@ -192,6 +195,11 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
 
     if (new File(sourceDirectory.toString() + "/WEB-INF/appengine-web.xml").exists()) {
       getLog().info("Detected App Engine standard environment application.");
+
+      // force runtime to 'java' for compat projects using Java version >1.7
+      if (Float.parseFloat(getCompileTargetVersion()) > 1.7f) {
+        runtime = "java";
+      }
 
       // Dockerfile default location
       configureDockerfileDefaultLocation();
@@ -283,5 +291,10 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
   @Override
   public File getDockerDirectory() {
     return dockerDirectory;
+  }
+
+  @Override
+  public String getRuntime() {
+    return runtime;
   }
 }

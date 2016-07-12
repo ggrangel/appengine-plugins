@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.maven;
 
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import java.io.File;
 
@@ -36,6 +39,9 @@ public abstract class CloudSdkMojo extends AbstractMojo {
   @Parameter(defaultValue = "${plugin}", readonly = true)
   private PluginDescriptor pluginDescriptor;
 
+  @Parameter(defaultValue = "${project}", readonly = true)
+  private MavenProject mavenProject;
+
   private AppEngineFactory factory = new CloudSdkAppEngineFactory(this);
 
   public String getArtifactId() {
@@ -52,5 +58,30 @@ public abstract class CloudSdkMojo extends AbstractMojo {
 
   public AppEngineFactory getAppEngineFactory() {
     return factory;
+  }
+
+  /**
+   * Determines the Java compiler target version by inspecting the project's maven-compiler-plugin
+   * configuration.
+   *
+   * @return The Java compiler target version.
+   */
+  public String getCompileTargetVersion() {
+    // maven-plugin-compiler default is 1.5
+    String javaVersion = "1.5";
+    if (mavenProject != null) {
+      Plugin compilerPlugin = mavenProject
+          .getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
+      if (compilerPlugin != null) {
+        Xpp3Dom config = (Xpp3Dom) compilerPlugin.getConfiguration();
+        if (config != null) {
+          Xpp3Dom domVersion = config.getChild("target");
+          if (domVersion != null) {
+            javaVersion = domVersion.getValue();
+          }
+        }
+      }
+    }
+    return javaVersion;
   }
 }

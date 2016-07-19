@@ -25,7 +25,9 @@ import com.google.cloud.tools.appengine.cloudsdk.internal.process.WaitingProcess
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessExitListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessOutputLineListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessStartListener;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import java.io.File;
@@ -33,11 +35,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -266,6 +273,7 @@ public class CloudSdk {
     private List<ProcessOutputLineListener> stdErrLineListeners = new ArrayList<>();
     private List<ProcessExitListener> exitListeners = new ArrayList<>();
     private List<ProcessStartListener> startListeners = new ArrayList<>();
+    private List<CloudSdkResolver> resolvers;
     private int runDevAppServerWaitSeconds;
 
     /**
@@ -380,18 +388,77 @@ public class CloudSdk {
 
       // Default SDK path
       if (sdkPath == null) {
-        Path discoveredSdkPath = new PathResolver().getCloudSdkPath();
-        if (discoveredSdkPath == null) {
-          throw new AppEngineException("Google Cloud SDK path was not provided and could not be"
-              + " found in any known install locations.");
-        }
-        sdkPath = discoveredSdkPath;
+        sdkPath = discoverSdkPath();
       }
 
       return new CloudSdk(sdkPath, appCommandMetricsEnvironment,
           appCommandMetricsEnvironmentVersion, appCommandCredentialFile,
           appCommandOutputFormat, async, stdOutLineListeners, stdErrLineListeners, exitListeners,
           startListeners, runDevAppServerWaitSeconds);
+    }
+
+    /**
+     * Attempt to find the Google Cloud SDK in various places.
+     * 
+     * @return the path to the root of the Google Cloud SDK
+     * @throws AppEngineException if not found
+     */
+    @Nonnull
+    private Path discoverSdkPath() {
+      for (CloudSdkResolver resolver : getResolvers()) {
+        try {
+          Path discoveredSdkPath = resolver.getCloudSdkPath();
+          if (discoveredSdkPath != null) {
+            return discoveredSdkPath;
+          }
+        } catch (RuntimeException ex) {
+          // prevent interference from exceptions in other resolvers
+          logger.log(Level.SEVERE, resolver.getClass().getName()
+              + ": exception thrown when searching for Google Cloud SDK", ex);
+        }
+      }
+      throw new AppEngineException("Google Cloud SDK path was not provided and could not be"
+          + " found in any known install locations.");
+    }
+
+    /**
+     * Return the configured SDK resolvers.
+     */
+    @VisibleForTesting
+    public List<CloudSdkResolver> getResolvers() {
+      List<CloudSdkResolver> resolvers;
+      if (this.resolvers != null) {
+        resolvers = new ArrayList<>(this.resolvers);
+      } else {
+        // Explicitly specify classloader rather than use the Thread Context Class Loader (TCCL)
+        ServiceLoader<CloudSdkResolver> services =
+            ServiceLoader.load(CloudSdkResolver.class, getClass().getClassLoader());
+        resolvers = Lists.newArrayList(services);
+        // Explicitly add the PATH-based resolver
+        resolvers.add(new PathResolver());
+      }
+      Collections.sort(resolvers, new ResolverComparator());
+      return resolvers;
+    }
+
+    /*
+     * Set the list of path resolvers to locate the Google Cloud SDK. Intended for tests to
+     * precisely control where the SDK may be found.
+     */
+    @VisibleForTesting
+    public Builder resolvers(List<CloudSdkResolver> resolvers) {
+      this.resolvers = resolvers;
+      return this;
+    }
+  }
+
+  /**
+   * Compare two {@link CloudSdkResolver} instances by their rank.
+   */
+  private static class ResolverComparator implements Comparator<CloudSdkResolver> {
+    @Override
+    public int compare(CloudSdkResolver o1, CloudSdkResolver o2) {
+      return o1.getRank() - o2.getRank();
     }
 
   }

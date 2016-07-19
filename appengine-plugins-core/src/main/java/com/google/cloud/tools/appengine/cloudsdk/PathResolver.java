@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Resolve paths with CloudSdk and Python defaults.
  */
-public class PathResolver {
+public class PathResolver implements CloudSdkResolver {
 
   /**
    * Attempts to find the path to Google Cloud SDK.
@@ -92,5 +92,12 @@ public class PathResolver {
       }
     }
     return null;
+  }
+
+  @Override
+  public int getRank() {
+    // Should be near-last but allow option for last-ditch resolvers that may choose
+    // to prompt the user for a location
+    return Integer.MAX_VALUE / 2;
   }
 }

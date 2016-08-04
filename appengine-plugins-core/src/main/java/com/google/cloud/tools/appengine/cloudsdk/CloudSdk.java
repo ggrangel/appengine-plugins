@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -72,37 +71,20 @@ public class CloudSdk {
   private final String appCommandOutputFormat;
   private final WaitingProcessOutputLineListener runDevAppServerWaitListener;
 
-  private CloudSdk(Path sdkPath, String appCommandMetricsEnvironment,
+  private CloudSdk(Path sdkPath,
+                   String appCommandMetricsEnvironment,
                    String appCommandMetricsEnvironmentVersion,
-                   @Nullable File appCommandCredentialFile, String appCommandOutputFormat,
-                   boolean async,
-                   List<ProcessOutputLineListener> stdOutLineListeners,
-                   List<ProcessOutputLineListener> stdErrLineListeners,
-                   List<ProcessExitListener> exitListeners,
-                   List<ProcessStartListener> startListeners,
-                   int runDevAppServerWaitSeconds) {
+                   @Nullable File appCommandCredentialFile,
+                   String appCommandOutputFormat,
+                   ProcessRunner processRunner,
+                   WaitingProcessOutputLineListener runDevAppServerWaitListener) {
     this.sdkPath = sdkPath;
     this.appCommandMetricsEnvironment = appCommandMetricsEnvironment;
     this.appCommandMetricsEnvironmentVersion = appCommandMetricsEnvironmentVersion;
     this.appCommandCredentialFile = appCommandCredentialFile;
     this.appCommandOutputFormat = appCommandOutputFormat;
-
-    // configure listeners for async dev app server start with waiting
-    if (async && runDevAppServerWaitSeconds > 0) {
-      this.runDevAppServerWaitListener = new WaitingProcessOutputLineListener(
-          ".*(Dev App Server is now running|INFO:oejs\\.Server:main: Started).*",
-          runDevAppServerWaitSeconds);
-
-      stdOutLineListeners.add(runDevAppServerWaitListener);
-      stdErrLineListeners.add(runDevAppServerWaitListener);
-      exitListeners.add(0, runDevAppServerWaitListener);
-    } else {
-      this.runDevAppServerWaitListener = null;
-    }
-
-    // create process runner
-    this.processRunner = new DefaultProcessRunner(async, stdOutLineListeners, stdErrLineListeners,
-        exitListeners, startListeners);
+    this.processRunner = processRunner;
+    this.runDevAppServerWaitListener = runDevAppServerWaitListener;
 
     // Populate jar locations.
     // TODO(joaomartins): Consider case where SDK doesn't contain these jars. Only App Engine
@@ -262,6 +244,11 @@ public class CloudSdk {
     }
   }
 
+  @VisibleForTesting
+  WaitingProcessOutputLineListener getRunDevAppServerWaitListener() {
+    return runDevAppServerWaitListener;
+  }
+
   public static class Builder {
     private Path sdkPath;
     private String appCommandMetricsEnvironment;
@@ -276,6 +263,7 @@ public class CloudSdk {
     private List<ProcessStartListener> startListeners = new ArrayList<>();
     private List<CloudSdkResolver> resolvers;
     private int runDevAppServerWaitSeconds;
+    private boolean inheritProcessOutput;
 
     /**
      * The home directory of Google Cloud SDK.
@@ -380,6 +368,19 @@ public class CloudSdk {
     }
 
     /**
+     * Causes the generated gcloud or devappserver subprocess to inherit the calling process's
+     * stdout and stderr.
+     *
+     * <p>If this is set to {@code true}, no stdout and stderr listeners can be specified.
+     *
+     * @param inheritProcessOutput If true, stdout and stderr are redirected to the parent process
+     */
+    public Builder inheritProcessOutput(boolean inheritProcessOutput) {
+      this.inheritProcessOutput = inheritProcessOutput;
+      return this;
+    }
+
+    /**
      * Create a new instance of {@link CloudSdk}.
      *
      * <p>If {@code sdkPath} is not set, this method will look for the SDK in known install
@@ -392,10 +393,39 @@ public class CloudSdk {
         sdkPath = discoverSdkPath();
       }
 
+      // Verify there aren't listeners if subprocess inherits output.
+      // If output is inherited, then listeners won't receive anything.
+      if (inheritProcessOutput
+          && (stdOutLineListeners.size() > 0 || stdErrLineListeners.size() > 0)) {
+        throw new AppEngineException("You cannot specify subprocess output inheritance and"
+            + " output listeners.");
+      }
+
+      // Construct process runner.
+      ProcessRunner processRunner;
+      WaitingProcessOutputLineListener runDevAppServerWaitListener = null;
+      if (stdOutLineListeners.size() > 0 || stdErrLineListeners.size() > 0) {
+        // Configure listeners for async dev app server start with waiting.
+        if (async && runDevAppServerWaitSeconds > 0) {
+          runDevAppServerWaitListener = new WaitingProcessOutputLineListener(
+              ".*(Dev App Server is now running|INFO:oejs\\.Server:main: Started).*",
+              runDevAppServerWaitSeconds);
+
+          stdOutLineListeners.add(runDevAppServerWaitListener);
+          stdErrLineListeners.add(runDevAppServerWaitListener);
+          exitListeners.add(0, runDevAppServerWaitListener);
+        }
+
+        processRunner = new DefaultProcessRunner(async, exitListeners, startListeners,
+            stdOutLineListeners, stdErrLineListeners);
+      } else {
+        processRunner = new DefaultProcessRunner(async, exitListeners, startListeners,
+            inheritProcessOutput);
+      }
+
       return new CloudSdk(sdkPath, appCommandMetricsEnvironment,
-          appCommandMetricsEnvironmentVersion, appCommandCredentialFile,
-          appCommandOutputFormat, async, stdOutLineListeners, stdErrLineListeners, exitListeners,
-          startListeners, runDevAppServerWaitSeconds);
+          appCommandMetricsEnvironmentVersion, appCommandCredentialFile, appCommandOutputFormat,
+          processRunner, runDevAppServerWaitListener);
     }
 
     /**
@@ -450,6 +480,21 @@ public class CloudSdk {
     public Builder resolvers(List<CloudSdkResolver> resolvers) {
       this.resolvers = resolvers;
       return this;
+    }
+
+    @VisibleForTesting
+    List<ProcessOutputLineListener> getStdOutLineListeners() {
+      return stdOutLineListeners;
+    }
+
+    @VisibleForTesting
+    List<ProcessOutputLineListener> getStdErrLineListeners() {
+      return stdErrLineListeners;
+    }
+
+    @VisibleForTesting
+    List<ProcessExitListener> getExitListeners() {
+      return exitListeners;
     }
   }
 

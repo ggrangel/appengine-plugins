@@ -32,6 +32,7 @@ import com.google.common.collect.Maps;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -59,8 +60,8 @@ public class CloudSdk {
   private static final String JAVA_APPENGINE_SDK_PATH =
       "platform/google_appengine/google/appengine/tools/java/lib";
   private static final String JAVA_TOOLS_JAR = "appengine-tools-api.jar";
-  private static final String WINDOWS_BUNDLED_PYTHON = "platform/bundledpython/python.exe";
   private static final Map<String, Path> JAR_LOCATIONS = new HashMap<>();
+  private static final String WINDOWS_BUNDLED_PYTHON = "platform/bundledpython/python.exe";
 
   private final Path sdkPath;
   private final ProcessRunner processRunner;
@@ -129,8 +130,9 @@ public class CloudSdk {
   /**
    * Uses the process runner to execute a dev_appserver.py command.
    *
-   * @param args The arguments to pass to dev_appserver.py.
-   * @throws ProcessRunnerException When process runner encounters an error.
+   * @param args the arguments to pass to dev_appserver.py
+   * @throws InvalidPathException when Python can't be located
+   * @throws ProcessRunnerException when process runner encounters an error
    */
   public void runDevAppServerCommand(List<String> args) throws ProcessRunnerException {
     List<String> command = new ArrayList<>();
@@ -196,8 +198,26 @@ public class CloudSdk {
     return getSdkPath().resolve(JAVA_APPENGINE_SDK_PATH);
   }
 
-  private Path getWindowsPythonPath() {
-    return getSdkPath().resolve(WINDOWS_BUNDLED_PYTHON);
+  // https://github.com/GoogleCloudPlatform/appengine-plugins-core/issues/189
+  @VisibleForTesting
+  Path getWindowsPythonPath() {
+    String cloudSdkPython = System.getenv("CLOUDSDK_PYTHON");
+    if (cloudSdkPython != null) {
+      Path cloudSdkPythonPath = Paths.get(cloudSdkPython);
+      if (Files.exists(cloudSdkPythonPath)) {
+        return cloudSdkPythonPath;
+      } else {
+        throw new InvalidPathException(cloudSdkPython, "python binary not in specified location");
+      }
+    }
+    
+    Path pythonPath = getSdkPath().resolve(WINDOWS_BUNDLED_PYTHON);
+    if (Files.exists(pythonPath)) {
+      return pythonPath;
+    } else {
+      return Paths.get("python");
+    } 
+
   }
 
   /**
@@ -461,7 +481,7 @@ public class CloudSdk {
       if (this.resolvers != null) {
         resolvers = new ArrayList<>(this.resolvers);
       } else {
-        // Explicitly specify classloader rather than use the Thread Context Class Loader (TCCL)
+        // Explicitly specify classloader rather than use the Thread Context Class Loader
         ServiceLoader<CloudSdkResolver> services =
             ServiceLoader.load(CloudSdkResolver.class, getClass().getClassLoader());
         resolvers = Lists.newArrayList(services);

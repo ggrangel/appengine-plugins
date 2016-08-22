@@ -11,9 +11,9 @@
 
   <name>App Engine Plugins Core Library</name>
   <description>
-    A common library for building App Engine plugins.
+    A library for client side software that manages App Engine programs.
   </description>
-  <url>https://github.com/GoogleCloudPlatform/app-tools-lib-for-java</url>
+  <url>https://github.com/GoogleCloudPlatform/appengine-plugins-core/</url>
 
   <licenses>
     <license>

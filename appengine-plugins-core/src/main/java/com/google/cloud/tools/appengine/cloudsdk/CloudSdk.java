@@ -141,8 +141,6 @@ public class CloudSdk {
    */
   public void runDevAppServerCommand(List<String> args) throws ProcessRunnerException {
     validateCloudSdk();
-    // TODO: remove this check when the auto-install for Java is fixed in dev_appserver.py
-    validateAppEngineJavaComponents();
 
     List<String> command = new ArrayList<>();
 
@@ -154,6 +152,11 @@ public class CloudSdk {
     command.addAll(args);
 
     logCommand(command);
+
+    // set quiet mode and consequently auto-install of app-engine-java component
+    Map<String, String> environment = Maps.newHashMap();
+    environment.put("CLOUDSDK_CORE_DISABLE_PROMPTS", "1");
+    processRunner.setEnvironment(environment);
 
     processRunner.run(command.toArray(new String[command.size()]));
 

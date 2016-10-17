@@ -29,6 +29,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Run App Engine Development App Server synchronously.
@@ -344,5 +345,14 @@ public class RunMojo extends CloudSdkMojo implements RunConfiguration {
   @Override
   public String getDefaultGcsBucketName() {
     return defaultGcsBucketName;
+  }
+
+  // TODO(joaomartins): It's OK for this method to return null -- it will cause dev_appserver to
+  // use JAVA_HOME or java from PATH. We should eventually let users explicitly choose the VM they
+  // want to run dev_appserver in though?
+  @Override
+  @Nullable
+  public String getJavaHomeDir() {
+    return null;
   }
 }

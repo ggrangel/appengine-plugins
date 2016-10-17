@@ -105,7 +105,7 @@
     <dependency>
       <groupId>com.google.cloud.tools</groupId>
       <artifactId>appengine-plugins-core</artifactId>
-      <version>0.1.10</version>
+      <version>0.1.11</version>
     </dependency>
 
     <dependency>
@@ -301,6 +301,8 @@
           </includes>
           <excludes>
             <exclude>**/*DeployMojoIntegrationTest.java</exclude>
+            <exclude>**/*GenRepoInfoFileMojoIntegrationTest.java</exclude>
+            <exclude>**/*StageMojoIntegrationTest.java</exclude>
           </excludes>
         </configuration>
         <executions>

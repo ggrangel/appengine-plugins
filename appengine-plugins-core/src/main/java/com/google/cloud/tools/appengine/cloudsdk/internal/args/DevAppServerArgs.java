@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.appengine.cloudsdk.internal.args;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,30 +26,34 @@ import java.util.List;
 public class DevAppServerArgs {
 
   /**
-   * @return [--name=value] or [] if value=null.
+   * @return {@code [--name=value]} or {@code []} if value=null.
    */
   public static List<String> get(String name, String value) {
     return Args.stringWithEq(name, value);
   }
 
   /**
-   * @return [--name=value1, --name=value2, ...] or [] if value=null.
+   * @return {@code [--name=value1, --name=value2, ...]} or {@code []} if value=null.
    */
   public static List<String> get(String name, List<String> values) {
     return Args.stringsWithEq(name, values);
   }
 
   /**
-   * @return [--name=value] or [] if value=null.
+   * @return {@code [--name=value]} or {@code []} if value=null.
    */
   public static List<String> get(String name, Integer value) {
     return Args.integerWithEq(name, value);
   }
 
   /**
-   * @return [--name] if value=true, [] if value=false/null.
+   * @return {@code [--name=true]} if value=true, {@code [--name=false]} if value=false,
+   *     {@code []} if value=null.
    */
   public static List<String> get(String name, Boolean value) {
-    return Args.bool(name, value);
+    if (value == null) {
+      return Collections.emptyList();
+    }
+    return Arrays.asList("--" + name + "=" + value.toString());
   }
 }

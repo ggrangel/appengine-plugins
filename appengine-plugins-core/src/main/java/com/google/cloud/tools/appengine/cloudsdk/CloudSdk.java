@@ -19,17 +19,23 @@ package com.google.cloud.tools.appengine.cloudsdk;
 import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.cloud.tools.appengine.cloudsdk.internal.args.GcloudArgs;
 import com.google.cloud.tools.appengine.cloudsdk.internal.process.DefaultProcessRunner;
+import com.google.cloud.tools.appengine.cloudsdk.internal.process.ExitCodeRecorderProcessExitListener;
 import com.google.cloud.tools.appengine.cloudsdk.internal.process.ProcessRunner;
 import com.google.cloud.tools.appengine.cloudsdk.internal.process.ProcessRunnerException;
+import com.google.cloud.tools.appengine.cloudsdk.internal.process.StringBuilderProcessOutputLineListener;
 import com.google.cloud.tools.appengine.cloudsdk.internal.process.WaitingProcessOutputLineListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessExitListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessOutputLineListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessStartListener;
+import com.google.cloud.tools.appengine.cloudsdk.serialization.CloudSdkComponent;
+import com.google.cloud.tools.appengine.cloudsdk.serialization.CloudSdkVersion;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -45,6 +51,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -159,6 +166,42 @@ public class CloudSdk {
     processRunner.run(command.toArray(new String[command.size()]));
   }
 
+  // Runs a gcloud command synchronously, with a new ProcessRunner. This method is intended to be
+  // used for the execution of short-running gcloud commands, especially when we need to do some
+  // additional processing of the gcloud command's output before returning. In all other cases, this
+  // class's main configured ProcessRunner should be used.
+  private String runSynchronousGcloudCommand(List<String> args)
+      throws ProcessRunnerException {
+    validateCloudSdk();
+
+    StringBuilderProcessOutputLineListener stdOutListener =
+        new StringBuilderProcessOutputLineListener();
+    ExitCodeRecorderProcessExitListener exitListener = new ExitCodeRecorderProcessExitListener();
+
+    // instantiate a separate synchronous process runner
+    ProcessRunner runner = new DefaultProcessRunner(
+        false,                                                       /* async */
+        ImmutableList.<ProcessExitListener>of(exitListener),         /* exitListeners */
+        ImmutableList.<ProcessStartListener>of(),                    /* startListeners */
+        ImmutableList.<ProcessOutputLineListener>of(stdOutListener), /* stdOutLineListeners */
+        ImmutableList.<ProcessOutputLineListener>of());              /* stdErrLineListeners */
+
+    // build and run the command
+    List<String> command = new ImmutableList.Builder<String>()
+        .add(getGCloudPath().toString())
+        .addAll(args)
+        .build();
+
+    runner.run(command.toArray(new String[command.size()]));
+
+    if (exitListener.getMostRecentExitCode() != null
+        && !exitListener.getMostRecentExitCode().equals(0)) {
+      throw new ProcessRunnerException("Process exited unsuccessfully");
+    }
+
+    return stdOutListener.toString();
+  }
+
   /**
    * Uses the process runner to execute a dev_appserver.py command.
    *
@@ -233,6 +276,48 @@ public class CloudSdk {
     logCommand(command);
 
     processRunner.run(command.toArray(new String[command.size()]));
+  }
+
+  /**
+   * Returns the version of the Cloud SDK installation. Unlike other methods in this class that call
+   * gcloud, this method always uses a synchronous ProcessRunner and will block until the gcloud
+   * process returns.
+   *
+   * @throws ProcessRunnerException when process runner encounters an error
+   */
+  public CloudSdkVersion getVersion() throws ProcessRunnerException {
+    validateCloudSdk();
+
+    // gcloud info --format="value(basic.version)"
+    List<String> command = new ImmutableList.Builder<String>()
+        .add("info")
+        .addAll(GcloudArgs.get("format", "value(basic.version)"))
+        .build();
+
+    return new CloudSdkVersion(runSynchronousGcloudCommand(command));
+  }
+
+  /**
+   * Returns the list of Cloud SDK Components and their settings, reported by the current gcloud
+   * installation. Unlike other methods in this class that call gcloud, this method always uses a
+   * synchronous ProcessRunner and will block until the gcloud process returns.
+   *
+   * @throws ProcessRunnerException when process runner encounters an error
+   * @throws JsonSyntaxException when the cloud SDK output cannot be parsed
+   */
+  public List<CloudSdkComponent> getComponents()
+      throws ProcessRunnerException, JsonSyntaxException {
+    validateCloudSdk();
+
+    // gcloud components list --show-versions --format=json
+    List<String> command = new ImmutableList.Builder<String>()
+        .add("components", "list")
+        .addAll(GcloudArgs.get("show-versions", true))
+        .addAll(GcloudArgs.get("format", "json"))
+        .build();
+
+    String componentsJson = runSynchronousGcloudCommand(command);
+    return CloudSdkComponent.fromJsonList(componentsJson);
   }
 
   private void logCommand(List<String> command) {

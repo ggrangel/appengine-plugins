@@ -19,32 +19,39 @@ package com.google.cloud.tools.appengine.cloudsdk.serialization;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents the version of the Cloud SDK. Expects a version to be a series of integers separated
- * by the '.' character. This class does not handle versions strings that are intended to be
- * human-readable, i.e 'v1beta3-1.0.0'.
+ * Represents the version of the Cloud SDK. Loosely follows the semantic versioning spec
+ * (semver.org) with a few exceptions to make it more flexible:
+ *
+ * <ul>
+ *   <li>Versions can have one or more numeric version components, instead of MAJOR.MINOR.PATCH.
+ *   These numeric version components are compared for ordering and equality testing.</li>
+ *   <li>Any pre-release or build numbers are ignored for ordering and equality testing.</li>
+ * </ul>
  */
 public class CloudSdkVersion implements Comparable<CloudSdkVersion> {
+
+  private static final char BUILD_SEPARATOR = '+';
+  private static final char PRERELEASE_SEPARATOR = '-';
 
   private final List<Integer> versionComponents;
   private final String version;
 
   /**
    * Constructs a CloudSdkVersion from a version string.
-   * @param version a non-null, nonempty string of the form 130.0.0
-   * @throws NumberFormatException if the string cannot be parsed
+   * @param version a non-null, nonempty string of the form "\d+(\.\d+)*[+-].*".
+   * @throws IllegalArgumentException if the string cannot be parsed
    */
-  public CloudSdkVersion(String version) throws NumberFormatException {
+  public CloudSdkVersion(String version) throws IllegalArgumentException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
 
     this.version = version;
-    this.versionComponents = buildVersionComponents(version);
+    this.versionComponents = parseVersionComponents(version);
   }
 
   @Override
@@ -108,12 +115,31 @@ public class CloudSdkVersion implements Comparable<CloudSdkVersion> {
     }
   }
 
-  private List<Integer> buildVersionComponents(String version) throws NumberFormatException {
+  // TODO(alexsloan): implement and assert true semver comparisons, such that prerelease suffixes
+  // are compared according to the semver spec (semver.org)
+  private List<Integer> parseVersionComponents(String version) throws NumberFormatException {
+    // just strip out any suffixes
+    version = ignoreBuildOrPrereleaseSuffix(version);
+
     String[] components = version.split("\\.");
-    ImmutableList.Builder builder = ImmutableList.builder();
+    ImmutableList.Builder<Integer> builder = ImmutableList.builder();
     for (String num : components) {
       builder.add(Integer.parseInt(num));
     }
     return builder.build();
   }
+
+  // Returns the version string without its prerelease and/or build suffix. Any characters following
+  // (and including) the first occurrence of either the BUILD_SEPARATOR or the PRERELEASE_SEPARATOR
+  // will be ignored
+  private String ignoreBuildOrPrereleaseSuffix(String version) {
+    List<Character> separators = ImmutableList.of(BUILD_SEPARATOR, PRERELEASE_SEPARATOR);
+    for (int i = 0; i < version.length(); i++) {
+      if (separators.contains(version.charAt(i))) {
+        return version.substring(0, i);
+      }
+    }
+    return version;
+  }
+
 }

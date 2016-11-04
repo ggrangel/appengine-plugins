@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -41,9 +42,9 @@ public class CloudSdkVersionTest {
     new CloudSdkVersion("");
   }
 
-  @Test(expected = NumberFormatException.class)
-  public void testConstructor_nonNumeric() {
-    new CloudSdkVersion("v1beta3-1.0.0");
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_preReleaseAsPrefix() {
+    new CloudSdkVersion("beta.1-1.0.0");
   }
 
   @Test
@@ -53,9 +54,22 @@ public class CloudSdkVersionTest {
   }
 
   @Test
+  public void testToString_withPreRelease() {
+    String version = "0.1.0.22-beta.1";
+    assertEquals(version, new CloudSdkVersion(version).toString());
+  }
+
+  @Test
   public void testEquals_differentSizes() {
     assertTrue(new CloudSdkVersion("0.1.0").equals(new CloudSdkVersion("0.1")));
     assertTrue(new CloudSdkVersion("0").equals(new CloudSdkVersion("0.0.0.0")));
+    assertFalse(new CloudSdkVersion("1.1").equals(new CloudSdkVersion("1.10")));
+  }
+
+  @Test
+  public void testEquals_ignorePreRelease() {
+    assertEquals(new CloudSdkVersion("0.1.0-rc.1"),
+        new CloudSdkVersion("0.1.0-release-anystring.x.y.z"));
   }
 
   @Test
@@ -94,6 +108,16 @@ public class CloudSdkVersionTest {
     assertEquals(0, first.compareTo(second));
     assertEquals(firstVersion, first.toString());
     assertEquals(secondVersion, second.toString());
-
   }
+
+  @Test
+  public void testCompareTo_ignorePreRelease() {
+    assertEquals(-1, new CloudSdkVersion("1.1.0-alpha.01")
+        .compareTo(new CloudSdkVersion("2.1.0-beta2+123456")));
+    assertEquals(1, new CloudSdkVersion("2.1.0-beta2+123456")
+        .compareTo(new CloudSdkVersion("1.1.0-01-asdf-beta")));
+    assertEquals(0, new CloudSdkVersion("1.1.0-alpha.01")
+        .compareTo(new CloudSdkVersion("1.1.0-alpha.02")));
+  }
+
 }

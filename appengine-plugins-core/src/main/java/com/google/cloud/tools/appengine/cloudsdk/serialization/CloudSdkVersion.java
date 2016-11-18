@@ -20,38 +20,69 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Represents the version of the Cloud SDK. Loosely follows the semantic versioning spec
- * (semver.org) with a few exceptions to make it more flexible:
- *
- * <ul>
- *   <li>Versions can have one or more numeric version components, instead of MAJOR.MINOR.PATCH.
- *   These numeric version components are compared for ordering and equality testing.</li>
- *   <li>Any pre-release or build numbers are ignored for ordering and equality testing.</li>
- * </ul>
+ * Represents a Version of the Cloud SDK, which follows the Semantic Version 2.0.0 spec. See
+ * <a href="http://semver.org/spec/v2.0.0.html">http://semver.org/spec/v2.0.0.html</a> for more
+ * detail.
  */
 public class CloudSdkVersion implements Comparable<CloudSdkVersion> {
 
-  private static final char BUILD_SEPARATOR = '+';
-  private static final char PRERELEASE_SEPARATOR = '-';
+  private static final Pattern SEMVER_PATTERN = Pattern.compile(getSemVerRegex());
 
-  private final List<Integer> versionComponents;
   private final String version;
 
+  private final int majorVersion;
+  private final int minorVerion;
+  private final int patchVersion;
+  private final CloudSdkVersionPreRelease preRelease; // optional pre-release component of version
+  private final String buildIdentifier; // optional build ID component of version string
+
   /**
-   * Constructs a CloudSdkVersion from a version string.
-   * @param version a non-null, nonempty string of the form "\d+(\.\d+)*[+-].*".
-   * @throws IllegalArgumentException if the string cannot be parsed
+   * Constructs a new CloudSdkVersion.
+   *
+   * @param version the semantic version string
+   * @throws IllegalArgumentException if the argument is not a valid semantic version string
    */
   public CloudSdkVersion(String version) throws IllegalArgumentException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
 
+    Matcher matcher = SEMVER_PATTERN.matcher(version);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException(
+          String.format("Pattern \"%s\" is not a valid CloudSdkVersion.", version));
+    }
+
+    majorVersion = Integer.parseInt(matcher.group("major"));
+    minorVerion = Integer.parseInt(matcher.group("minor"));
+    patchVersion = Integer.parseInt(matcher.group("patch"));
+
+    preRelease = matcher.group("prerelease") != null
+        ? new CloudSdkVersionPreRelease(matcher.group("prerelease")) : null;
+    buildIdentifier = matcher.group("build");
+
     this.version = version;
-    this.versionComponents = parseVersionComponents(version);
+  }
+
+  private static String getSemVerRegex() {
+    // Only digits, with no leading zeros.
+    String digits = "(?:0|[1-9][0-9]*)";
+    // Digits, letters and dashes
+    String alphaNum = "[-0-9A-Za-z]+";
+    // This is an alphanumeric string that must have at least one letter (or else it would be
+    // considered digits).
+    String strictAlphaNum = "[-0-9A-Za-z]*[-A-Za-z]+[-0-9A-Za-z]*";
+
+    String preReleaseIdentifier = "(?:" + digits + "|" + strictAlphaNum + ")";
+    String preRelease = "(?:" + preReleaseIdentifier + "(?:\\." + preReleaseIdentifier + ")*)";
+    String build = "(?:" + alphaNum + "(?:\\." + alphaNum + ")*)";
+
+    return "^(?<major>" + digits + ")\\.(?<minor>" + digits + ")\\.(?<patch>" + digits + ")"
+        + "(?:\\-(?<prerelease>" + preRelease + "))?(?:\\+(?<build>" + build + "))?$";
   }
 
   @Override
@@ -59,32 +90,53 @@ public class CloudSdkVersion implements Comparable<CloudSdkVersion> {
     return version;
   }
 
+  /**
+   * Compares this to another CloudSdkVersion, per the Semantic Versioning 2.0.0 specification.
+   *
+   * <p>Note that the build identifier field is excluded for comparison. Thus,
+   * <code>new CloudSdkVersion("0.0.1+v1").compareTo(new CloudSdkVersion("0.0.1+v2")) == 0</code>
+   * </p>
+   */
   @Override
-  public int compareTo(CloudSdkVersion otherVersion) {
-    List<Integer> mine = new ArrayList<>(this.versionComponents);
-    List<Integer> other = new ArrayList<>(otherVersion.getVersionComponents());
+  public int compareTo(CloudSdkVersion other) {
+    Preconditions.checkNotNull(other);
 
-    // if both versions don't have the same number of components, pad the smaller one with zeros
-    rightPadZerosUntilSameLength(mine, other);
-
-    // compare version integers from left to right
+    // First, compare required fields
+    List<Integer> mine = ImmutableList.of(majorVersion, minorVerion, patchVersion);
+    List<Integer> others = ImmutableList.of(other.getMajorVersion(), other.getMinorVerion(),
+        other.getPatchVersion());
     for (int i = 0; i < mine.size(); i++) {
-      int result = mine.get(i).compareTo(other.get(i));
+      int result = mine.get(i).compareTo(others.get(i));
       if (result != 0) {
         return result;
       }
     }
+
+    // Compare pre-release components
+    if (preRelease != null && other.getPreRelease() != null) {
+      return preRelease.compareTo(other.getPreRelease());
+    }
+
+    // A SemVer with a pre-release string has lower precedence than one without.
+    if (preRelease == null && other.getPreRelease() != null) {
+      return 1;
+    }
+    if (preRelease != null && other.getPreRelease() == null) {
+      return -1;
+    }
+
     return 0;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(versionComponents);
+    return Objects.hash(majorVersion, minorVerion, patchVersion, preRelease, buildIdentifier);
   }
 
   /**
-   * Compares objects for equality. Two CloudSdkVersions are considered equal if, from left to
-   * right, their version integers are equal.
+   * Compares this to another CloudSdkVersion for equality. Unlike compareTo, this method considers
+   * two CloudSdkVersions to be equal if all of their components are identical, including their
+   * build identifiers. Thus, "0.0.1+v1" is not equal to "0.0.1+v2".
    */
   @Override
   public boolean equals(Object obj) {
@@ -99,47 +151,36 @@ public class CloudSdkVersion implements Comparable<CloudSdkVersion> {
     }
     CloudSdkVersion otherVersion = (CloudSdkVersion) obj;
 
-    return this.compareTo(otherVersion) == 0;
+    return Objects.equals(majorVersion, otherVersion.majorVersion)
+        && Objects.equals(minorVerion, otherVersion.minorVerion)
+        && Objects.equals(patchVersion, otherVersion.patchVersion)
+        && Objects.equals(preRelease, otherVersion.preRelease)
+        && Objects.equals(buildIdentifier, otherVersion.buildIdentifier);
   }
 
-  protected List<Integer> getVersionComponents() {
-    return versionComponents;
+  public int getMajorVersion() {
+    return majorVersion;
   }
 
-  private void rightPadZerosUntilSameLength(List<Integer> first, List<Integer> second) {
-    while (first.size() < second.size()) {
-      first.add(0);
-    }
-    while (first.size() > second.size()) {
-      second.add(0);
-    }
+  public int getMinorVerion() {
+    return minorVerion;
   }
 
-  // TODO(alexsloan): implement and assert true semver comparisons, such that prerelease suffixes
-  // are compared according to the semver spec (semver.org)
-  private List<Integer> parseVersionComponents(String version) throws NumberFormatException {
-    // just strip out any suffixes
-    version = ignoreBuildOrPrereleaseSuffix(version);
-
-    String[] components = version.split("\\.");
-    ImmutableList.Builder<Integer> builder = ImmutableList.builder();
-    for (String num : components) {
-      builder.add(Integer.parseInt(num));
-    }
-    return builder.build();
+  public int getPatchVersion() {
+    return patchVersion;
   }
 
-  // Returns the version string without its prerelease and/or build suffix. Any characters following
-  // (and including) the first occurrence of either the BUILD_SEPARATOR or the PRERELEASE_SEPARATOR
-  // will be ignored
-  private String ignoreBuildOrPrereleaseSuffix(String version) {
-    List<Character> separators = ImmutableList.of(BUILD_SEPARATOR, PRERELEASE_SEPARATOR);
-    for (int i = 0; i < version.length(); i++) {
-      if (separators.contains(version.charAt(i))) {
-        return version.substring(0, i);
-      }
-    }
-    return version;
+  protected CloudSdkVersionPreRelease getPreRelease() {
+    return preRelease;
+  }
+
+  /**
+   * Returns the version's build identifier - an optional component of the semantic version which
+   * signifies a specific build release. Note that the build identifier is never considered for
+   * comparison or equality testing.
+   */
+  public String getBuildIdentifier() {
+    return buildIdentifier;
   }
 
 }

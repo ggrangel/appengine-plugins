@@ -56,8 +56,9 @@ public class PathResolver implements CloudSdkResolver {
     return searchPaths(possiblePaths);
   }
 
-  private void getLocationsFromPath(List<String> possiblePaths) {
+  private static void getLocationsFromPath(List<String> possiblePaths) {
     String pathEnv = System.getenv("PATH");
+
     if (pathEnv != null) {
       for (String path : pathEnv.split(File.pathSeparator)) {
         // strip out trailing path separator
@@ -71,7 +72,7 @@ public class PathResolver implements CloudSdkResolver {
     }
   }
 
-  private String getProgramFilesLocation() {
+  private static String getProgramFilesLocation() {
     String programFiles = System.getenv("ProgramFiles");
     if (programFiles == null) {
       programFiles = System.getenv("ProgramFiles(x86)");
@@ -83,7 +84,7 @@ public class PathResolver implements CloudSdkResolver {
     }
   }
 
-  private Path searchPaths(List<String> possiblePaths) {
+  private static Path searchPaths(List<String> possiblePaths) {
     for (String pathString : possiblePaths) {
       if (pathString != null) {
         File file = new File(pathString);

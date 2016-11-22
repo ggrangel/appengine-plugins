@@ -17,7 +17,9 @@
 package com.google.cloud.tools.appengine.cloudsdk;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,9 +45,10 @@ public class PathResolver implements CloudSdkResolver {
 
     // search program files
     if (System.getProperty("os.name").contains("Windows")) {
+      possiblePaths.add(getLocalAppDataLocation());
       possiblePaths.add(getProgramFilesLocation());
     } else {
-      // home dir
+      // home directory
       possiblePaths.add(System.getProperty("user.home") + "/google-cloud-sdk");
       // try devshell VM
       possiblePaths.add("/google/google-cloud-sdk");
@@ -54,6 +57,18 @@ public class PathResolver implements CloudSdkResolver {
     }
 
     return searchPaths(possiblePaths);
+  }
+
+  /** 
+   * The default location for a single-user install of Cloud SDK on Windows.
+   */
+  private static String getLocalAppDataLocation() {
+    String localAppData = System.getenv("LOCALAPPDATA");
+    if (localAppData != null) {
+      return localAppData + "\\Google\\Cloud SDK\\google-cloud-sdk";
+    } else {
+      return null;
+    }
   }
 
   private static void getLocationsFromPath(List<String> possiblePaths) {
@@ -87,9 +102,9 @@ public class PathResolver implements CloudSdkResolver {
   private static Path searchPaths(List<String> possiblePaths) {
     for (String pathString : possiblePaths) {
       if (pathString != null) {
-        File file = new File(pathString);
-        if (file.exists()) {
-          return file.toPath();
+        Path path = Paths.get(pathString);
+        if (Files.exists(path)) {
+          return path;
         }
       }
     }

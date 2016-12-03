@@ -106,9 +106,9 @@ public class DefaultProcessRunner implements ProcessRunner {
       }
 
       processBuilder.command(command);
-
+      
       Process process = processBuilder.start();
-
+      
       // Only handle stdout or stderr if there are listeners.
       if (!stdOutLineListeners.isEmpty()) {
         handleStdOut(process);
@@ -141,7 +141,7 @@ public class DefaultProcessRunner implements ProcessRunner {
     this.environment = environment;
   }
 
-  private void handleStdOut(final Process process) {
+  private void handleStdOut(Process process) {
     final Scanner stdOut = new Scanner(process.getInputStream(), Charsets.UTF_8.name());
     Thread stdOutThread = new Thread("standard-out") {
       @Override
@@ -159,7 +159,7 @@ public class DefaultProcessRunner implements ProcessRunner {
     stdOutThread.start();
   }
 
-  private void handleErrOut(final Process process) {
+  private void handleErrOut(Process process) {
     final Scanner stdErr = new Scanner(process.getErrorStream(), Charsets.UTF_8.name());
     Thread stdErrThread = new Thread("standard-err") {
       @Override
@@ -177,7 +177,7 @@ public class DefaultProcessRunner implements ProcessRunner {
     stdErrThread.start();
   }
 
-  private void syncRun(final Process process) throws InterruptedException {
+  private void syncRun(Process process) throws InterruptedException {
     int exitCode = process.waitFor();
     for (ProcessExitListener exitListener : exitListeners) {
       exitListener.onExit(exitCode);

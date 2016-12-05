@@ -132,12 +132,12 @@ public class CloudSdk {
 
     List<String> command = new ArrayList<>();
     command.add(getGCloudPath().toString());
+
     for (String commandToken : topLevelCommand) {
       command.add(commandToken);
     }
-    command.addAll(args);
 
-    command.add("--quiet");
+    command.addAll(args);
     command.addAll(GcloudArgs.get("format", appCommandOutputFormat));
 
     Map<String, String> environment = Maps.newHashMap();
@@ -157,6 +157,9 @@ public class CloudSdk {
     if (System.getProperty("os.name").contains("Windows")) {
       environment.put("CLOUDSDK_APP_NUM_FILE_UPLOAD_PROCESSES", "1");
     }
+
+    environment.put("CLOUDSDK_CORE_DISABLE_PROMPTS", "1");
+
     logCommand(command);
     processRunner.setEnvironment(environment);
     processRunner.run(command.toArray(new String[command.size()]));

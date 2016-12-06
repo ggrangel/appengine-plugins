@@ -36,6 +36,9 @@ import com.google.common.collect.Maps;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -57,7 +60,9 @@ import javax.annotation.Nullable;
  * Cloud SDK CLI wrapper.
  */
 public class CloudSdk {
-  private static final int MINIMUM_VERSION = 131;
+
+  public static final CloudSdkVersion MINIMUM_VERSION = new CloudSdkVersion("133.0.0");
+
   private static final Logger logger = Logger.getLogger(CloudSdk.class.toString());
   private static final Joiner WHITESPACE_JOINER = Joiner.on(" ");
 
@@ -68,8 +73,9 @@ public class CloudSdk {
       "platform/google_appengine/google/appengine/tools/java/lib";
   private static final String JAVA_TOOLS_JAR = "appengine-tools-api.jar";
   private static final String WINDOWS_BUNDLED_PYTHON = "platform/bundledpython/python.exe";
-  private final Map<String, Path> jarLocations = new HashMap<>();
+  private static final String VERSION_FILE_NAME = "VERSION";
 
+  private final Map<String, Path> jarLocations = new HashMap<>();
   private final Path sdkPath;
   private final ProcessRunner processRunner;
   private final String appCommandMetricsEnvironment;
@@ -274,19 +280,35 @@ public class CloudSdk {
   }
 
   /**
-   * Returns the version of the Cloud SDK installation. Unlike other methods in this class that call
-   * gcloud, this method always uses a synchronous ProcessRunner and will block until the gcloud
-   * process returns.
+   * Returns the version of the Cloud SDK installation. Version is determined by reading the VERSION
+   * file located in the Cloud SDK directory.
    *
-   * @throws ProcessRunnerException when process runner encounters an error
+   * @throws CloudSdkVersionFileNotFoundException if the VERSION file is not present
+   * @throws RuntimeException if there was an error reading the file
+   * @throws IllegalStateException if the file content could not be parsed
    */
-  public CloudSdkVersion getVersion() throws ProcessRunnerException {
-    // gcloud info --format="value(basic.version)"
-    List<String> command = new ImmutableList.Builder<String>().add("info")
-        .addAll(GcloudArgs.get("format", "value(basic.version)")).build();
+  public CloudSdkVersion getVersion() {
+    Path versionFile = getSdkPath().resolve(VERSION_FILE_NAME);
 
-    String output = runSynchronousGcloudCommand(command);
-    return new CloudSdkVersion(output);
+    if (!Files.isRegularFile(versionFile)) {
+      throw new CloudSdkVersionFileNotFoundException("Cloud SDK version file not found at "
+          + versionFile.toString());
+    }
+
+    String contents = "";
+    try {
+      List<String> lines = Files.readAllLines(versionFile, StandardCharsets.UTF_8);
+      if (lines.size() > 0) {
+        // expect only a single line
+        contents = lines.get(0);
+      }
+      return new CloudSdkVersion(contents);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalStateException(
+          "Pattern found in the Cloud SDK version file could not be parsed: " + contents, e);
+    }
   }
 
   /**
@@ -369,22 +391,23 @@ public class CloudSdk {
   /**
    * Checks whether the Cloud SDK path and version are valid.
    *
-   * @throws CloudSdkNotFoundException when an up-to-date Cloud SDK is not installed where expected
+   * @throws CloudSdkNotFoundException when Cloud SDK is not installed where expected
+   * @throws CloudSdkOutOfDateException when Cloud SDK is out of date
    */
-  public void validateCloudSdk() throws CloudSdkNotFoundException {
+  public void validateCloudSdk() throws CloudSdkNotFoundException, CloudSdkOutOfDateException {
     validateCloudSdkLocation();
     validateCloudSdkVersion();
   }
 
-  private void validateCloudSdkVersion() {
+  private void validateCloudSdkVersion() throws CloudSdkOutOfDateException {
     try {
       CloudSdkVersion version = getVersion();
-      if (version.getMajorVersion() < MINIMUM_VERSION) {
-        throw new CloudSdkOutOfDateException("Cloud SDK version " + version
-            + " is too old. Please update to at least " + MINIMUM_VERSION);
+      if (version.compareTo(MINIMUM_VERSION) < 0) {
+        throw new CloudSdkOutOfDateException(MINIMUM_VERSION);
       }
-    } catch (ProcessRunnerException | IllegalArgumentException ex) {
-      throw new CloudSdkNotFoundException("Could not determine Cloud SDK version", ex);
+    } catch (CloudSdkVersionFileNotFoundException ex) {
+      // this is a version of the Cloud SDK prior to when VERSION files were introduced
+      throw new CloudSdkOutOfDateException(MINIMUM_VERSION);
     }
   }
 

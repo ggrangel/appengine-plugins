@@ -25,6 +25,7 @@ import java.util.List;
 public class DefaultRunConfiguration implements RunConfiguration {
 
   private List<File> appYamls;
+  private List<File> services;
   private String host;
   private Integer port;
   private String adminHost;
@@ -56,6 +57,16 @@ public class DefaultRunConfiguration implements RunConfiguration {
 
   public void setAppYamls(List<File> appYamls) {
     this.appYamls = appYamls;
+  }
+
+
+  @Override
+  public List<File> getServices() {
+    return services;
+  }
+
+  public void setServices(List<File> services) {
+    this.services = services;
   }
 
   @Override

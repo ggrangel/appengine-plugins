@@ -50,7 +50,7 @@ public class StageMojoIntegrationTest extends AbstractMojoIntegrationTest {
     verifier.assertFilePresent("target/appengine-staging/WEB-INF/web.xml");
     verifier.assertFilePresent("target/appengine-staging/app.yaml");
     verifier.assertFileMatches(projectDir + "/target/appengine-staging/app.yaml",
-        "(?s).*module: 'standard-project'.*");
+        "(?s).*service: 'standard-project'.*");
 
     // repeat with staging directory present
     verifier.setLogFileName("testStageStandard_repeat.txt");

@@ -18,6 +18,7 @@ package com.google.cloud.tools.maven;
 
 import com.google.cloud.tools.appengine.api.deploy.StageFlexibleConfiguration;
 import com.google.cloud.tools.appengine.api.deploy.StageStandardConfiguration;
+import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -185,6 +186,8 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
       alias = "stage.artifact", property = "app.stage.artifact")
   protected File artifact;
 
+  private AppEngineWebXml appengineWebXml;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     // delete staging directory if it exists
@@ -202,10 +205,9 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
 
     getLog().info("Staging the application to: " + stagingDirectory);
 
-    AppEngineWebXml appengineWebXml = new AppEngineWebXml(
-        new File(sourceDirectory.toString() + "/WEB-INF/appengine-web.xml"));
-
-    if (appengineWebXml.exists()) {
+    appengineWebXml =
+        new AppEngineWebXml(new File(sourceDirectory.toString() + "/WEB-INF/appengine-web.xml"));
+    if (isStandardStaging()) {
       getLog().info("Detected App Engine standard environment application.");
 
       // force runtime to 'java' for compat projects using Java version >1.7
@@ -221,6 +223,10 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
       getLog().info("Detected App Engine flexible environment application.");
       getAppEngineFactory().flexibleStaging().stageFlexible(this);
     }
+  }
+
+  protected boolean isStandardStaging() {
+    return appengineWebXml.exists();
   }
 
   protected void configureDockerfileDefaultLocation() {
@@ -349,5 +355,15 @@ public class StageMojo extends CloudSdkMojo implements StageStandardConfiguratio
         throw new MojoExecutionException("XPath evaluation failed on appengine-web.xml", e);
       }
     }
+  }
+
+  @VisibleForTesting
+  public void setStagingDirectory(File stagingDirectory) {
+    this.stagingDirectory = stagingDirectory;
+  }
+
+  @VisibleForTesting
+  public void setSourceDirectory(File sourceDirectory) {
+    this.sourceDirectory = sourceDirectory;
   }
 }

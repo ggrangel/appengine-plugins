@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.maven;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
+import org.apache.maven.project.MavenProject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -33,6 +34,9 @@ public class CloudSdkMojoTest {
 
   @Mock
   private PluginDescriptor pluginDescriptorMock;
+
+  @Mock
+  private MavenProject mavenProject;
 
   @InjectMocks
   private CloudSdkMojoImpl mojo;
@@ -59,6 +63,13 @@ public class CloudSdkMojoTest {
     // invoke & verify
     assertEquals(ARTIFACT_VERSION, mojo.getArtifactVersion());
 
+  }
+
+  @Test
+  public void testGetPackaging() throws Exception {
+    when(mavenProject.getPackaging()).thenReturn("this-is-a-test-packaging");
+
+    assertEquals("this-is-a-test-packaging", mojo.getPackaging());
   }
 
   static class CloudSdkMojoImpl extends CloudSdkMojo {

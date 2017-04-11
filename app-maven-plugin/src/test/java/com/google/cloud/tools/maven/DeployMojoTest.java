@@ -29,6 +29,7 @@ import com.google.common.io.Files;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.project.MavenProject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,14 +37,18 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Properties;
 
-@RunWith(MockitoJUnitRunner.class)
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
+@RunWith(JUnitParamsRunner.class)
 public class DeployMojoTest {
 
   @Rule
@@ -51,6 +56,9 @@ public class DeployMojoTest {
 
   @Mock
   private CloudSdkAppEngineFactory factoryMock;
+
+  @Mock
+  private MavenProject project;
 
   @Mock
   private AppEngineFlexibleStaging flexibleStagingMock;
@@ -69,16 +77,21 @@ public class DeployMojoTest {
 
   @Before
   public void wireUpDeployMojo() throws IOException {
+    MockitoAnnotations.initMocks(this);
     deployMojo.deployables = new ArrayList<>();
     deployMojo.stagingDirectory = tempFolder.newFolder("staging");
     deployMojo.sourceDirectory = tempFolder.newFolder("source");
+    deployMojo.mavenProject = project;
+    when(project.getProperties()).thenReturn(new Properties());
   }
 
   @Test
-  public void testDeployStandard()
+  @Parameters({"jar", "war"})
+  public void testDeployStandard(String packaging)
       throws IOException, MojoFailureException, MojoExecutionException {
 
     // wire up
+    when(project.getPackaging()).thenReturn(packaging);
     when(factoryMock.standardStaging()).thenReturn(standardStagingMock);
     when(factoryMock.deployment()).thenReturn(deploymentMock);
 
@@ -97,9 +110,11 @@ public class DeployMojoTest {
   }
 
   @Test
-  public void testDeployFlexible() throws Exception {
+  @Parameters({"jar", "war"})
+  public void testDeployFlexible(String packaging) throws Exception {
 
     // wire up
+    when(project.getPackaging()).thenReturn(packaging);
     when(factoryMock.flexibleStaging()).thenReturn(flexibleStagingMock);
     when(factoryMock.deployment()).thenReturn(deploymentMock);
 
@@ -114,11 +129,13 @@ public class DeployMojoTest {
   }
 
   @Test
-  public void testDeploySpecifiedAppYaml() throws Exception {
+  @Parameters({"jar", "war"})
+  public void testDeploySpecifiedAppYaml(String packaging) throws Exception {
     File appYaml = new File("myApp.yaml");
     deployMojo.deployables = Arrays.asList(appYaml);
-
+    
     // wire up
+    when(project.getPackaging()).thenReturn(packaging);
     when(factoryMock.flexibleStaging()).thenReturn(flexibleStagingMock);
     when(factoryMock.deployment()).thenReturn(deploymentMock);
 

@@ -11,6 +11,7 @@ import com.google.cloud.tools.maven.CloudSdkAppEngineFactory;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
+import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
@@ -21,8 +22,9 @@ import org.mockito.MockitoAnnotations;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Properties;
 
-public class SingleYamlStandradDeployTestHelper<M extends AbstractSingleYamlDeployMojo>
+public class SingleYamlStandardDeployTestHelper<M extends AbstractSingleYamlDeployMojo>
     extends ExternalResource {
   
   @Mock
@@ -34,12 +36,15 @@ public class SingleYamlStandradDeployTestHelper<M extends AbstractSingleYamlDepl
   @Mock
   private CloudSdkAppEngineFactory factoryMock;
 
+  @Mock
+  private MavenProject mavenProject;
+
   @InjectMocks
   protected M mojo;
 
   private TemporaryFolder temporaryFolder;
 
-  public SingleYamlStandradDeployTestHelper(M mojo, TemporaryFolder temporaryFolder) {
+  public SingleYamlStandardDeployTestHelper(M mojo, TemporaryFolder temporaryFolder) {
     this.mojo = mojo;
     this.temporaryFolder = temporaryFolder;
   }
@@ -58,6 +63,7 @@ public class SingleYamlStandradDeployTestHelper<M extends AbstractSingleYamlDepl
     Files.write("<appengine-web-app></appengine-web-app>", appengineWebXml, Charsets.UTF_8);
     when(factoryMock.standardStaging()).thenReturn(standardStagingMock);
     when(factoryMock.deployment()).thenReturn(deploymentMock);
+    when(mavenProject.getProperties()).thenReturn(new Properties());
   }
   
   @Override

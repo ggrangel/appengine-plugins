@@ -92,4 +92,8 @@ public abstract class CloudSdkMojo extends AbstractMojo {
     }
     return javaVersion;
   }
+
+  protected String getPackaging() {
+    return mavenProject.getPackaging();
+  }
 }

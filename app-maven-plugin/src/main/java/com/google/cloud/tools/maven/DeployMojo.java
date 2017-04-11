@@ -90,6 +90,11 @@ public class DeployMojo extends StageMojo implements DeployConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    if (!"war".equals(getPackaging()) && !"jar".equals(getPackaging())) {
+      // https://github.com/GoogleCloudPlatform/app-maven-plugin/issues/85
+      getLog().info("Deploy is only executed for war and jar modules.");
+      return;
+    }
     // execute stage
     super.execute();
 

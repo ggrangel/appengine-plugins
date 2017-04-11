@@ -51,6 +51,7 @@ public class RunAsyncMojoIntegrationTest extends AbstractMojoIntegrationTest {
       throws IOException, VerificationException, InterruptedException {
     try {
     Verifier verifier = createVerifier(name, version);
+    verifier.setSystemProperty("app.devserver.startSuccessTimeout", "60");
     verifier.executeGoal("appengine:start");
 
     assertEquals("Hello from the App Engine Standard project.",

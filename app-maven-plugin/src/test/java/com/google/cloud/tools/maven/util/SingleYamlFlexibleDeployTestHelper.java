@@ -8,6 +8,7 @@ import com.google.cloud.tools.appengine.api.deploy.AppEngineFlexibleStaging;
 import com.google.cloud.tools.maven.AbstractSingleYamlDeployMojo;
 import com.google.cloud.tools.maven.CloudSdkAppEngineFactory;
 
+import org.apache.maven.project.MavenProject;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.InjectMocks;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
+import java.util.Properties;
 
 public class SingleYamlFlexibleDeployTestHelper<M extends AbstractSingleYamlDeployMojo>
     extends ExternalResource {
@@ -27,6 +29,9 @@ public class SingleYamlFlexibleDeployTestHelper<M extends AbstractSingleYamlDepl
 
   @Mock
   private CloudSdkAppEngineFactory factoryMock;
+
+  @Mock
+  private MavenProject mavenProject;
 
   @InjectMocks
   protected M mojo;
@@ -44,6 +49,7 @@ public class SingleYamlFlexibleDeployTestHelper<M extends AbstractSingleYamlDepl
     mojo.setSourceDirectory(temporaryFolder.newFolder("source"));
     MockitoAnnotations.initMocks(this);
 
+    when(mavenProject.getProperties()).thenReturn(new Properties());
     when(factoryMock.flexibleStaging()).thenReturn(flexibleStagingMock);
     when(factoryMock.deployment()).thenReturn(deploymentMock);
   }

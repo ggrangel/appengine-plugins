@@ -25,29 +25,35 @@ import com.google.cloud.tools.maven.it.verifier.StandardVerifier;
 
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
+@RunWith(JUnitParamsRunner.class)
 public class RunMojoIntegrationTest extends AbstractMojoIntegrationTest {
 
   private static final String ADMIN_PORT = "28082";
   private static final String SERVER_PORT = "28081";
   private static final String SERVER_URL = "http://localhost:" + SERVER_PORT;
 
-  @Test
-  public void testRunStandardV1() throws IOException, VerificationException, InterruptedException {
-    test("testRunV1", SupportedDevServerVersion.V1);
-  }
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
-  public void testRunStandardV2Alpha()
-      throws IOException, VerificationException, InterruptedException {
-    test("testRunV2Alpha", SupportedDevServerVersion.V2ALPHA);
-  }
+  @Parameters
+  public void testRun(final SupportedDevServerVersion version, String[] profiles,
+      String expectedModuleName) throws IOException, VerificationException, InterruptedException {
 
-  private void test(final String name, final SupportedDevServerVersion version)
-      throws IOException, VerificationException, InterruptedException {
+    final String name = "testRun" + version + Arrays.toString(profiles);
     final Verifier verifier = createVerifier(name, version);
     final StringBuilder urlContent = new StringBuilder();
 
@@ -78,6 +84,11 @@ public class RunMojoIntegrationTest extends AbstractMojoIntegrationTest {
     // execute
     verifier.setSystemProperty("app.devserver.port", SERVER_PORT);
     verifier.setSystemProperty("app.devserver.adminPort", ADMIN_PORT);
+    for (String profile : profiles) {
+      if (!profile.isEmpty()) {
+        verifier.addCliOption("-P" + profile);
+      }
+    }
     verifier.executeGoal("appengine:run");
 
     thread.join();
@@ -86,6 +97,34 @@ public class RunMojoIntegrationTest extends AbstractMojoIntegrationTest {
     assertEquals("Hello from the App Engine Standard project.", urlContent.toString());
     verifier.verifyErrorFreeLog();
     verifier.verifyTextInLog("Dev App Server is now running");
+    verifier.verifyTextInLog("Module instance " + expectedModuleName + " is running");
+  }
+
+  /**
+   * Provides parameters  for {@link #testRun(SupportedDevServerVersion, String[], String)}.
+   */
+  @SuppressWarnings("unused")
+  private Object[] parametersForTestRun() {
+    List<Object[]> result = new ArrayList<>();
+    for (SupportedDevServerVersion serverVersion : SupportedDevServerVersion.values()) {
+        result.add(new Object[]{ serverVersion, new String[0], "standard-project" });
+        result.add(new Object[]{ serverVersion, new String[]{ "base-it-profile", "appyamls" },
+            "standard-project-appyamls" });
+        result.add(new Object[]{ serverVersion, new String[]{ "base-it-profile", "services" },
+          "standard-project-services" });
+    }
+    return result.toArray(new Object[0]);
+  }
+
+  @Test
+  public void testRun_failsWhenAppYamlsAndServicesBothSet() throws IOException, VerificationException {
+    expectedException.expect(VerificationException.class);
+    expectedException.expectMessage("Both <appYamls> and <services> are defined."
+        + " <appYamls> is deprecated, use <services> only.");
+    expectedException.expectMessage("BUILD FAILURE");
+    final Verifier verifier = createVerifier("testRunAppYamlsAndServices", SupportedDevServerVersion.V1);
+    verifier.addCliOption("-PappYamlsAndServices");
+    verifier.executeGoal("appengine:run");
   }
 
   private Verifier createVerifier(String name, SupportedDevServerVersion version)

@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 1.3.0
+
+### Changed
+* `appengineShowConfiguration` no longer prints the gradle project parameters of extensions ([#121](../../pull/121))
+
 ## 1.3.0-rc1
 
 ### Added

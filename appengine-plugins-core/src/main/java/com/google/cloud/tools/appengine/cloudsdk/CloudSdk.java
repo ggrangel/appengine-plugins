@@ -235,7 +235,7 @@ public class CloudSdk {
    * @throws CloudSdkOutOfDateException when the installed Cloud SDK is too old 
    * @throws AppEngineException when dev_appserver.py cannot be found
    */
-  public void runDevAppServerCommand(List<String> args)
+  void runDevAppServerCommand(List<String> args)
       throws ProcessRunnerException {
     validateCloudSdk();
 
@@ -268,12 +268,14 @@ public class CloudSdk {
    * Uses the process runner to execute the classic Java SDK devappsever command.
    *
    * @param args the arguments to pass to devappserver
+   * @param environment the environment to set on the devappserver process
    * @throws ProcessRunnerException when process runner encounters an error
    * @throws CloudSdkNotFoundException when the Cloud SDK is not installed where expected
    * @throws CloudSdkOutOfDateException when the installed Cloud SDK is too old 
    * @throws AppEngineException when dev appserver cannot be found
    */
-  public void runDevAppServer1Command(List<String> jvmArgs, List<String> args)
+  void runDevAppServer1Command(List<String> jvmArgs, List<String> args,
+                                      Map<String, String> environment)
           throws ProcessRunnerException {
     validateAppEngineJavaComponents();
     validateJdk();
@@ -292,9 +294,9 @@ public class CloudSdk {
 
     logCommand(command);
 
-    Map<String, String> environment = Maps.newHashMap();
-    environment.put("JAVA_HOME", javaHomePath.toAbsolutePath().toString());
-    processRunner.setEnvironment(environment);
+    Map<String, String> devServerEnvironment = Maps.newHashMap(environment);
+    devServerEnvironment.put("JAVA_HOME", javaHomePath.toAbsolutePath().toString());
+    processRunner.setEnvironment(devServerEnvironment);
     processRunner.run(command.toArray(new String[command.size()]));
 
     // wait for start if configured

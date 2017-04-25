@@ -24,7 +24,9 @@ import com.google.cloud.tools.appengine.api.devserver.StopConfiguration;
 import com.google.cloud.tools.appengine.cloudsdk.internal.args.DevAppServerArgs;
 import com.google.cloud.tools.appengine.cloudsdk.internal.process.ProcessRunnerException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 
 import java.io.File;
@@ -36,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -112,8 +115,16 @@ public class CloudSdkAppEngineDevServer1 implements AppEngineDevServer {
     for (File service : config.getServices()) {
       arguments.add(service.toPath().toString());
     }
+
+    Map<String, String> appEngineEnvironment
+        = getAllAppEngineWebXmlEnvironmentVariables(config.getServices());
+    if (!appEngineEnvironment.isEmpty()) {
+      log.info("Setting appengine-web.xml configured environment variables: "
+          + Joiner.on(",").withKeyValueSeparator("=").join(appEngineEnvironment));
+    }
+
     try {
-      sdk.runDevAppServer1Command(jvmArguments, arguments);
+      sdk.runDevAppServer1Command(jvmArguments, arguments, appEngineEnvironment);
     } catch (ProcessRunnerException e) {
       throw new AppEngineException(e);
     }
@@ -194,4 +205,36 @@ public class CloudSdkAppEngineDevServer1 implements AppEngineDevServer {
     }
     return java8Detected;
   }
+
+  private Map<String, String> getAllAppEngineWebXmlEnvironmentVariables(List<File> services) {
+    Map<String, String> allAppEngineEnvironment = Maps.newHashMap();
+    for (File serviceDirectory : services) {
+      Path appengineWebXml = serviceDirectory.toPath().resolve("WEB-INF/appengine-web.xml");
+      try (InputStream is = Files.newInputStream(appengineWebXml)) {
+        AppEngineDescriptor appEngineDescriptor = AppEngineDescriptor.parse(is);
+        Map<String, String> appEngineEnvironment = appEngineDescriptor.getEnvironment();
+        if (appEngineEnvironment != null) {
+          checkAndWarnDuplicateEnvironmentVariables(
+              appEngineEnvironment, allAppEngineEnvironment, appEngineDescriptor.getServiceId());
+
+          allAppEngineEnvironment.putAll(appEngineEnvironment);
+        }
+      } catch (IOException e) {
+        throw new AppEngineException(e);
+      }
+    }
+    return allAppEngineEnvironment;
+  }
+
+  private void checkAndWarnDuplicateEnvironmentVariables(Map<String, String> newEnvironment,
+                                                        Map<String, String> existingEnvironment,
+                                                        String service) {
+    for (String key : newEnvironment.keySet()) {
+      if (existingEnvironment.containsKey(key)) {
+        log.warning(String.format("Found duplicate environment variable key '%s' across "
+            + "appengine-web.xml files in the following service: %s", key, service));
+      }
+    }
+  }
+
 }

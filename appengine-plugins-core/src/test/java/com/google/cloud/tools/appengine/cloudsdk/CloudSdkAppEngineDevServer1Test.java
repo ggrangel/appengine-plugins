@@ -120,6 +120,7 @@ public class CloudSdkAppEngineDevServer1Test {
     configuration.setPort(8090);
     configuration.setJvmFlags(ImmutableList.of("-Dflag1", "-Dflag2"));
     configuration.setDefaultGcsBucketName("buckets");
+    configuration.setEnvironment(null);
 
     // these params are not used by devappserver1 and will log warnings
     configuration.setAdminHost("adminHost");
@@ -257,7 +258,7 @@ public class CloudSdkAppEngineDevServer1Test {
   }
 
   @Test
-  public void testPrepareCommand_environmentVariables() throws AppEngineException, ProcessRunnerException {
+  public void testPrepareCommand_appEngineWebXmlEnvironmentVariables() throws AppEngineException, ProcessRunnerException {
     DefaultRunConfiguration configuration = new DefaultRunConfiguration();
     configuration.setServices(ImmutableList.of(java8Service1EnvVars));
 
@@ -275,7 +276,7 @@ public class CloudSdkAppEngineDevServer1Test {
   }
 
   @Test
-  public void testPrepareCommand_multipleServicesDuplicateEnvironmentVariables() throws AppEngineException, ProcessRunnerException {
+  public void testPrepareCommand_multipleServicesDuplicateAppEngineWebXmlEnvironmentVariables() throws AppEngineException, ProcessRunnerException {
     DefaultRunConfiguration configuration = new DefaultRunConfiguration();
     configuration.setServices(ImmutableList.of(java8Service1EnvVars, java8Service2EnvVars));
 
@@ -288,6 +289,48 @@ public class CloudSdkAppEngineDevServer1Test {
 
     Map<String, String> expectedEnvironment = ImmutableMap.of(
         "key1", "val1", "keya", "vala", "key2", "duplicated-key", "keyc", "valc");
+
+    devServer.run(configuration);
+
+    verify(sdk, times(1)).runDevAppServer1Command(expectedJvmArgs, expectedFlags, expectedEnvironment);
+  }
+
+  @Test
+  public void testPrepareCommand_clientSuppliedEnvironmentVariables() throws AppEngineException, ProcessRunnerException {
+    DefaultRunConfiguration configuration = new DefaultRunConfiguration();
+    configuration.setServices(ImmutableList.of(java7Service));
+
+    Map<String, String> clientEnvironmentVariables = ImmutableMap.of("mykey1", "myval1", "mykey2", "myval2");
+    configuration.setEnvironment(clientEnvironmentVariables);
+
+    List<String> expectedFlags = ImmutableList.of("--allow_remote_shutdown",
+        "--disable_update_check", pathToJava7Service.toString());
+    List<String> expectedJvmArgs = ImmutableList
+        .of("-javaagent:" + fakeJavaSdkHome.resolve("agent/appengine-agent.jar").toAbsolutePath()
+            .toString());
+
+    devServer.run(configuration);
+
+    verify(sdk, times(1)).runDevAppServer1Command(expectedJvmArgs, expectedFlags, clientEnvironmentVariables);
+  }
+
+  @Test
+  public void testPrepareCommand_clientSuppliedAndAppEngineWebXmlEnvironmentVariables() throws AppEngineException, ProcessRunnerException {
+    DefaultRunConfiguration configuration = new DefaultRunConfiguration();
+    configuration.setServices(ImmutableList.of(java8Service1EnvVars));
+
+    Map<String, String> clientEnvironmentVariables = ImmutableMap.of("mykey1", "myval1", "mykey2", "myval2");
+    configuration.setEnvironment(clientEnvironmentVariables);
+
+    List<String> expectedFlags = ImmutableList.of("--allow_remote_shutdown",
+        "--disable_update_check", "--no_java_agent", pathToJava8Service1WithEnvVars.toString());
+
+    List<String> expectedJvmArgs = ImmutableList.of("-Duse_jetty9_runtime=true",
+            "-D--enable_all_permissions=true");
+
+    Map<String, String> appEngineEnvironment = ImmutableMap.of("key1", "val1", "key2", "val2");
+    Map<String, String> expectedEnvironment = Maps.newHashMap(appEngineEnvironment);
+    expectedEnvironment.putAll(clientEnvironmentVariables);
 
     devServer.run(configuration);
 

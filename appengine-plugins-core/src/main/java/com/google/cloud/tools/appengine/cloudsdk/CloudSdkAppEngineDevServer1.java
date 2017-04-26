@@ -123,6 +123,10 @@ public class CloudSdkAppEngineDevServer1 implements AppEngineDevServer {
           + Joiner.on(",").withKeyValueSeparator("=").join(appEngineEnvironment));
     }
 
+    if (config.getEnvironment() != null) {
+      appEngineEnvironment.putAll(config.getEnvironment());
+    }
+
     try {
       sdk.runDevAppServer1Command(jvmArguments, arguments, appEngineEnvironment);
     } catch (ProcessRunnerException e) {

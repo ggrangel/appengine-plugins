@@ -22,6 +22,7 @@ import com.google.cloud.tools.appengine.cloudsdk.internal.process.ProcessRunnerE
 import com.google.cloud.tools.test.utils.SpyVerifier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,6 +36,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
@@ -95,6 +97,7 @@ public class CloudSdkAppEngineDevServer2Test {
     configuration.setDefaultGcsBucketName("buckets");
     configuration.setClearDatastore(true);
     configuration.setDatastorePath(fakeDatastorePath.toFile());
+    configuration.setEnvironment(null);
 
     SpyVerifier.newVerifier(configuration).verifyDeclaredSetters();
 
@@ -114,7 +117,7 @@ public class CloudSdkAppEngineDevServer2Test {
     verify(sdk, times(1)).runDevAppServerCommand(eq(expected));
 
     SpyVerifier.newVerifier(configuration).verifyDeclaredGetters(
-        ImmutableMap.<String, Integer>of("getServices", 3));
+        ImmutableMap.of("getServices", 3));
 
   }
 
@@ -149,6 +152,22 @@ public class CloudSdkAppEngineDevServer2Test {
     devServer.run(configuration);
 
     verify(sdk, times(1)).runDevAppServerCommand(eq(expected));
+  }
+
+  @Test
+  public void testPrepareCommand_clientEnvVars() throws AppEngineException, ProcessRunnerException {
+    DefaultRunConfiguration configuration = new DefaultRunConfiguration();
+    configuration.setServices(ImmutableList.of(new File("exploded-war/")));
+
+    Map<String, String> clientEnvVars = ImmutableMap.of("key1", "val1", "key2", "val2");
+    configuration.setEnvironment(clientEnvVars);
+
+    List<String> expectedArgs = ImmutableList
+        .of("exploded-war", "--env_var", "key1=val1", "--env_var", "key2=val2");
+
+    devServer.run(configuration);
+
+    verify(sdk, times(1)).runDevAppServerCommand(eq(expectedArgs));
   }
 
 }

@@ -78,12 +78,13 @@ Valid for versions "1" and "2-alpha":
 | Parameter             | Description |
 | --------------------- | ----------- |
 | ~~`appYamls`~~        | Deprecated in favor of `services` |
-| `jvmFlags`            | JVM flags to pass to the App Server Java process. |
-| `host`                | Application host address. |
-| `port`                | Application host port. |
-| `startSuccessTimeout` | Amount of time in seconds to wait for the Dev App Server to start in the background. |
 | `devserverVersion`    | Server versions to use, options are "1" or "2-alpha" |
+| `environment`        | Environment variables to pass to the Dev App Server process |
+| `host`                | Application host address. |
+| `jvmFlags`            | JVM flags to pass to the App Server Java process. |
+| `port`                | Application host port. |
 | `services`            | List of services to run |
+| `startSuccessTimeout` | Amount of time in seconds to wait for the Dev App Server to start in the background. |
 
 Only valid for version "2-alpha":
 
@@ -209,6 +210,18 @@ To switch back to the Dev App Server v2-alpha (that was default in version < 1.3
 <configuration>
    <devserverVersion>2-alpha</devserverVersion>
 </configuration>
+```
+
+### How can I pass environment variables to the Dev Appserver (both v1 and v2-alpha)?
+
+You can pass environment variables directly to the Dev App Server:
+
+```XML
+<configuration>
+  <environment>
+    <VARIABLE_NAME>value</VARIABLE_NAME>
+  <environment>
+<configuration>
 ```
 
 ---

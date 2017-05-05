@@ -8,6 +8,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 1.3.1
+### Added
+* New `<environment>` parameter to pass environment variables to Dev App Server ([#183](../../pulls/183)),
+relevant pull request in App Engine Plugins Core:
+[appengine-plugins-core/378](https://github.com/GoogleCloudPlatform/appengine-plugins-core/pull/378)
+and [appengine-plugins-core/381](https://github.com/GoogleCloudPlatform/appengine-plugins-core/pull/381)
+
+### Changed
+* Upgrade App Engine Plugins Core dependency to 0.3.2 ([#183](../../pulls/183))
+
 ## 1.3.0
 No changes compared to 1.3.0-rc2.
 

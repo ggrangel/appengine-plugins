@@ -21,6 +21,7 @@ import com.google.cloud.tools.appengine.api.devserver.RunConfiguration;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.api.ProjectConfigurationException;
 
@@ -55,6 +56,7 @@ public class RunExtension implements RunConfiguration {
   private String defaultGcsBucketName;
   private Boolean clearDatastore;
   private File datastorePath;
+  private Map<String, String> environment;
 
   /**
    * Constructor.
@@ -306,5 +308,14 @@ public class RunExtension implements RunConfiguration {
 
   public void setDatastorePath(Object datastorePath) {
     this.datastorePath = project.file(datastorePath);
+  }
+
+  @Override
+  public Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Map<String, String> environment) {
+    this.environment = environment;
   }
 }

@@ -21,8 +21,8 @@ import com.google.cloud.tools.appengine.api.devserver.AppEngineDevServer;
 import com.google.cloud.tools.appengine.api.devserver.DefaultStopConfiguration;
 import com.google.cloud.tools.appengine.api.devserver.StopConfiguration;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdk;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer1;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer2;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class DevAppServerHelper {
       case V1:
         return new CloudSdkAppEngineDevServer1(sdk);
       case V2:
-        return new CloudSdkAppEngineDevServer(sdk);
+        return new CloudSdkAppEngineDevServer2(sdk);
       default:
         throw new AssertionError("Unexpected serverVersion " + run.getServerVersion());
     }

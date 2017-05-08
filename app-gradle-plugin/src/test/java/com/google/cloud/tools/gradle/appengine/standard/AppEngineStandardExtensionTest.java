@@ -22,6 +22,7 @@ import com.google.cloud.tools.gradle.appengine.core.DeployExtension;
 import com.google.cloud.tools.gradle.appengine.core.ToolsExtension;
 import com.google.cloud.tools.gradle.appengine.util.ExtensionUtil;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +40,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /** Tests to check we are parsing objects -> file/files correctly. */
-public class AppEngineStandardExtensionParserTest {
+public class AppEngineStandardExtensionTest {
 
   @Rule public final TemporaryFolder testProjectDir = new TemporaryFolder();
 
@@ -64,6 +65,18 @@ public class AppEngineStandardExtensionParserTest {
     ((ProjectInternal) p).evaluate();
 
     return p;
+  }
+
+  // TODO : Make this a test that reads ALL params
+  @Test
+  public void testReadEnvironment() throws IOException {
+    Project p = setUpTestProject("environment-params");
+
+    ExtensionAware ext =
+        (ExtensionAware) p.getExtensions().getByName(AppEngineCorePlugin.APPENGINE_EXTENSION);
+    RunExtension run = new ExtensionUtil(ext).get(AppEngineStandardPlugin.RUN_EXTENSION);
+
+    Assert.assertEquals(run.getEnvironment(), ImmutableMap.of("key1", "value1", "key2", "value2"));
   }
 
   @Test

@@ -23,8 +23,8 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.appengine.api.devserver.StopConfiguration;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdk;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer1;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer2;
 import com.google.cloud.tools.gradle.appengine.standard.DevAppServerHelper.Validator;
 import org.gradle.api.ProjectConfigurationException;
 import org.hamcrest.Matchers;
@@ -36,7 +36,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DevAppServerHelperTest {
@@ -63,7 +63,7 @@ public class DevAppServerHelperTest {
   public void testGetAppServer_v2() {
     when(run.getServerVersion()).thenReturn("2-alpha");
     Assert.assertThat(
-        helper.getAppServer(sdk, run), Matchers.instanceOf(CloudSdkAppEngineDevServer.class));
+        helper.getAppServer(sdk, run), Matchers.instanceOf(CloudSdkAppEngineDevServer2.class));
     verify(validator, times(1)).validateServerVersion(run.getServerVersion());
   }
 

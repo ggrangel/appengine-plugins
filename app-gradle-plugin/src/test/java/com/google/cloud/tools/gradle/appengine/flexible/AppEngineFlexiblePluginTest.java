@@ -151,7 +151,7 @@ public class AppEngineFlexiblePluginTest {
   }
 
   @Test
-  public void testDefaultConfiguration() {
+  public void testDefaultConfiguration() throws IOException {
     Project p = ProjectBuilder.builder().withProjectDir(testProjectDir.getRoot()).build();
 
     p.getPluginManager().apply(JavaPlugin.class);
@@ -165,10 +165,11 @@ public class AppEngineFlexiblePluginTest {
 
     Assert.assertEquals(new File(p.getBuildDir(), "staged-app"), stageExt.getStagingDirectory());
     Assert.assertEquals(
-        new File(testProjectDir.getRoot(), "src/main/appengine"), stageExt.getAppEngineDirectory());
+        testProjectDir.getRoot().toPath().toRealPath().resolve("src/main/appengine"),
+        stageExt.getAppEngineDirectory().toPath());
     Assert.assertEquals(
-        new File(testProjectDir.getRoot(), "src/main/appengine"),
-        deployExt.getAppEngineDirectory());
+        testProjectDir.getRoot().toPath().toRealPath().resolve("src/main/appengine"),
+        deployExt.getAppEngineDirectory().toPath());
     Assert.assertEquals(
         (((War) p.getProperties().get("war")).getArchivePath()), stageExt.getArtifact());
     Assert.assertFalse(new File(testProjectDir.getRoot(), "src/main/docker").exists());

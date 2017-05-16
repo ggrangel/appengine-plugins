@@ -177,6 +177,20 @@ You can debug the Dev App Server v1 using the jvmFlags:
 <configuration>
 ```
 
+### How do I enable hot reload of my application?
+
+To enable hot reload of classes, you must tell the Dev App Server v1 to scan for changes :
+```XML
+<configuration>
+  <jvmFlags>
+    <jvmFlag>
+        -Dappengine.fullscan.seconds=5
+    </jvmFlag>
+  </jvmFlags>
+<configuration>
+```
+While your app is running, just run `mvn war:exploded` to reflect your changes into the running application.
+
 ### How do I put datastore somewhere else (so it's not deleted across rebuilds)?
 
 ```XML

@@ -1,9 +1,9 @@
 # User Guide
 
 ## Applying the Plugin
-For both _standard_ and _flexible_ applications, include the plugin in your buildscript :
+Include the plugin jar in your buildscript classpath and apply the appropriate Standard or Flexible plugin:
 
-```
+```groovy
 buildscript {
   repositories {
     mavenCentral()
@@ -13,8 +13,14 @@ buildscript {
   }
 }
 
-apply plugin: "com.google.cloud.tools.appengine"
+apply plugin: "com.google.cloud.tools.appengine-standard"
+// or
+apply plugin: "com.google.cloud.tools.appengine-flexible"
 ```
+
+You can also use the `com.google.cloud.tools.appengine` plugin that will automatically determine
+your environment based on the presence of an `appengine-web.xml`
+in `src/main/webapp/WEB-INF/`, _Standard_ if present, _Flexible_ otherwise.
 
 The [Cloud SDK](https://cloud.google.com/sdk) is required for this plugin to
 function. Download and install it before running any tasks.
@@ -22,8 +28,6 @@ function. Download and install it before running any tasks.
 ---
 
 ## App Engine Standard
-The plugin will target the App Engine standard environment if you include an `appengine-web.xml`
-in `src/main/webapp/WEB-INF/`, otherwise it will assume it is an [App Engine flexible](#app-engine-flexible) application.
 
 ### Tasks
 For App Engine standard, the plugin exposes the following tasks :
@@ -214,12 +218,12 @@ To enable hot reload of classes:
       }
     }
     ```
-2. You can either use `explodeApp` which clears and rebuilds the output directory OR 
+2. You can either use `explodeApp` which clears and rebuilds the output directory OR
    you can configure a new `reloadApp` task to rebuild into the `exploded-<project>` directory without deleting it.
     ```groovy
     task reloadApp(type: Copy) {
       dependsOn war
-  
+
       project.afterEvaluate {
         into project.tasks.explodeWar.explodedAppDirectory
          with war
@@ -280,8 +284,6 @@ appengine {
 ---
 
 ## App Engine Flexible
-The plugin will target the App Engine flexible environment if you do **NOT** include an `appengine-web.xml`
-in `src/main/webapp/WEB-INF/`.
 
 ### Tasks
 For App Engine flexible, the plugin exposes the following tasks :

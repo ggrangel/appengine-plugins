@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
  */
 public class CloudSdk {
 
-  public static final CloudSdkVersion MINIMUM_VERSION = new CloudSdkVersion("145.0.0");
+  public static final CloudSdkVersion MINIMUM_VERSION = new CloudSdkVersion("159.0.0");
 
   private static final Logger logger = Logger.getLogger(CloudSdk.class.getName());
   private static final Joiner WHITESPACE_JOINER = Joiner.on(" ");
@@ -79,15 +79,19 @@ public class CloudSdk {
   private final ProcessRunner processRunner;
   private final String appCommandMetricsEnvironment;
   private final String appCommandMetricsEnvironmentVersion;
-  @Nullable
   private final File appCommandCredentialFile;
   private final String appCommandOutputFormat;
+  private final String appCommandShowStructuredLogs;
   private final WaitingProcessOutputLineListener runDevAppServerWaitListener;
 
-  private CloudSdk(Path sdkPath, Path javaHomePath, String appCommandMetricsEnvironment,
-                   String appCommandMetricsEnvironmentVersion,
+  private CloudSdk(Path sdkPath,
+                   @Nullable Path javaHomePath,
+                   @Nullable String appCommandMetricsEnvironment,
+                   @Nullable String appCommandMetricsEnvironmentVersion,
                    @Nullable File appCommandCredentialFile,
-                   String appCommandOutputFormat, ProcessRunner processRunner,
+                   @Nullable String appCommandOutputFormat,
+                   @Nullable String appCommandShowStructuredLogs,
+                   ProcessRunner processRunner,
                    WaitingProcessOutputLineListener runDevAppServerWaitListener) {
     this.sdkPath = sdkPath;
     this.javaHomePath = javaHomePath;
@@ -95,6 +99,7 @@ public class CloudSdk {
     this.appCommandMetricsEnvironmentVersion = appCommandMetricsEnvironmentVersion;
     this.appCommandCredentialFile = appCommandCredentialFile;
     this.appCommandOutputFormat = appCommandOutputFormat;
+    this.appCommandShowStructuredLogs = appCommandShowStructuredLogs;
     this.processRunner = processRunner;
     this.runDevAppServerWaitListener = runDevAppServerWaitListener;
 
@@ -165,9 +170,20 @@ public class CloudSdk {
     command.addAll(args);
     command.addAll(GcloudArgs.get("format", appCommandOutputFormat));
 
-    Map<String, String> environment = Maps.newHashMap();
     if (appCommandCredentialFile != null) {
       command.addAll(GcloudArgs.get("credential-file-override", appCommandCredentialFile));
+    }
+
+    logCommand(command);
+    processRunner.setEnvironment(getGcloudCommandEnvironment());
+    processRunner.setWorkingDirectory(workingDirectory);
+    processRunner.run(command.toArray(new String[command.size()]));
+  }
+
+  @VisibleForTesting
+  Map<String, String> getGcloudCommandEnvironment() {
+    Map<String, String> environment = Maps.newHashMap();
+    if (appCommandCredentialFile != null) {
       environment.put("CLOUDSDK_APP_USE_GSUTIL", "0");
     }
     if (appCommandMetricsEnvironment != null) {
@@ -175,6 +191,9 @@ public class CloudSdk {
     }
     if (appCommandMetricsEnvironmentVersion != null) {
       environment.put("CLOUDSDK_METRICS_ENVIRONMENT_VERSION", appCommandMetricsEnvironmentVersion);
+    }
+    if (appCommandShowStructuredLogs != null) {
+      environment.put("CLOUDSDK_CORE_SHOW_STRUCTURED_LOGS", appCommandShowStructuredLogs);
     }
     // This is to ensure IDE credentials get correctly passed to the gcloud commands, in Windows.
     // It's a temporary workaround until a fix is released.
@@ -185,10 +204,7 @@ public class CloudSdk {
 
     environment.put("CLOUDSDK_CORE_DISABLE_PROMPTS", "1");
 
-    logCommand(command);
-    processRunner.setEnvironment(environment);
-    processRunner.setWorkingDirectory(workingDirectory);
-    processRunner.run(command.toArray(new String[command.size()]));
+    return environment;
   }
 
   // Runs a gcloud command synchronously, with a new ProcessRunner. This method is intended to be
@@ -525,9 +541,9 @@ public class CloudSdk {
     private Path sdkPath;
     private String appCommandMetricsEnvironment;
     private String appCommandMetricsEnvironmentVersion;
-    @Nullable
     private File appCommandCredentialFile;
     private String appCommandOutputFormat;
+    private String appCommandShowStructuredLogs;
     private boolean async = false;
     private List<ProcessOutputLineListener> stdOutLineListeners = new ArrayList<>();
     private List<ProcessOutputLineListener> stdErrLineListeners = new ArrayList<>();
@@ -581,6 +597,15 @@ public class CloudSdk {
      */
     public Builder appCommandOutputFormat(String appCommandOutputFormat) {
       this.appCommandOutputFormat = appCommandOutputFormat;
+      return this;
+    }
+
+    /**
+     * Sets structured json logs for the stderr output. Supported values include 'never' (default),
+     * 'always', 'terminal', etc.
+     */
+    public Builder appCommandShowStructuredLogs(String appCommandShowStructuredLogs) {
+      this.appCommandShowStructuredLogs = appCommandShowStructuredLogs;
       return this;
     }
 
@@ -713,7 +738,7 @@ public class CloudSdk {
 
       return new CloudSdk(sdkPath, javaHomePath, appCommandMetricsEnvironment,
           appCommandMetricsEnvironmentVersion, appCommandCredentialFile, appCommandOutputFormat,
-          processRunner, runDevAppServerWaitListener);
+          appCommandShowStructuredLogs, processRunner, runDevAppServerWaitListener);
     }
 
     /**

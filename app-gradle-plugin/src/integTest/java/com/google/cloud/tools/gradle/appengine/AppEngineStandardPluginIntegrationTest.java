@@ -34,18 +34,35 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /** End to end tests for standard projects. */
+@RunWith(Parameterized.class)
 public class AppEngineStandardPluginIntegrationTest {
 
   @Rule public Timeout globalTimeout = Timeout.seconds(180);
 
-  @Rule public final TemporaryFolder testProjectDir = new TemporaryFolder();
+  @Rule public TemporaryFolder testProjectDir = new TemporaryFolder();
+
+  private final String testProjectSrcDirectory;
+
+  /** Parameterize the project source for the test. */
+  @Parameterized.Parameters
+  public static Object[] data() {
+    return new Object[] {
+      "src/integTest/resources/projects/standard-project",
+      "src/integTest/resources/projects/standard-project-java8"
+    };
+  }
+
+  public AppEngineStandardPluginIntegrationTest(String testProjectSrcDirectory) {
+    this.testProjectSrcDirectory = testProjectSrcDirectory;
+  }
 
   @Before
   public void setUp() throws IOException {
-    FileUtils.copyDirectory(
-        new File("src/integTest/resources/projects/standard-project"), testProjectDir.getRoot());
+    FileUtils.copyDirectory(new File(testProjectSrcDirectory), testProjectDir.getRoot());
   }
 
   @Ignore
@@ -82,7 +99,7 @@ public class AppEngineStandardPluginIntegrationTest {
   }
 
   @Test
-  public void testDeploy() throws ProcessRunnerException {
+  public void testDeploy() throws ProcessRunnerException, IOException {
     BuildResult buildResult =
         GradleRunner.create()
             .withProjectDir(testProjectDir.getRoot())

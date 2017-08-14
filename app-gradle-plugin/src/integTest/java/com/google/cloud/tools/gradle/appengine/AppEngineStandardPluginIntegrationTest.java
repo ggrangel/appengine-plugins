@@ -20,6 +20,7 @@ package com.google.cloud.tools.gradle.appengine;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdk;
 import com.google.cloud.tools.appengine.cloudsdk.internal.process.ProcessRunnerException;
 import com.google.cloud.tools.appengine.cloudsdk.process.NonZeroExceptionExitListener;
+import com.google.cloud.tools.gradle.appengine.standard.AppEngineStandardPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -36,29 +37,31 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 /** End to end tests for standard projects. */
 @RunWith(Parameterized.class)
 public class AppEngineStandardPluginIntegrationTest {
 
+  /** Parameterize the project source for the test. */
+  @Parameters
+  public static Object[] data() {
+    return new Object[][] {
+      {"src/integTest/resources/projects/standard-project", "Dev App Server is now running"},
+      {"src/integTest/resources/projects/standard-project-java8", "INFO:oejs.Server:main: Started"}
+    };
+  }
+
   @Rule public Timeout globalTimeout = Timeout.seconds(180);
 
   @Rule public TemporaryFolder testProjectDir = new TemporaryFolder();
 
-  private final String testProjectSrcDirectory;
+  @Parameter(0)
+  public String testProjectSrcDirectory;
 
-  /** Parameterize the project source for the test. */
-  @Parameterized.Parameters
-  public static Object[] data() {
-    return new Object[] {
-      "src/integTest/resources/projects/standard-project",
-      "src/integTest/resources/projects/standard-project-java8"
-    };
-  }
-
-  public AppEngineStandardPluginIntegrationTest(String testProjectSrcDirectory) {
-    this.testProjectSrcDirectory = testProjectSrcDirectory;
-  }
+  @Parameter(1)
+  public String devAppServerStartedString;
 
   @Before
   public void setUp() throws IOException {
@@ -83,6 +86,16 @@ public class AppEngineStandardPluginIntegrationTest {
         .withArguments("appengineStart")
         .build();
 
+    File expectedLogFileDir =
+        new File(
+            testProjectDir.getRoot(),
+            "/build/" + AppEngineStandardPlugin.DEV_APP_SERVER_OUTPUT_DIR_NAME);
+
+    Assert.assertEquals(1, expectedLogFileDir.listFiles().length);
+    File devAppserverLogFile = new File(expectedLogFileDir, "dev_appserver.out");
+    String devAppServerOutput = FileUtils.readFileToString(devAppserverLogFile);
+    Assert.assertTrue(devAppServerOutput.contains(devAppServerStartedString));
+
     AssertConnection.assertResponse(
         "http://localhost:8080", 200, "Hello from the App Engine Standard project.");
 
@@ -92,10 +105,7 @@ public class AppEngineStandardPluginIntegrationTest {
         .withArguments("appengineStop")
         .build();
 
-    // give the server a couple seconds to come down
-    Thread.sleep(8000);
-
-    AssertConnection.assertUnreachable("http://localhost:8080");
+    AssertConnection.assertUnreachable("http://localhost:8080", 8000);
   }
 
   @Test

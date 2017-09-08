@@ -3,24 +3,75 @@
     "name": "Google BigQuery API",
     "documentation": "https://cloud.google.com/bigquery/docs/reference/libraries",
     "description":"Google's fully managed, petabyte scale, serverless data warehouse for analytics",
-    "transport": "http",
+    "transports": ["http"],
     "icon":"https://cloud.google.com/_static/images/cloud/products/logos/svg/bigquery.svg",
     "clients": [
       {
+      "name":"Google Cloud Java Client for BigQuery",
       "language":"java",
       "site":"https://cloud.google.com/bigquery/docs/reference/libraries#client-libraries-install-java",
-      "apireference":"https://googlecloudplatform.github.io/google-cloud-java/0.22.0/apidocs/com/google/cloud/bigquery/package-summary.html",
-      "version" : "0.22.0",
+      "apireference":"https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/com/google/cloud/bigquery/package-summary.html",
       "infotip":"The com.google.cloud.bigquery packages",
-      "status" : "beta",  
+      "launchStage" : "beta",  
+      "packages" : ["com.google.cloud.bigquery"],
       "source" : "https://github.com/GoogleCloudPlatform/google-cloud-java/tree/master/google-cloud-bigquery",
       "languageLevel" : "1.7.0",
       "mavenCoordinates" : {
          "groupId" : "com.google.cloud",
          "artifactId" : "google-cloud-bigquery",
          "version" : "0.22.0-beta"
+       }
       }
-    }
-   ]
+    ]
+  },
+  {
+    "name": "Google Cloud Datastore",
+    "documentation": "https://cloud.google.com/datastore/docs/reference/libraries",
+    "description":"Google Cloud Datastore is a NoSQL key-value database built for automatic scaling.",
+    "transports": ["http"],
+    "icon":"https://cloud.google.com/_static/images/cloud/products/logos/svg/datastore.svg",
+    "clients": [
+      {
+      "name":"Cloud Datastore Client Library for Java",
+      "language":"java",
+      "site":"https://cloud.google.com/datastore/docs/reference/libraries#client-libraries-install-java",
+      "apireference":"https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/index.html?com/google/cloud/datastore/package-summary.html",
+      "infotip":"The com.google.cloud.datastore packages",
+      "packages" : ["com.google.cloud.datastore"],
+      "launchStage" : "GA",  
+      "source" : "https://github.com/GoogleCloudPlatform/google-cloud-java/tree/master/google-cloud-bigquery",
+      "languageLevel" : "1.7.0",
+      "mavenCoordinates" : {
+         "groupId" : "com.google.cloud",
+         "artifactId" : "google-cloud-datastore",
+         "version" : "1.4.0"
+       }
+      }
+    ]
+  },
+  {
+    "name": "Google Cloud Storage",
+    "documentation": "https://cloud.google.com/storage/docs/reference/libraries",
+    "description":"Unified BLOB storage for developers and enterprises, from live data serving to data analytics/ML to data archiving.",
+    "transports": ["http"],
+    "icon":"https://cloud.google.com/_static/images/cloud/products/logos/svg/storage.svg",
+    "clients": [
+      {
+      "name":"Google Cloud Storage Client Library for Java",
+      "language":"java",
+      "site":"https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-java",
+      "apireference" : "https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/index.html?com/google/cloud/storage/package-summary.html",
+      "packages" : ["com.google.cloud.storage"],
+      "infotip":"The com.google.cloud.storage packages for client side access to GCS",
+      "launchStage" : "GA",  
+      "source" : "https://github.com/GoogleCloudPlatform/google-cloud-java/tree/master/google-cloud-storage",
+      "languageLevel" : "1.7.0",
+      "mavenCoordinates" : {
+         "groupId" : "com.google.cloud",
+         "artifactId" : "google-cloud-storage",
+         "version" : "1.4.0"
+       }
+      }
+    ]
   }
 ]

@@ -1,5 +1,6 @@
 ![project status image](https://img.shields.io/badge/stability-stable-brightgreen.svg)
 [![Build Status](http://travis-ci.org/GoogleCloudPlatform/app-maven-plugin.svg)](http://travis-ci.org/GoogleCloudPlatform/app-maven-plugin)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/appengine-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/appengine-maven-plugin)
 # Google App Engine Maven plugin
 
 This Maven plugin provides goals to build and deploy Google App Engine applications.

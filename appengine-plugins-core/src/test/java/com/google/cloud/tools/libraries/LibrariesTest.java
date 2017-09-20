@@ -82,8 +82,10 @@ public class LibrariesTest {
     Assert.assertTrue(transports + " is not a recognized transport",
         "http".equals(transports) || "grpc".equals(transports));
     assertReachable(api.getString("documentation"));
-    if (api.getString("icon") != null) {
+    try {
       assertReachable(api.getString("icon"));
+    } catch (NullPointerException ex) {
+      // no icon element to test
     }
     JsonArray clients = api.getJsonArray("clients");
     Assert.assertFalse(clients.isEmpty());
@@ -91,8 +93,12 @@ public class LibrariesTest {
       JsonObject client = (JsonObject) clients.get(i);
       String launchStage = client.getString("launchStage");
       Assert.assertThat(statuses, hasItemInArray(launchStage));
+      try {
+        assertReachable(client.getString("site"));
+      } catch (NullPointerException ex) {
+        // no site element to test
+      }
       assertReachable(client.getString("apireference"));
-      assertReachable(client.getString("site"));
       Assert.assertTrue(client.getString("languageLevel").matches("1\\.\\d+\\.\\d+"));
       Assert.assertFalse(client.getString("name").isEmpty());
       Assert.assertNotNull(client.getJsonObject("mavenCoordinates"));
@@ -104,14 +110,13 @@ public class LibrariesTest {
 
   private static void assertReachable(String url) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-    Assert.assertEquals(200, connection.getResponseCode());
+    Assert.assertEquals("Could not reach " + url, 200, connection.getResponseCode());
   }
   
   @Test
   public void testDuplicates() throws URISyntaxException {
     Map<String, String> apiCoordinates = new HashMap<>();
-    for (int i = 0; i < apis.length; i++) { 
-      JsonObject api = apis[i];
+    for (JsonObject api : apis) {
       String name = api.getString("name");
       if (apiCoordinates.containsKey(name)) {
         Assert.fail(name + " is defined twice");

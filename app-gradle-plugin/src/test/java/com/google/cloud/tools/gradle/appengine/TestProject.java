@@ -96,7 +96,7 @@ public class TestProject {
   }
 
   /** Run the gradle runner (build) with a specific gradle version and return the build result. */
-  public BuildResult applyGradleRunnerWithVersion(String version) {
+  public BuildResult applyGradleRunnerWithGradleVersion(String version) {
     return GradleRunner.create()
         .withProjectDir(projectRoot)
         .withPluginClasspath()

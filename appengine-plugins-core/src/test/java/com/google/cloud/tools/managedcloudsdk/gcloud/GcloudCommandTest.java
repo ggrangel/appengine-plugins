@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.install;
+package com.google.cloud.tools.managedcloudsdk.gcloud;
 
-import com.google.cloud.tools.managedcloudsdk.MessageListener;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandExitException;
 import com.google.cloud.tools.managedcloudsdk.process.AsyncStreamHandler;
 import com.google.cloud.tools.managedcloudsdk.process.CommandExecutor;
 import com.google.cloud.tools.managedcloudsdk.process.CommandExecutorFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,26 +35,24 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-/** Tests for {@link Installer} */
-public class InstallerTest {
-
-  @Mock private InstallScriptProvider mockInstallScriptProvider;
-  @Mock private CommandExecutorFactory mockCommandExecutorFactory;
-  @Mock private CommandExecutor mockCommandExecutor;
-  @Mock private MessageListener mockMessageListener;
-  @Mock private AsyncStreamHandler<Void> mockStreamHandler;
-  @Mock private ListenableFuture<Void> mockResult;
+/** Tests for {@link GcloudCommand} */
+public class GcloudCommandTest {
 
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
-  private List<String> fakeCommand = Arrays.asList("scriptexec", "test-install.script");
+  @Mock private CommandExecutorFactory mockCommandExecutorFactory;
+  @Mock private CommandExecutor mockCommandExecutor;
+  @Mock private AsyncStreamHandler<Void> mockStreamHandler;
+  @Mock private ListenableFuture<Void> mockStreamResult;
+  @Mock private ListenableFuture<Void> mockResult;
+
+  private Path fakeGcloud;
+  private List<String> fakeParameters;
 
   @Before
-  public void initializeAndConfigureMocks()
-      throws IOException, ExecutionException, InterruptedException {
+  public void setUpFakesAndMocks() throws IOException, ExecutionException, InterruptedException {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(mockInstallScriptProvider.getScriptCommandLine()).thenReturn(fakeCommand);
     Mockito.when(mockCommandExecutorFactory.newCommandExecutor()).thenReturn(mockCommandExecutor);
     Mockito.when(
             mockCommandExecutor.run(
@@ -65,43 +62,24 @@ public class InstallerTest {
         .thenReturn(0);
     Mockito.when(mockStreamHandler.getResult()).thenReturn(mockResult);
     Mockito.when(mockResult.get()).thenReturn(null);
+
+    fakeGcloud = tmp.newFile("gcloud").toPath();
+    fakeParameters = Arrays.asList("test", "--option");
   }
 
   @Test
   public void testCall() throws Exception {
-    Installer installer =
-        new Installer<>(
-            tmp.getRoot().toPath(),
-            mockInstallScriptProvider,
-            false,
-            mockMessageListener,
+    GcloudCommand testCommand =
+        new GcloudCommand(
+            fakeGcloud,
+            fakeParameters,
             mockCommandExecutorFactory,
             mockStreamHandler,
             mockStreamHandler);
-    installer.install();
+    testCommand.run();
 
-    Mockito.verify(mockCommandExecutor).setWorkingDirectory(tmp.getRoot().toPath());
     Mockito.verify(mockCommandExecutor)
-        .run(getExpectedCommand(false), mockStreamHandler, mockStreamHandler);
-    Mockito.verifyNoMoreInteractions(mockCommandExecutor);
-  }
-
-  @Test
-  public void testCall_withUsageReporting() throws Exception {
-    Installer installer =
-        new Installer<>(
-            tmp.getRoot().toPath(),
-            mockInstallScriptProvider,
-            true,
-            mockMessageListener,
-            mockCommandExecutorFactory,
-            mockStreamHandler,
-            mockStreamHandler);
-    installer.install();
-
-    Mockito.verify(mockCommandExecutor).setWorkingDirectory(tmp.getRoot().toPath());
-    Mockito.verify(mockCommandExecutor)
-        .run(getExpectedCommand(true), mockStreamHandler, mockStreamHandler);
+        .run(getExpectedCommand(), mockStreamHandler, mockStreamHandler);
     Mockito.verifyNoMoreInteractions(mockCommandExecutor);
   }
 
@@ -114,35 +92,50 @@ public class InstallerTest {
                 Mockito.eq(mockStreamHandler)))
         .thenReturn(10);
 
-    Installer installer =
-        new Installer<>(
-            tmp.getRoot().toPath(),
-            mockInstallScriptProvider,
-            false,
-            mockMessageListener,
+    GcloudCommand testCommand =
+        new GcloudCommand(
+            fakeGcloud,
+            fakeParameters,
             mockCommandExecutorFactory,
             mockStreamHandler,
             mockStreamHandler);
     try {
-      installer.install();
+      testCommand.run();
       Assert.fail("GcloudCommandExitException expected but not found.");
     } catch (GcloudCommandExitException ex) {
-      Assert.assertEquals("Installer exited with non-zero exit code: 10", ex.getMessage());
+      Assert.assertEquals("gcloud exited with non-zero exit code: 10", ex.getMessage());
     }
-    Mockito.verify(mockCommandExecutor).setWorkingDirectory(tmp.getRoot().toPath());
     Mockito.verify(mockCommandExecutor)
-        .run(getExpectedCommand(false), mockStreamHandler, mockStreamHandler);
+        .run(getExpectedCommand(), mockStreamHandler, mockStreamHandler);
     Mockito.verifyNoMoreInteractions(mockCommandExecutor);
   }
 
-  private List<String> getExpectedCommand(boolean usageReporting) {
-    List<String> command = new ArrayList<>(6);
-    command.add("scriptexec");
-    command.add("test-install.script");
-    command.add("--path-update=false");
-    command.add("--command-completion=false");
-    command.add("--quiet");
-    command.add("--usage-reporting=" + usageReporting);
+  @Test
+  public void testCall_outputConsumptionInterrupted() throws Exception {
+    Mockito.when(mockStreamHandler.getResult()).thenReturn(mockStreamResult);
+    Mockito.when(mockStreamResult.get()).thenThrow(InterruptedException.class);
+
+    GcloudCommand testCommand =
+        new GcloudCommand(
+            fakeGcloud,
+            fakeParameters,
+            mockCommandExecutorFactory,
+            mockStreamHandler,
+            mockStreamHandler);
+
+    try {
+      testCommand.run();
+      Assert.fail("ExecutionException expected but not found.");
+    } catch (ExecutionException ex) {
+      Assert.assertEquals("Output consumers interrupted.", ex.getMessage());
+    }
+  }
+
+  private List<String> getExpectedCommand() {
+    List<String> command = new ArrayList<>(3);
+    command.add(fakeGcloud.toString());
+    command.add("test");
+    command.add("--option");
     return command;
   }
 }

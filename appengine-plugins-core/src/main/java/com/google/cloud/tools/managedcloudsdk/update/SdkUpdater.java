@@ -17,58 +17,34 @@
 package com.google.cloud.tools.managedcloudsdk.update;
 
 import com.google.cloud.tools.managedcloudsdk.MessageListener;
-import com.google.cloud.tools.managedcloudsdk.executors.SdkExecutorServiceFactory;
-import com.google.cloud.tools.managedcloudsdk.executors.SingleThreadExecutorServiceFactory;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandFactory;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /** Update an SDK. */
 public class SdkUpdater {
 
-  private final GcloudCommandFactory commandFactory;
-  private final SdkExecutorServiceFactory executorServiceFactory;
+  private final Path gcloud;
+  private final CommandRunner commandRunner;
 
   /** Use {@link #newUpdater} to instantiate. */
-  SdkUpdater(
-      GcloudCommandFactory commandFactory, SdkExecutorServiceFactory executorServiceFactory) {
-    this.commandFactory = commandFactory;
-    this.executorServiceFactory = executorServiceFactory;
+  SdkUpdater(Path gcloud, CommandRunner commandRunner) {
+    this.gcloud = gcloud;
+    this.commandRunner = commandRunner;
   }
 
   /**
    * Update the Cloud SDK.
    *
    * @param messageListener listener to receive feedback on
-   * @return a resultless future for controlling the process
    */
-  public ListenableFuture<Void> update(final MessageListener messageListener) {
-    ListeningExecutorService executorService = executorServiceFactory.newExecutorService();
-    ListenableFuture<Void> resultFuture =
-        executorService.submit(
-            new Callable<Void>() {
-              @Override
-              public Void call() throws Exception {
-                commandFactory.newCommand(getParameters(), messageListener).run();
-                return null;
-              }
-            });
-    executorService.shutdown(); // shutdown executor after install
-    return resultFuture;
-  }
-
-  List<String> getParameters() {
-    List<String> command = new ArrayList<>();
-    // now configure parameters (not OS specific)
-    command.add("components");
-    command.add("update");
-    command.add("--quiet");
-
-    return command;
+  public void update(final MessageListener messageListener)
+      throws InterruptedException, CommandExitException, CommandExecutionException {
+    List<String> command = Arrays.asList(gcloud.toString(), "components", "update", "--quiet");
+    commandRunner.run(command, null, null, messageListener);
   }
 
   /**
@@ -78,9 +54,6 @@ public class SdkUpdater {
    * @return a new configured Cloud Sdk updater
    */
   public static SdkUpdater newUpdater(Path gcloud) {
-    GcloudCommandFactory gcloudCommandFactory = new GcloudCommandFactory(gcloud);
-    SdkExecutorServiceFactory executorServiceFactory = new SingleThreadExecutorServiceFactory();
-
-    return new SdkUpdater(gcloudCommandFactory, executorServiceFactory);
+    return new SdkUpdater(gcloud, CommandRunner.newRunner());
   }
 }

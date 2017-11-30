@@ -17,8 +17,8 @@
 package com.google.cloud.tools.managedcloudsdk.install;
 
 import com.google.cloud.tools.managedcloudsdk.MessageListener;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandExitException;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -40,7 +40,6 @@ public class SdkInstallerTest {
 
   @Rule public TemporaryFolder testDir = new TemporaryFolder();
 
-  @Mock private ListeningExecutorService executorService;
   @Mock private FileResourceProviderFactory fileResourceProviderFactory;
   @Mock private MessageListener messageListener;
 
@@ -71,7 +70,7 @@ public class SdkInstallerTest {
   @Before
   public void setUpMocksAndFakes()
       throws IOException, InterruptedException, UnknownArchiveTypeException, ExecutionException,
-          GcloudCommandExitException {
+          CommandExitException, CommandExecutionException {
     MockitoAnnotations.initMocks(this);
 
     Path managedSdkRoot = testDir.newFolder("managed-sdk-test-home").toPath();
@@ -165,51 +164,48 @@ public class SdkInstallerTest {
 
   @Test
   public void testDownloadSdk_successRun()
-      throws InterruptedException, ExecutionException, SdkInstallerException,
-          UnknownArchiveTypeException, IOException, GcloudCommandExitException {
+      throws CommandExecutionException, InterruptedException, IOException, CommandExitException,
+          SdkInstallerException, UnknownArchiveTypeException {
 
     SdkInstaller testInstaller =
         new SdkInstaller(
             fileResourceProviderFactory,
             successfulDownloaderFactory,
             successfulLatestExtractorFactory,
-            successfulInstallerFactory,
-            null);
-    Path result = testInstaller.downloadSdkSync(messageListener);
+            successfulInstallerFactory);
+    Path result = testInstaller.install(messageListener);
 
     Assert.assertEquals(fakeSdkHome, result);
   }
 
   @Test
   public void testDownloadSdk_successRunWithoutExplicitInstall()
-      throws InterruptedException, ExecutionException, SdkInstallerException,
-          UnknownArchiveTypeException, IOException, GcloudCommandExitException {
+      throws CommandExecutionException, InterruptedException, IOException, CommandExitException,
+          SdkInstallerException, UnknownArchiveTypeException {
     SdkInstaller testInstaller =
         new SdkInstaller(
             fileResourceProviderFactory,
             successfulDownloaderFactory,
             successfulVersionedExtractorFactory,
-            null,
             null);
-    Path result = testInstaller.downloadSdkSync(messageListener);
+    Path result = testInstaller.install(messageListener);
 
     Assert.assertEquals(fakeSdkHome, result);
   }
 
   @Test
   public void testDownloadSdk_failedDownload()
-      throws InterruptedException, ExecutionException, UnknownArchiveTypeException, IOException,
-          GcloudCommandExitException {
+      throws InterruptedException, CommandExecutionException, CommandExitException,
+          UnknownArchiveTypeException, IOException {
 
     SdkInstaller testInstaller =
         new SdkInstaller(
             fileResourceProviderFactory,
             failureDownloaderFactory,
             successfulLatestExtractorFactory,
-            successfulInstallerFactory,
-            null);
+            successfulInstallerFactory);
     try {
-      Path result = testInstaller.downloadSdkSync(messageListener);
+      testInstaller.install(messageListener);
       Assert.fail("SdKInstallerException expected but not thrown");
     } catch (SdkInstallerException ex) {
       Assert.assertEquals(
@@ -221,17 +217,16 @@ public class SdkInstallerTest {
   @Test
   public void testDownloadSdk_failedExtraction()
       throws InterruptedException, ExecutionException, UnknownArchiveTypeException, IOException,
-          GcloudCommandExitException {
+          CommandExitException, CommandExecutionException {
 
     SdkInstaller testInstaller =
         new SdkInstaller(
             fileResourceProviderFactory,
             successfulDownloaderFactory,
             failureExtractorFactory,
-            successfulInstallerFactory,
-            null);
+            successfulInstallerFactory);
     try {
-      Path result = testInstaller.downloadSdkSync(messageListener);
+      testInstaller.install(messageListener);
       Assert.fail("SdKInstallerException expected but not thrown");
     } catch (SdkInstallerException ex) {
       Assert.assertEquals(
@@ -243,17 +238,16 @@ public class SdkInstallerTest {
   @Test
   public void testDownloadSdk_failedInstallation()
       throws InterruptedException, ExecutionException, UnknownArchiveTypeException, IOException,
-          GcloudCommandExitException {
+          CommandExitException, CommandExecutionException {
 
     SdkInstaller testInstaller =
         new SdkInstaller(
             fileResourceProviderFactory,
             successfulDownloaderFactory,
             successfulLatestExtractorFactory,
-            failureInstallerFactory,
-            null);
+            failureInstallerFactory);
     try {
-      Path result = testInstaller.downloadSdkSync(messageListener);
+      testInstaller.install(messageListener);
       Assert.fail("SdKInstallerException expected but not thrown");
     } catch (SdkInstallerException ex) {
       Assert.assertEquals(

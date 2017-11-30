@@ -17,17 +17,13 @@
 package com.google.cloud.tools.managedcloudsdk.install;
 
 import com.google.cloud.tools.managedcloudsdk.MessageListener;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandExitException;
-import com.google.cloud.tools.managedcloudsdk.process.AsyncStreamHandler;
-import com.google.cloud.tools.managedcloudsdk.process.CommandExecutor;
-import com.google.cloud.tools.managedcloudsdk.process.CommandExecutorFactory;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /** Installer for running install scripts in a Cloud SDK download. */
 final class Installer<T extends InstallScriptProvider> {
@@ -36,9 +32,7 @@ final class Installer<T extends InstallScriptProvider> {
   private final InstallScriptProvider installScriptProvider;
   private final boolean usageReporting;
   private final MessageListener messageListener;
-  private final CommandExecutorFactory commandExecutorFactory;
-  private final AsyncStreamHandler<Void> stdOutConsumer;
-  private final AsyncStreamHandler<Void> stdErrConsumer;
+  private final CommandRunner commandRunner;
 
   /** Instantiated by {@link InstallerFactory}. */
   Installer(
@@ -46,36 +40,24 @@ final class Installer<T extends InstallScriptProvider> {
       InstallScriptProvider installScriptProvider,
       boolean usageReporting,
       MessageListener messageListener,
-      CommandExecutorFactory commandExecutorFactory,
-      AsyncStreamHandler<Void> stdOutConsumer,
-      AsyncStreamHandler<Void> stdErrConsumer) {
+      CommandRunner commandRunner) {
     this.installedSdkRoot = installedSdkRoot;
     this.installScriptProvider = installScriptProvider;
     this.usageReporting = usageReporting;
     this.messageListener = messageListener;
-    this.commandExecutorFactory = commandExecutorFactory;
-    this.stdOutConsumer = stdOutConsumer;
-    this.stdErrConsumer = stdErrConsumer;
+    this.commandRunner = commandRunner;
   }
 
   /** Install a cloud sdk (only run this on LATEST). */
-  public void install() throws IOException, ExecutionException, GcloudCommandExitException {
-
+  public void install()
+      throws CommandExitException, CommandExecutionException, InterruptedException {
     List<String> command = new ArrayList<>(installScriptProvider.getScriptCommandLine());
-    // now configure parameters (not OS specific)
     command.add("--path-update=false"); // don't update user's path
     command.add("--command-completion=false"); // don't add command completion
     command.add("--quiet"); // don't accept user input during install
-    command.add("--usage-reporting=" + usageReporting); // usageReportingPassthrough
+    command.add("--usage-reporting=" + usageReporting); // usage reporing passthrough
 
-    CommandExecutor commandExecutor = commandExecutorFactory.newCommandExecutor();
-    commandExecutor.setWorkingDirectory(installedSdkRoot);
-
-    messageListener.message("Running command : " + Joiner.on(" ").join(command) + "\n");
-    int exitCode = commandExecutor.run(command, stdOutConsumer, stdErrConsumer);
-    if (exitCode != 0) {
-      throw new GcloudCommandExitException("Installer exited with non-zero exit code: " + exitCode);
-    }
+    commandRunner.run(command, installedSdkRoot, null, messageListener);
   }
 
   @VisibleForTesting

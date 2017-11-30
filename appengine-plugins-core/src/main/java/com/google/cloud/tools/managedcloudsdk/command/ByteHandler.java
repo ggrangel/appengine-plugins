@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.process;
+package com.google.cloud.tools.managedcloudsdk.command;
 
-/** {@link CommandExecutor} Factory. */
-public class CommandExecutorFactory {
+/**
+ * Handle bytes from a stream consumer.
+ *
+ * <p>You do not need to implement this, use {@link AsyncStreamSaverFactory} or {@link
+ * AsyncStreamHandlerFactory}
+ */
+interface ByteHandler {
+  void bytes(byte[] bytes, int length);
 
-  public CommandExecutor newCommandExecutor() {
-    return new CommandExecutor();
-  }
+  String getResult();
 }

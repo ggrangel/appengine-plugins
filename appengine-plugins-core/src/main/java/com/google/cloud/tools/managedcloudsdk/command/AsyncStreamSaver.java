@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.process;
+package com.google.cloud.tools.managedcloudsdk.command;
 
-/** A line handler that collects lines and returns a single result string. */
-public class CollectingByteHandler implements ByteHandler<String> {
+import com.google.cloud.tools.managedcloudsdk.process.AsyncStreamHandler;
+import java.util.concurrent.Future;
 
-  private final StringBuilder result = new StringBuilder("");
+/** An {@link AsyncStreamHandler} that saves the output. */
+interface AsyncStreamSaver extends AsyncStreamHandler {
 
-  @Override
-  public void bytes(byte[] bytes, int length) {
-    result.append(new String(bytes, 0, length));
-  }
-
-  @Override
-  public String getResult() {
-    return result.toString();
-  }
+  /** Returns a future to a fully saved process inputStream. */
+  Future<String> getResult();
 }

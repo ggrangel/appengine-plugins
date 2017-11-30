@@ -17,12 +17,13 @@
 package com.google.cloud.tools.managedcloudsdk.components;
 
 import com.google.cloud.tools.managedcloudsdk.MessageListener;
-import com.google.cloud.tools.managedcloudsdk.executors.SdkExecutorServiceFactory;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandFactory;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
 import java.io.IOException;
-import java.util.concurrent.Callable;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,30 +37,28 @@ public class SdkComponentInstallerTest {
 
   @Rule public TemporaryFolder testDir = new TemporaryFolder();
 
-  @Mock private GcloudCommandFactory mockGcloudCommandFactory;
   @Mock private MessageListener mockMessageListener;
-  @Mock private SdkExecutorServiceFactory mockExecutorServiceFactory;
+  @Mock private CommandRunner mockCommandRunner;
 
-  private ListeningExecutorService testExecutorService;
+  private Path fakeGcloud;
   private SdkComponent testComponent = SdkComponent.APP_ENGINE_JAVA;
 
   @Before
-  public void setUpFakesAndMocks() throws IOException {
+  public void setUpMocks() throws IOException {
     MockitoAnnotations.initMocks(this);
-
-    testExecutorService = Mockito.spy(MoreExecutors.newDirectExecutorService());
-    Mockito.when(mockExecutorServiceFactory.newExecutorService()).thenReturn(testExecutorService);
+    fakeGcloud = testDir.getRoot().toPath().resolve("fake-gcloud");
   }
 
   @Test
-  public void testInstallComponent_successRun() {
-    SdkComponentInstaller testInstaller =
-        new SdkComponentInstaller(mockGcloudCommandFactory, mockExecutorServiceFactory);
+  public void testInstallComponent_successRun()
+      throws InterruptedException, CommandExitException, CommandExecutionException {
+    SdkComponentInstaller testInstaller = new SdkComponentInstaller(fakeGcloud, mockCommandRunner);
     testInstaller.installComponent(testComponent, mockMessageListener);
+    Mockito.verify(mockCommandRunner).run(expectedCommand(), null, null, mockMessageListener);
+  }
 
-    Mockito.verify(mockExecutorServiceFactory).newExecutorService();
-    Mockito.verify(testExecutorService).submit(Mockito.any(Callable.class));
-    Mockito.verify(mockGcloudCommandFactory)
-        .newCommand(testInstaller.getParameters(testComponent), mockMessageListener);
+  private List<String> expectedCommand() {
+    return Arrays.asList(
+        fakeGcloud.toString(), "components", "install", testComponent.toString(), "--quiet");
   }
 }

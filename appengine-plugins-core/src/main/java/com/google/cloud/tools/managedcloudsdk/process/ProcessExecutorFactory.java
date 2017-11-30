@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.gcloud;
+package com.google.cloud.tools.managedcloudsdk.process;
 
-/** Exception when sdk command fails. */
-public class GcloudCommandExitException extends Exception {
-  public GcloudCommandExitException(String message) {
-    super(message);
+/** {@link ProcessExecutor} Factory. */
+public class ProcessExecutorFactory {
+
+  /** Returns a new default ProcessExecutor. */
+  public ProcessExecutor newProcessExecutor() {
+    return new ProcessExecutor();
   }
 }

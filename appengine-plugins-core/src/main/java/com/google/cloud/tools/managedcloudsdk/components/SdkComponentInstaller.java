@@ -17,59 +17,36 @@
 package com.google.cloud.tools.managedcloudsdk.components;
 
 import com.google.cloud.tools.managedcloudsdk.MessageListener;
-import com.google.cloud.tools.managedcloudsdk.executors.SdkExecutorServiceFactory;
-import com.google.cloud.tools.managedcloudsdk.executors.SingleThreadExecutorServiceFactory;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandFactory;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /** Install an SDK component. */
 public class SdkComponentInstaller {
 
-  private final GcloudCommandFactory commandFactory;
-  private final SdkExecutorServiceFactory executorServiceFactory;
+  private final Path gcloud;
+  private final CommandRunner commandRunner;
 
   /** Use {@link #newComponentInstaller} to instantiate. */
-  SdkComponentInstaller(
-      GcloudCommandFactory commandFactory, SdkExecutorServiceFactory executorServiceFactory) {
-    this.commandFactory = commandFactory;
-    this.executorServiceFactory = executorServiceFactory;
+  SdkComponentInstaller(Path gcloud, CommandRunner commandRunner) {
+    this.gcloud = gcloud;
+    this.commandRunner = commandRunner;
   }
 
   /**
-   * Install a component on a separate thread.
+   * Install a component.
    *
    * @param component component to install
    * @param messageListener listener to receive feedback
-   * @return a resultless future for controlling the process
    */
-  public ListenableFuture<Void> installComponent(
-      final SdkComponent component, final MessageListener messageListener) {
-    ListeningExecutorService executorService = executorServiceFactory.newExecutorService();
-    ListenableFuture<Void> resultFuture =
-        executorService.submit(
-            new Callable<Void>() {
-              @Override
-              public Void call() throws Exception {
-                commandFactory.newCommand(getParameters(component), messageListener).run();
-                return null;
-              }
-            });
-    executorService.shutdown(); // shutdown executor after install
-    return resultFuture;
-  }
-
-  List<String> getParameters(SdkComponent component) {
-    List<String> command = new ArrayList<>();
-    command.add("components");
-    command.add("install");
-    command.add(component.toString());
-    command.add("--quiet");
-    return command;
+  public void installComponent(SdkComponent component, MessageListener messageListener)
+      throws InterruptedException, CommandExitException, CommandExecutionException {
+    List<String> command =
+        Arrays.asList(gcloud.toString(), "components", "install", component.toString(), "--quiet");
+    commandRunner.run(command, null, null, messageListener);
   }
 
   /**
@@ -79,10 +56,6 @@ public class SdkComponentInstaller {
    * @return a new configured Cloud Sdk component installer
    */
   public static SdkComponentInstaller newComponentInstaller(Path gcloud) {
-
-    GcloudCommandFactory componentInstallerFactory = new GcloudCommandFactory(gcloud);
-    SdkExecutorServiceFactory executorServiceFactory = new SingleThreadExecutorServiceFactory();
-
-    return new SdkComponentInstaller(componentInstallerFactory, executorServiceFactory);
+    return new SdkComponentInstaller(gcloud, CommandRunner.newRunner());
   }
 }

@@ -21,23 +21,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 /** Executes a shell command. */
-public class CommandExecutor {
+public class ProcessExecutor {
 
   private ProcessBuilderFactory processBuilderFactory = new ProcessBuilderFactory();
-  private Map<String, String> environment;
-  private Path workingDirectory;
 
-  /** Sets the environment variables to run the command with. */
-  public CommandExecutor setEnvironment(Map<String, String> environmentMap) {
-    this.environment = environmentMap;
-    return this;
-  }
-
-  public CommandExecutor setWorkingDirectory(Path workingDirectory) {
-    this.workingDirectory = workingDirectory;
+  @VisibleForTesting
+  ProcessExecutor setProcessBuilderFactory(ProcessBuilderFactory processBuilderFactory) {
+    this.processBuilderFactory = processBuilderFactory;
     return this;
   }
 
@@ -48,20 +40,23 @@ public class CommandExecutor {
     }
   }
 
-  @VisibleForTesting
-  CommandExecutor setProcessBuilderFactory(ProcessBuilderFactory processBuilderFactory) {
-    this.processBuilderFactory = processBuilderFactory;
-    return this;
-  }
-
   /**
    * Runs the command.
    *
-   * @param command the list of command line tokens
-   * @return exitcode from the process
+   * @param command list of command line tokens
+   * @param workingDirectory the working directory to run the command from
+   * @param environment a map of environment variables
+   * @param stdout a stdout stream handler that must run on a separate thread
+   * @param stderr a stderr stream handler that must run on a separate thread
+   * @return exit code from the process
    */
-  public int run(List<String> command, AsyncStreamHandler stdout, AsyncStreamHandler stderr)
-      throws IOException, ExecutionException {
+  public int run(
+      List<String> command,
+      Path workingDirectory,
+      Map<String, String> environment,
+      AsyncStreamHandler stdout,
+      AsyncStreamHandler stderr)
+      throws IOException, InterruptedException {
 
     // Builds the command to execute.
     ProcessBuilder processBuilder = processBuilderFactory.createProcessBuilder();
@@ -82,7 +77,7 @@ public class CommandExecutor {
       exitCode = process.waitFor();
     } catch (InterruptedException ex) {
       process.destroy();
-      throw new ExecutionException("Process cancelled.", ex);
+      throw ex; // rethrow after cleanup
     }
 
     return exitCode;

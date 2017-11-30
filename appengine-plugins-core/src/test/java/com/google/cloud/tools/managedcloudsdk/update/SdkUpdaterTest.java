@@ -17,16 +17,13 @@
 package com.google.cloud.tools.managedcloudsdk.update;
 
 import com.google.cloud.tools.managedcloudsdk.MessageListener;
-import com.google.cloud.tools.managedcloudsdk.executors.SdkExecutorServiceFactory;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommand;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandExitException;
-import com.google.cloud.tools.managedcloudsdk.gcloud.GcloudCommandFactory;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,37 +37,26 @@ public class SdkUpdaterTest {
 
   @Rule public TemporaryFolder testDir = new TemporaryFolder();
 
-  @Mock private GcloudCommandFactory mockGcloudCommandFactory;
-  @Mock private GcloudCommand mockGcloudCommand;
   @Mock private MessageListener mockMessageListener;
-  @Mock private SdkExecutorServiceFactory mockExecutorServiceFactory;
+  @Mock private CommandRunner mockCommandRunner;
 
-  private ListeningExecutorService testExecutorService;
+  private Path fakeGcloud;
 
   @Before
   public void setUpFakesAndMocks() throws IOException {
     MockitoAnnotations.initMocks(this);
-
-    testExecutorService = Mockito.spy(MoreExecutors.newDirectExecutorService());
-    Mockito.when(mockExecutorServiceFactory.newExecutorService()).thenReturn(testExecutorService);
-    Mockito.when(
-            mockGcloudCommandFactory.newCommand(
-                Mockito.any(List.class), Mockito.eq(mockMessageListener)))
-        .thenReturn(mockGcloudCommand);
+    fakeGcloud = testDir.getRoot().toPath().resolve("fake-gcloud");
   }
 
   @Test
   public void testUpdate_successRun()
-      throws GcloudCommandExitException, ExecutionException, IOException {
-    SdkUpdater testUpdater = new SdkUpdater(mockGcloudCommandFactory, mockExecutorServiceFactory);
+      throws InterruptedException, CommandExitException, CommandExecutionException {
+    SdkUpdater testUpdater = new SdkUpdater(fakeGcloud, mockCommandRunner);
     testUpdater.update(mockMessageListener);
+    Mockito.verify(mockCommandRunner).run(expectedCommand(), null, null, mockMessageListener);
+  }
 
-    Mockito.verify(mockExecutorServiceFactory).newExecutorService();
-    Mockito.verify(testExecutorService).submit(Mockito.any(Callable.class));
-    Mockito.verify(mockGcloudCommandFactory)
-        .newCommand(testUpdater.getParameters(), mockMessageListener);
-    Mockito.verifyNoMoreInteractions(mockExecutorServiceFactory);
-    Mockito.verify(mockGcloudCommand).run();
-    Mockito.verifyNoMoreInteractions(mockGcloudCommand);
+  private List<String> expectedCommand() {
+    return Arrays.asList(fakeGcloud.toString(), "components", "update", "--quiet");
   }
 }

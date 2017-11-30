@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.process;
+package com.google.cloud.tools.managedcloudsdk.command;
 
-/**
- * Handle bytes from a stream consumer.
- *
- * @param <T> use {@code Void} if you don't want to store the result
- */
-public interface ByteHandler<T> {
-  void bytes(byte[] bytes, int length);
-
-  T getResult();
+/** Exception thrown when a command failed to execute completely. */
+public class CommandExecutionException extends Exception {
+  public CommandExecutionException(Throwable cause) {
+    super(cause);
+  }
 }

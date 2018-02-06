@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.install;
+package com.google.cloud.tools.managedcloudsdk;
 
-import java.io.IOException;
-import java.nio.file.Path;
+public class MessageCollector implements ConsoleListener {
+  StringBuilder output = new StringBuilder("");
 
-/** Provide a archive extractor implementation. */
-interface ExtractorProvider {
+  @Override
+  public void console(String rawString) {
+    output.append(rawString);
+  }
 
-  /**
-   * Extracts a single file archive into target destination folder.
-   *
-   * @param archive the archive to extract
-   * @param destination the destination folder for extracted files
-   * @throws IOException if extractor fails
-   */
-  void extract(Path archive, Path destination) throws IOException;
+  public String getOutput() {
+    return output.toString();
+  }
 }

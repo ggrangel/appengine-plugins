@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.install;
+package com.google.cloud.tools.managedcloudsdk;
 
-import java.io.IOException;
-import java.nio.file.Path;
+public class NullProgressListener implements ProgressListener {
+  @Override
+  public void start(String message, long totalWork) {}
 
-/** Provide a archive extractor implementation. */
-interface ExtractorProvider {
+  @Override
+  public void update(long workDone) {}
 
-  /**
-   * Extracts a single file archive into target destination folder.
-   *
-   * @param archive the archive to extract
-   * @param destination the destination folder for extracted files
-   * @throws IOException if extractor fails
-   */
-  void extract(Path archive, Path destination) throws IOException;
+  @Override
+  public void done() {}
+
+  @Override
+  public ProgressListener newChild(long allocation) {
+    return new NullProgressListener();
+  }
 }

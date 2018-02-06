@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.managedcloudsdk.install;
 
-import com.google.cloud.tools.managedcloudsdk.MessageListener;
+import com.google.cloud.tools.managedcloudsdk.ProgressListener;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.URL;
@@ -26,13 +26,11 @@ import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -40,7 +38,7 @@ import org.mockito.MockitoAnnotations;
 public class DownloaderTest {
 
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
-  @Mock private MessageListener messageListener;
+  @Mock private ProgressListener mockProgressListener;
 
   @Before
   public void setupMocks() {
@@ -64,7 +62,8 @@ public class DownloaderTest {
     Path testSourceFile = createTestRemoteResource(1);
     URL fakeRemoteResource = testSourceFile.toUri().toURL();
 
-    Downloader downloader = new Downloader(fakeRemoteResource, destination, null, messageListener);
+    Downloader downloader =
+        new Downloader(fakeRemoteResource, destination, null, mockProgressListener);
 
     downloader.download();
     Assert.assertTrue(Files.exists(destination));
@@ -78,7 +77,8 @@ public class DownloaderTest {
     Path testSourceFile = createTestRemoteResource(1);
     URL fakeRemoteResource = testSourceFile.toUri().toURL();
 
-    Downloader downloader = new Downloader(fakeRemoteResource, destination, null, messageListener);
+    Downloader downloader =
+        new Downloader(fakeRemoteResource, destination, null, mockProgressListener);
 
     downloader.download();
     Assert.assertTrue(Files.exists(destination));
@@ -91,26 +91,15 @@ public class DownloaderTest {
     Path testSourceFile = createTestRemoteResource(testFileSize);
     URL fakeRemoteResource = testSourceFile.toUri().toURL();
 
-    Downloader downloader = new Downloader(fakeRemoteResource, destination, null, messageListener);
+    Downloader downloader =
+        new Downloader(fakeRemoteResource, destination, null, mockProgressListener);
 
     downloader.download();
     Assert.assertTrue(Files.exists(destination));
     Assert.assertArrayEquals(Files.readAllBytes(destination), Files.readAllBytes(testSourceFile));
 
-    ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-    Mockito.verify(messageListener, Mockito.atLeastOnce()).message(messageCaptor.capture());
-
-    List<String> values = messageCaptor.getAllValues();
-    Assert.assertEquals("Downloading " + fakeRemoteResource.toString() + "\n", values.get(0));
-    Assert.assertEquals("Downloading " + String.valueOf(testFileSize) + " bytes\n", values.get(1));
-    Assert.assertEquals("done.\n", values.get(values.size() - 1));
-
-    List<String> dots = values.subList(2, values.size() - 1);
-
-    Assert.assertTrue(dots.size() > 0);
-    for (String dot : dots) {
-      Assert.assertEquals(".", dot);
-    }
+    ProgressVerifier.verifyProgress(
+        mockProgressListener, "Downloading " + String.valueOf(testFileSize) + " bytes");
   }
 
   @Test
@@ -129,7 +118,7 @@ public class DownloaderTest {
     // create a URL with a custom streamHandler so we can get our mock connection
     URL testUrl = new URL("", "", 80, "", testHandler);
     Downloader downloader =
-        new Downloader(testUrl, destination, "test-user-agent", messageListener);
+        new Downloader(testUrl, destination, "test-user-agent", mockProgressListener);
 
     try {
       downloader.download();
@@ -144,7 +133,7 @@ public class DownloaderTest {
     Path destination = tmp.getRoot().toPath().resolve("destination-file");
     Files.createFile(destination);
 
-    Downloader downloader = new Downloader(null, destination, null, messageListener);
+    Downloader downloader = new Downloader(null, destination, null, mockProgressListener);
 
     try {
       downloader.download();
@@ -169,7 +158,7 @@ public class DownloaderTest {
               @Override
               public void run() {
                 Downloader downloader =
-                    new Downloader(fakeRemoteResource, destination, null, messageListener);
+                    new Downloader(fakeRemoteResource, destination, null, mockProgressListener);
                 Thread.currentThread().interrupt();
                 try {
                   downloader.download();
@@ -185,11 +174,6 @@ public class DownloaderTest {
     testThreadToInterrupt.join();
 
     Assert.assertFalse(Files.exists(destination));
-    Mockito.verify(messageListener).message("Downloading " + fakeRemoteResource + "\n");
-    Mockito.verify(messageListener)
-        .message("Downloading " + String.valueOf(testFileSize) + " bytes\n");
-    Mockito.verify(messageListener).message("Download was interrupted\n");
-    Mockito.verify(messageListener).message("Cleaning up...\n");
-    Mockito.verifyNoMoreInteractions(messageListener);
+    Mockito.verify(mockProgressListener, Mockito.never()).update(100);
   }
 }

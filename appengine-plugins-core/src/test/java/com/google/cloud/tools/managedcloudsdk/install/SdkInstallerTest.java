@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.managedcloudsdk.install;
 
-import com.google.cloud.tools.managedcloudsdk.MessageListener;
+import com.google.cloud.tools.managedcloudsdk.ConsoleListener;
+import com.google.cloud.tools.managedcloudsdk.ProgressListener;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import java.io.IOException;
@@ -40,7 +41,8 @@ public class SdkInstallerTest {
   @Rule public TemporaryFolder testDir = new TemporaryFolder();
 
   @Mock private FileResourceProviderFactory fileResourceProviderFactory;
-  @Mock private MessageListener messageListener;
+  @Mock private ProgressListener progressListener;
+  @Mock private ConsoleListener consoleListener;
 
   @Mock private DownloaderFactory successfulDownloaderFactory;
   @Mock private Downloader successfulDownloader;
@@ -91,10 +93,12 @@ public class SdkInstallerTest {
     Mockito.when(fileResourceProviderFactory.newFileResourceProvider())
         .thenReturn(fakeFileResourceProvider);
 
+    Mockito.when(progressListener.newChild(Mockito.any(Long.class))).thenReturn(progressListener);
+
     // SUCCESS MOCKS
     Mockito.when(
             successfulDownloaderFactory.newDownloader(
-                fakeArchiveSource, fakeArchiveDestination, messageListener))
+                fakeArchiveSource, fakeArchiveDestination, progressListener))
         .thenReturn(successfulDownloader);
     Mockito.doAnswer(createPathAnswer(fakeArchiveDestination, false))
         .when(successfulDownloader)
@@ -103,7 +107,7 @@ public class SdkInstallerTest {
     // A "LATEST" extractor will result in a cloud sdk home with no gcloud file until install
     Mockito.<Extractor<? extends ExtractorProvider>>when(
             successfulLatestExtractorFactory.newExtractor(
-                fakeArchiveDestination, fakeArchiveExtractionDestination, messageListener))
+                fakeArchiveDestination, fakeArchiveExtractionDestination, progressListener))
         .thenReturn(successfulLatestExtractor);
     Mockito.doAnswer(
             createPathAnswer(fakeArchiveExtractionDestination.resolve("google-cloud-sdk"), true))
@@ -113,32 +117,32 @@ public class SdkInstallerTest {
     // A "versioned" extractor will result in a gcloud file
     Mockito.<Extractor<? extends ExtractorProvider>>when(
             successfulVersionedExtractorFactory.newExtractor(
-                fakeArchiveDestination, fakeArchiveExtractionDestination, messageListener))
+                fakeArchiveDestination, fakeArchiveExtractionDestination, progressListener))
         .thenReturn(successfulVersionedExtractor);
     Mockito.doAnswer(createPathAnswer(fakeGcloud, false))
         .when(successfulVersionedExtractor)
         .extract();
 
     Mockito.<Installer<? extends InstallScriptProvider>>when(
-            successfulInstallerFactory.newInstaller(fakeSdkHome, messageListener))
+            successfulInstallerFactory.newInstaller(fakeSdkHome, progressListener, consoleListener))
         .thenReturn(successfulInstaller);
     Mockito.doAnswer(createPathAnswer(fakeGcloud, false)).when(successfulInstaller).install();
 
     // FAIL MOCKS
     Mockito.when(
             failureDownloaderFactory.newDownloader(
-                fakeArchiveSource, fakeArchiveDestination, messageListener))
+                fakeArchiveSource, fakeArchiveDestination, progressListener))
         .thenReturn(failureDownloader);
     Mockito.doNothing().when(failureDownloader).download();
 
     Mockito.<Extractor<? extends ExtractorProvider>>when(
             failureExtractorFactory.newExtractor(
-                fakeArchiveDestination, fakeArchiveExtractionDestination, messageListener))
+                fakeArchiveDestination, fakeArchiveExtractionDestination, progressListener))
         .thenReturn(failureExtractor);
     Mockito.doNothing().when(failureExtractor).extract();
 
     Mockito.<Installer<? extends InstallScriptProvider>>when(
-            failureInstallerFactory.newInstaller(fakeSdkHome, messageListener))
+            failureInstallerFactory.newInstaller(fakeSdkHome, progressListener, consoleListener))
         .thenReturn(failureInstaller);
     Mockito.doNothing().when(failureInstaller).install();
   }
@@ -172,7 +176,7 @@ public class SdkInstallerTest {
             successfulDownloaderFactory,
             successfulLatestExtractorFactory,
             successfulInstallerFactory);
-    Path result = testInstaller.install(messageListener);
+    Path result = testInstaller.install(progressListener, consoleListener);
 
     Assert.assertEquals(fakeSdkHome, result);
   }
@@ -187,7 +191,7 @@ public class SdkInstallerTest {
             successfulDownloaderFactory,
             successfulVersionedExtractorFactory,
             null);
-    Path result = testInstaller.install(messageListener);
+    Path result = testInstaller.install(progressListener, consoleListener);
 
     Assert.assertEquals(fakeSdkHome, result);
   }
@@ -203,7 +207,7 @@ public class SdkInstallerTest {
             successfulLatestExtractorFactory,
             successfulInstallerFactory);
     try {
-      testInstaller.install(messageListener);
+      testInstaller.install(progressListener, consoleListener);
       Assert.fail("SdKInstallerException expected but not thrown");
     } catch (SdkInstallerException ex) {
       Assert.assertEquals(
@@ -223,7 +227,7 @@ public class SdkInstallerTest {
             failureExtractorFactory,
             successfulInstallerFactory);
     try {
-      testInstaller.install(messageListener);
+      testInstaller.install(progressListener, consoleListener);
       Assert.fail("SdKInstallerException expected but not thrown");
     } catch (SdkInstallerException ex) {
       Assert.assertEquals(
@@ -243,7 +247,7 @@ public class SdkInstallerTest {
             successfulLatestExtractorFactory,
             failureInstallerFactory);
     try {
-      testInstaller.install(messageListener);
+      testInstaller.install(progressListener, consoleListener);
       Assert.fail("SdKInstallerException expected but not thrown");
     } catch (SdkInstallerException ex) {
       Assert.assertEquals(
@@ -251,7 +255,4 @@ public class SdkInstallerTest {
           ex.getMessage());
     }
   }
-
-  @Test
-  public void testNewInstaller_versioned() {}
 }

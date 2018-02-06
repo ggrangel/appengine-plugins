@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.managedcloudsdk.install;
 
-import com.google.cloud.tools.managedcloudsdk.MessageListener;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,7 +24,6 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 public class ZipExtractorProviderTest {
 
@@ -37,16 +35,12 @@ public class ZipExtractorProviderTest {
     Path testArchive =
         Paths.get(getClass().getClassLoader().getResource("genericArchives/test.zip").toURI());
     Assert.assertTrue(Files.exists(testArchive));
-    MessageListener messageListener = Mockito.mock(MessageListener.class);
 
     ZipExtractorProvider zipExtractorProvider = new ZipExtractorProvider();
 
-    zipExtractorProvider.extract(testArchive, extractionRoot, messageListener);
+    zipExtractorProvider.extract(testArchive, extractionRoot);
 
     GenericArchivesVerifier.assertArchiveExtraction(extractionRoot);
-    GenericArchivesVerifier.assertListenerReceivedExtractionMessages(
-        messageListener, tmp.getRoot().toPath());
-
     // only check file permissions on non-windows
     if (!System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("windows")) {
       GenericArchivesVerifier.assertFilePermissions(extractionRoot);

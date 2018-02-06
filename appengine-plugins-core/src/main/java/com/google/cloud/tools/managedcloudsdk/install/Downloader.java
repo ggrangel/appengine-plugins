@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.managedcloudsdk.install;
 
-import com.google.cloud.tools.managedcloudsdk.MessageListener;
+import com.google.cloud.tools.managedcloudsdk.ProgressListener;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,24 +26,26 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.logging.Logger;
 
 /** Downloader for downloading a single Cloud SDK archive. */
 final class Downloader {
 
+  private static final Logger logger = Logger.getLogger(Downloader.class.getName());
+
   static final int BUFFER_SIZE = 8 * 1024;
-  static final int UPDATE_THRESHOLD = 1024 * 1024; // update every megabyte
   private final URL address;
   private final Path destinationFile;
   private final String userAgentString;
-  private final MessageListener messageListener;
+  private final ProgressListener progressListener;
 
   /** Use {@link DownloaderFactory} to instantiate. */
   Downloader(
-      URL source, Path destinationFile, String userAgentString, MessageListener messageListener) {
+      URL source, Path destinationFile, String userAgentString, ProgressListener progressListener) {
     this.address = source;
     this.destinationFile = destinationFile;
     this.userAgentString = userAgentString;
-    this.messageListener = messageListener;
+    this.progressListener = progressListener;
   }
 
   /** Download an archive, this will NOT overwrite a previously existing file. */
@@ -55,45 +57,38 @@ final class Downloader {
     if (Files.exists(destinationFile)) {
       throw new FileAlreadyExistsException(destinationFile.toString());
     }
-
     URLConnection connection = address.openConnection();
     connection.setRequestProperty("User-Agent", userAgentString);
 
     try (InputStream in = connection.getInputStream()) {
+      // note : contentLength can potentially be -1 if it is unknown.
       long contentLength = connection.getContentLengthLong();
 
-      messageListener.message("Downloading " + address + "\n");
+      logger.info("Downloading " + address + " to " + destinationFile);
 
       try (BufferedOutputStream out =
           new BufferedOutputStream(
               Files.newOutputStream(destinationFile, StandardOpenOption.CREATE_NEW))) {
+
+        progressListener.start(
+            "Downloading " + String.valueOf(contentLength) + " bytes", contentLength);
+
         int bytesRead;
         byte[] buffer = new byte[BUFFER_SIZE];
 
-        long lastUpdated = 0;
-        long totalBytesRead = 0;
-
-        messageListener.message("Downloading " + String.valueOf(contentLength) + " bytes\n");
         while ((bytesRead = in.read(buffer)) != -1) {
           if (Thread.currentThread().isInterrupted()) {
-            messageListener.message("Download was interrupted\n");
-            messageListener.message("Cleaning up...\n");
+            logger.warning("Download was interrupted\n");
             cleanUp();
             throw new InterruptedException("Download was interrupted");
           }
-          out.write(buffer, 0, bytesRead);
 
-          // update progress
-          totalBytesRead += bytesRead;
-          long bytesSinceLastUpdate = totalBytesRead - lastUpdated;
-          if (totalBytesRead == contentLength || bytesSinceLastUpdate > UPDATE_THRESHOLD) {
-            messageListener.message(".");
-            lastUpdated = totalBytesRead;
-          }
+          out.write(buffer, 0, bytesRead);
+          progressListener.update(bytesRead);
         }
       }
     }
-    messageListener.message("done.\n");
+    progressListener.done();
   }
 
   private void cleanUp() throws IOException {

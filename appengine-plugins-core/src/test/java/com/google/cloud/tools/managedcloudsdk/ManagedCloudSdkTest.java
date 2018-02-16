@@ -21,8 +21,14 @@ import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
 import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
 import com.google.cloud.tools.managedcloudsdk.install.SdkInstallerException;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Properties;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -126,5 +132,93 @@ public class ManagedCloudSdkTest {
     Assert.assertTrue(testSdk.isInstalled());
     Assert.assertTrue(testSdk.hasComponent(testComponent));
     Assert.assertTrue(testSdk.isUpToDate());
+  }
+
+  private static final Path cloudSdkPartialPath =
+      Paths.get("google-cloud-tools-java").resolve("managed-cloud-sdk");
+
+  @Test
+  public void testGetOsSpecificManagedSdk_windowsStandard() throws IOException {
+    Path userHome = tempDir.getRoot().toPath();
+    Path localAppData = Files.createDirectories(userHome.resolve("AppData").resolve("Local"));
+    Properties fakeProperties = getFakeProperties(userHome.toString());
+    Path windowsPath =
+        ManagedCloudSdk.getOsSpecificManagedSdkHome(
+            OsInfo.Name.WINDOWS,
+            fakeProperties,
+            ImmutableMap.of("LOCALAPPDATA", localAppData.toString()));
+
+    Assert.assertEquals(localAppData.resolve(cloudSdkPartialPath), windowsPath);
+  }
+
+  @Test
+  public void testGetOsSpecificManagedSdk_macStandard() throws IOException {
+    Path userHome = tempDir.getRoot().toPath();
+    Properties fakeProperties = getFakeProperties(userHome.toString());
+    Path expectedPath =
+        Files.createDirectories(userHome.resolve("Library").resolve("Application Support"));
+    Path macPath =
+        ManagedCloudSdk.getOsSpecificManagedSdkHome(
+            OsInfo.Name.MAC, fakeProperties, Collections.<String, String>emptyMap());
+    Assert.assertEquals(expectedPath.resolve(cloudSdkPartialPath), macPath);
+  }
+
+  @Test
+  public void testGetOsSpecificManagedSdk_linuxStandard() throws IOException {
+    Path userHome = tempDir.getRoot().toPath();
+    Properties fakeProperties = getFakeProperties(userHome.toString());
+    Path expectedPath = userHome.resolve(".cache").resolve(cloudSdkPartialPath);
+
+    Path linuxPath =
+        ManagedCloudSdk.getOsSpecificManagedSdkHome(
+            OsInfo.Name.LINUX, fakeProperties, Collections.<String, String>emptyMap());
+    Assert.assertEquals(expectedPath, linuxPath);
+  }
+
+  @Test
+  public void testGetOsSpecificManagedSdk_windowsFallbackLocalAppDataEnvNotSet() {
+    Path userHome = tempDir.getRoot().toPath();
+    Properties fakeProperties = getFakeProperties(userHome.toString());
+    Path expectedPath = userHome.resolve(".cache").resolve(cloudSdkPartialPath);
+
+    Path windowsPath =
+        ManagedCloudSdk.getOsSpecificManagedSdkHome(
+            OsInfo.Name.WINDOWS, fakeProperties, Collections.<String, String>emptyMap());
+
+    Assert.assertEquals(expectedPath, windowsPath);
+  }
+
+  @Test
+  public void testGetOsSpecificManagedSdk_windowsFallbackLocalAppDataDoesntExist() {
+    Path userHome = tempDir.getRoot().toPath();
+    Path localAppData = userHome.resolve("AppData").resolve("Local"); // not created
+    Properties fakeProperties = getFakeProperties(userHome.toString());
+    Path expectedPath = userHome.resolve(".cache").resolve(cloudSdkPartialPath);
+
+    Path windowsPath =
+        ManagedCloudSdk.getOsSpecificManagedSdkHome(
+            OsInfo.Name.WINDOWS,
+            fakeProperties,
+            ImmutableMap.of("LOCALAPPDATA", localAppData.toString()));
+
+    Assert.assertEquals(expectedPath, windowsPath);
+  }
+
+  @Test
+  public void testGetOsSpecificManagedSdk_macFallback() {
+    Path userHome = tempDir.getRoot().toPath();
+    Properties fakeProperties = getFakeProperties(userHome.toString());
+    Path expectedPath = userHome.resolve(".cache").resolve(cloudSdkPartialPath);
+
+    Path macPath =
+        ManagedCloudSdk.getOsSpecificManagedSdkHome(
+            OsInfo.Name.MAC, fakeProperties, Collections.<String, String>emptyMap());
+    Assert.assertEquals(expectedPath, macPath);
+  }
+
+  private static Properties getFakeProperties(String userHome) {
+    Properties properties = new Properties();
+    properties.put("user.home", userHome);
+    return properties;
   }
 }

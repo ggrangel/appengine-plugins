@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Google Inc. All Right Reserved.
+ * Copyright (c) 2018 Google Inc. All Right Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,13 @@
  *
  */
 
-package com.google.cloud.tools.gradle.appengine;
+package com.google.cloud.tools.gradle.appengine.core;
 
-import com.google.common.collect.FluentIterable;
-import java.util.List;
-import org.gradle.testkit.runner.BuildResult;
+import java.io.File;
 
-/** ToolsExtension to filter gradle test kit runner results. */
-public class BuildResultFilter {
+interface CloudSdkDownloader {
 
-  /** Extract task as a list of path strings. */
-  public static List<String> extractTasks(BuildResult buildResult) {
+  File downloadSdk(String version);
 
-    return FluentIterable.from(buildResult.getTasks())
-        .transform(buildTask -> buildTask.getPath())
-        .toList();
-  }
+  boolean isSdkValid(String version, File home);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Google Inc. All Right Reserved.
+ * Copyright (c) 2018 Google Inc. All Right Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,18 @@ public class ToolsExtension {
   private final Project project;
 
   private File cloudSdkHome;
+  private String cloudSdkVersion;
 
   public ToolsExtension(Project project) {
     this.project = project;
+  }
+
+  public String getCloudSdkVersion() {
+    return cloudSdkVersion;
+  }
+
+  public void setCloudSdkVersion(String cloudSdkVersion) {
+    this.cloudSdkVersion = cloudSdkVersion;
   }
 
   public File getCloudSdkHome() {

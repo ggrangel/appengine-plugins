@@ -16,11 +16,16 @@
 
 package com.google.cloud.tools.managedcloudsdk.components;
 
+import com.google.cloud.tools.io.FileDeleteVisitor;
 import com.google.cloud.tools.managedcloudsdk.command.CommandCaller;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +45,44 @@ public class WindowsBundledPythonCopier implements BundledPythonCopier {
       throws InterruptedException, CommandExitException, CommandExecutionException {
     List<String> copyPythonCommand =
         Arrays.asList(gcloud.toString(), "components", "copy-bundled-python");
+    // The path returned from gcloud points to the "python.exe" binary, e.g.,
+    // c:/users/ieuser/appdata/local/temp/tmpjmkt_z/python/python.exe
+    // However, it may not copy but return an existing Python executable.
+    //
     // A trim() required to remove newlines from call result. Using new lines in windows
     // environment passed through via ProcessBuilder will result in cryptic : "The syntax of
     // the command is incorrect."
-    String tempPythonLocation = commandCaller.call(copyPythonCommand, null, null).trim();
-    return ImmutableMap.of("CLOUDSDK_PYTHON", tempPythonLocation);
+    String pythonExePath = commandCaller.call(copyPythonCommand, null, null).trim();
+
+    if (isUnderTempDirectory(pythonExePath, System.getenv())) {
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteCopiedPython(pythonExePath)));
+    }
+
+    return ImmutableMap.of("CLOUDSDK_PYTHON", pythonExePath);
+  }
+
+  @VisibleForTesting
+  static boolean isUnderTempDirectory(String pythonExePath, Map<String, String> environment) {
+    Path pythonExe = Paths.get(pythonExePath);
+    String temp = environment.get("TEMP");
+    String tmp = environment.get("TMP");
+
+    return (temp != null && pythonExe.startsWith(temp))
+        || (tmp != null && pythonExe.startsWith(tmp));
+  }
+
+  @VisibleForTesting
+  static void deleteCopiedPython(String pythonExePath) {
+    // The path returned from gcloud points to the "python.exe" binary. Delete it from the path.
+    String pythonHome = pythonExePath.replaceAll("[pP][yY][tT][hH][oO][nN]\\.[eE][xX][eE]$", "");
+    boolean endsWithPythonExe = !pythonHome.equals(pythonExePath);
+
+    if (endsWithPythonExe) { // just to be safe
+      try {
+        Files.walkFileTree(Paths.get(pythonHome), new FileDeleteVisitor());
+      } catch (IOException e) {
+        // not critical to remove a temp directory
+      }
+    }
   }
 }

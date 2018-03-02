@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.install;
+package com.google.cloud.tools.managedcloudsdk.components;
 
-import java.util.List;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import java.util.Map;
 
-/** Operating System specific install script command line provider. */
-interface InstallScriptProvider {
-
+public interface BundledPythonCopier {
   /**
-   * Returns a list of strings for running the OS specific installer script. This list only contains
-   * the script itself and supporting CLI launch scripts. It does NOT provide configuration
-   * parameters for the script.
+   * Copy a cloud sdk bundled python into a temporary directory and return an environment map with
+   * the location of that bundled python {@code CLOUDSDK_PYTHON:path/to/copied/python}.
    */
-  List<String> getScriptCommandLine();
-
-  Map<String, String> getScriptEnvironment();
+  Map<String, String> copyPython()
+      throws InterruptedException, CommandExitException, CommandExecutionException;
 }

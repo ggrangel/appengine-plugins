@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.managedcloudsdk.install;
+package com.google.cloud.tools.managedcloudsdk.components;
 
-import java.util.Arrays;
-import org.junit.Assert;
-import org.junit.Test;
+import com.google.cloud.tools.managedcloudsdk.command.CommandCaller;
+import java.nio.file.Path;
 
-/** Tests for {@link WindowsInstallScriptProvider} */
-public class WindowsInstallScriptProviderTest {
-
-  @Test
-  public void testGetScriptCommandLine() {
-    Assert.assertEquals(
-        Arrays.asList("cmd.exe", "/c", "install.bat"),
-        new WindowsInstallScriptProvider().getScriptCommandLine());
+public class WindowsBundledPythonCopierTestHelper {
+  public static BundledPythonCopier newInstance(Path gcloud) {
+    return new WindowsBundledPythonCopier(gcloud, CommandCaller.newCaller());
   }
 }

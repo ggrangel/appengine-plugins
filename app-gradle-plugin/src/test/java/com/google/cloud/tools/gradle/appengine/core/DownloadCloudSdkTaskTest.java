@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Google Inc. All Right Reserved.
+ * Copyright 2018 Google LLC. All Right Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,25 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
+import com.google.cloud.tools.managedcloudsdk.BadCloudSdkVersionException;
+import com.google.cloud.tools.managedcloudsdk.ManagedCloudSdk;
+import com.google.cloud.tools.managedcloudsdk.ManagedSdkVerificationException;
+import com.google.cloud.tools.managedcloudsdk.ManagedSdkVersionMismatchException;
+import com.google.cloud.tools.managedcloudsdk.UnsupportedOsException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
+import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
+import com.google.cloud.tools.managedcloudsdk.components.SdkComponentInstaller;
+import com.google.cloud.tools.managedcloudsdk.install.SdkInstaller;
+import com.google.cloud.tools.managedcloudsdk.install.SdkInstallerException;
+import com.google.cloud.tools.managedcloudsdk.update.SdkUpdater;
 import java.io.IOException;
-import org.gradle.api.GradleException;
+import java.nio.file.Paths;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -39,113 +48,68 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DownloadCloudSdkTaskTest {
 
-  @Mock private ToolsExtension toolsExtension;
   @Mock private CloudSdkBuilderFactory cloudSdkBuilderFactory;
-  @Mock private CloudSdkDownloader sdkDownloader;
+  @Mock private ManagedCloudSdk managedCloudSdk;
+  @Mock private ManagedCloudSdkFactory managedCloudSdkFactory;
 
-  @Rule public ExpectedException exception = ExpectedException.none();
+  @Mock private SdkInstaller installer;
+  @Mock private SdkComponentInstaller componentInstaller;
+  @Mock private SdkUpdater updater;
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private DownloadCloudSdkTask downloadCloudSdkTask;
 
   /** Setup DownloadCloudSdkTaskTest. */
   @Before
-  public void setup() {
+  public void setup() throws UnsupportedOsException, BadCloudSdkVersionException {
     Project tempProject = ProjectBuilder.builder().build();
     downloadCloudSdkTask =
         tempProject.getTasks().create("tempDownloadTask", DownloadCloudSdkTask.class);
     downloadCloudSdkTask.setCloudSdkBuilderFactory(cloudSdkBuilderFactory);
-    downloadCloudSdkTask.setToolsExtension(toolsExtension);
-    downloadCloudSdkTask.setSdkDownloader(sdkDownloader);
+    downloadCloudSdkTask.setManagedCloudSdkFactory(managedCloudSdkFactory);
+
+    when(managedCloudSdk.newInstaller()).thenReturn(installer);
+    when(managedCloudSdk.newComponentInstaller()).thenReturn(componentInstaller);
+    when(managedCloudSdk.newUpdater()).thenReturn(updater);
+    when(managedCloudSdk.getSdkHome()).thenReturn(Paths.get(""));
+
+    when(managedCloudSdkFactory.newManagedSdk()).thenReturn(managedCloudSdk);
   }
 
   @Test
-  public void testDownloadCloudSdkAction_validateTrue() {
-    String version = "LATEST";
-    File home = getTempHomeDirectory("LATEST");
-    when(toolsExtension.getCloudSdkVersion()).thenReturn(version);
-    when(toolsExtension.getCloudSdkHome()).thenReturn(home);
-
-    when(sdkDownloader.isSdkValid(version, home)).thenReturn(true);
-
+  public void testDownloadCloudSdkAction_install()
+      throws UnsupportedOsException, BadCloudSdkVersionException, ManagedSdkVerificationException,
+          ManagedSdkVersionMismatchException, InterruptedException, CommandExecutionException,
+          SdkInstallerException, IOException, CommandExitException {
+    when(managedCloudSdk.isInstalled()).thenReturn(false);
     downloadCloudSdkTask.downloadCloudSdkAction();
-    verify(sdkDownloader, never()).downloadSdk(version);
-    verify(cloudSdkBuilderFactory).setCloudSdkHome(home);
+    verify(managedCloudSdk).newInstaller();
   }
 
   @Test
-  public void testDownloadCloudSdkAction_validateFalse() {
-    String version = "LATEST";
-    File home = getTempHomeDirectory("100.100.100");
-    when(toolsExtension.getCloudSdkVersion()).thenReturn(version);
-    when(toolsExtension.getCloudSdkHome()).thenReturn(home);
-
-    when(sdkDownloader.isSdkValid(version, home)).thenReturn(false);
-
-    exception.expect(GradleException.class);
-    exception.expectMessage(
-        "Specified Cloud SDK version and actual version of the SDK installed in the "
-            + "specified directory do not match. You must either specify the correct "
-            + "cloudSdkHome and cloudSdkVersion, or you can remove the cloudSdkHome field "
-            + "to download the version you want.");
-
+  public void testDownloadCloudSdkAction_installComponent()
+      throws UnsupportedOsException, BadCloudSdkVersionException, ManagedSdkVerificationException,
+          ManagedSdkVersionMismatchException, InterruptedException, CommandExecutionException,
+          SdkInstallerException, IOException, CommandExitException {
+    when(managedCloudSdk.isInstalled()).thenReturn(true);
+    when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(false);
     downloadCloudSdkTask.downloadCloudSdkAction();
-    verify(sdkDownloader, never()).downloadSdk(version);
-    verify(cloudSdkBuilderFactory, never()).setCloudSdkHome(home);
+    verify(managedCloudSdk, never()).newInstaller();
+    verify(managedCloudSdk).newComponentInstaller();
   }
 
   @Test
-  public void testDownloadCloudSdkAction_noValidation() {
-    String version = null;
-    File home = getTempHomeDirectory("LATEST");
-    when(toolsExtension.getCloudSdkVersion()).thenReturn(version);
-    when(toolsExtension.getCloudSdkHome()).thenReturn(home);
-
+  public void testDownloadCloudSdkAction_update()
+      throws UnsupportedOsException, BadCloudSdkVersionException, ManagedSdkVerificationException,
+          ManagedSdkVersionMismatchException, InterruptedException, CommandExecutionException,
+          SdkInstallerException, IOException, CommandExitException {
+    when(managedCloudSdk.isInstalled()).thenReturn(true);
+    when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(true);
+    when(managedCloudSdk.isUpToDate()).thenReturn(false);
     downloadCloudSdkTask.downloadCloudSdkAction();
-    verify(sdkDownloader, never()).downloadSdk(version);
-    verify(cloudSdkBuilderFactory).setCloudSdkHome(home);
-  }
-
-  @Test
-  public void testDownloadCloudSdkAction_downloadVersion() {
-    String version = "100.100.100";
-    File home = null;
-    when(toolsExtension.getCloudSdkVersion()).thenReturn(version);
-    when(toolsExtension.getCloudSdkHome()).thenReturn(home);
-
-    File tempDir = getTempHomeDirectory(version);
-    when(sdkDownloader.downloadSdk(version)).thenReturn(tempDir);
-
-    downloadCloudSdkTask.downloadCloudSdkAction();
-    verify(sdkDownloader).downloadSdk(version);
-    verify(cloudSdkBuilderFactory).setCloudSdkHome(tempDir);
-  }
-
-  @Test
-  public void testDownloadCloudSdkAction_downloadLatest() {
-    String version = null;
-    File home = null;
-    when(toolsExtension.getCloudSdkVersion()).thenReturn(version);
-    when(toolsExtension.getCloudSdkHome()).thenReturn(home);
-
-    File tempDir = getTempHomeDirectory("LATEST");
-    when(sdkDownloader.downloadSdk("LATEST")).thenReturn(tempDir);
-
-    downloadCloudSdkTask.downloadCloudSdkAction();
-    verify(sdkDownloader).downloadSdk("LATEST");
-    verify(cloudSdkBuilderFactory).setCloudSdkHome(tempDir);
-  }
-
-  private File getTempHomeDirectory(String version) {
-    try {
-      return temporaryFolder.newFolder(version);
-    } catch (IOException ex) {
-      Assert.fail(
-          "Failed to create temp Cloud SDK download directory at "
-              + version
-              + ": "
-              + ex.getMessage());
-      return null;
-    }
+    verify(managedCloudSdk, never()).newInstaller();
+    verify(managedCloudSdk, never()).newComponentInstaller();
+    verify(managedCloudSdk).newUpdater();
   }
 }

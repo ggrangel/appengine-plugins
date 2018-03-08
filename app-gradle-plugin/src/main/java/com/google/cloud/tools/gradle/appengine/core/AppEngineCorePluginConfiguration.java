@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Google Inc. All Right Reserved.
+ * Copyright 2016 Google LLC. All Right Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class AppEngineCorePluginConfiguration {
   private DeployExtension deployExtension;
   private ToolsExtension toolsExtension;
   private CloudSdkBuilderFactory cloudSdkBuilderFactory;
+  private ManagedCloudSdkFactory managedCloudSdkFactory;
   private String taskGroup;
 
   /** Configure core tasks for appengine flexible and standard project plugins. */
@@ -57,7 +58,7 @@ public class AppEngineCorePluginConfiguration {
     this.taskGroup = taskGroup;
     this.toolsExtension = appEngineCoreExtensionProperties.getTools();
     this.deployExtension = appEngineCoreExtensionProperties.getDeploy();
-    configureCloudSdkBuilderFactory();
+    configureFactories();
 
     createDownloadCloudSdkTask();
     createDeployTask();
@@ -69,11 +70,12 @@ public class AppEngineCorePluginConfiguration {
     createShowConfigurationTask();
   }
 
-  private void configureCloudSdkBuilderFactory() {
+  private void configureFactories() {
     project.afterEvaluate(
         project -> {
           // create the sdk builder factory after we know the location of the sdk
           cloudSdkBuilderFactory = new CloudSdkBuilderFactory(toolsExtension.getCloudSdkHome());
+          managedCloudSdkFactory = new ManagedCloudSdkFactory(toolsExtension.getCloudSdkVersion());
         });
   }
 
@@ -89,11 +91,14 @@ public class AppEngineCorePluginConfiguration {
 
               project.afterEvaluate(
                   p -> {
-                    downloadCloudSdkTask.setToolsExtension(toolsExtension);
                     downloadCloudSdkTask.setCloudSdkBuilderFactory(cloudSdkBuilderFactory);
-                    p.getTasks()
-                        .matching(task -> task.getName().startsWith("appengine"))
-                        .forEach(task -> task.dependsOn(downloadCloudSdkTask));
+                    downloadCloudSdkTask.setManagedCloudSdkFactory(managedCloudSdkFactory);
+
+                    if (toolsExtension.getCloudSdkHome() == null) {
+                      p.getTasks()
+                          .matching(task -> task.getName().startsWith("appengine"))
+                          .forEach(task -> task.dependsOn(downloadCloudSdkTask));
+                    }
                   });
             });
   }

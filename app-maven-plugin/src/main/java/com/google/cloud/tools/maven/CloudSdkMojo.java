@@ -32,6 +32,10 @@ public abstract class CloudSdkMojo extends AbstractMojo {
   @Parameter(property = "cloudSdkPath", required = false)
   private File cloudSdkPath;
 
+  /** Optional parameter to configure the version of the Google Cloud SDK. */
+  @Parameter(property = "cloudSdkVersion", required = false)
+  private String cloudSdkVersion;
+
   @Parameter(defaultValue = "${plugin}", readonly = true)
   private PluginDescriptor pluginDescriptor;
 
@@ -50,6 +54,10 @@ public abstract class CloudSdkMojo extends AbstractMojo {
 
   public Path getCloudSdkPath() {
     return cloudSdkPath != null ? cloudSdkPath.toPath() : null;
+  }
+
+  public String getCloudSdkVersion() {
+    return cloudSdkVersion;
   }
 
   public AppEngineFactory getAppEngineFactory() {

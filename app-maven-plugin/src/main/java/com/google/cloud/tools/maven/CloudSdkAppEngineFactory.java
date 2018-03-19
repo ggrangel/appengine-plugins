@@ -30,6 +30,7 @@ import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineStandardStagin
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkGenRepoInfoFile;
 import com.google.cloud.tools.appengine.cloudsdk.process.NonZeroExceptionExitListener;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessOutputLineListener;
+import java.nio.file.Path;
 import org.apache.maven.plugin.logging.Log;
 
 /** Factory for App Engine dependencies. */
@@ -102,17 +103,39 @@ public class CloudSdkAppEngineFactory implements AppEngineFactory {
   }
 
   protected CloudSdk.Builder defaultCloudSdkBuilder() {
+    Path sdkPath = mojo.getCloudSdkPath();
+    if (mojo.getCloudSdkPath() == null) {
+      sdkPath = downloadCloudSdk();
+    } else if (mojo.getCloudSdkVersion() != null) {
+      checkCloudSdk();
+    }
 
     ProcessOutputLineListener lineListener = new DefaultProcessOutputLineListener(mojo.getLog());
 
     return cloudSdkFactory
         .cloudSdkBuilder()
-        .sdkPath(mojo.getCloudSdkPath())
+        .sdkPath(sdkPath)
         .addStdOutLineListener(lineListener)
         .addStdErrLineListener(lineListener)
         .exitListener(new NonZeroExceptionExitListener())
         .appCommandMetricsEnvironment(mojo.getArtifactId())
         .appCommandMetricsEnvironmentVersion(mojo.getArtifactVersion());
+  }
+
+  /**
+   * Downloads/installs/updates the Cloud SDK
+   *
+   * @return The cloud SDK installation directory
+   */
+  public Path downloadCloudSdk() {
+    // Just logging a warning here for now so tests don't fail
+    mojo.getLog().warn("Downloading Cloud SDK (not implemented)");
+    return null;
+  }
+
+  /** Verifies the cloud sdk installation */
+  public void checkCloudSdk() {
+    mojo.getLog().warn("Checking Cloud SDK (not implemented)");
   }
 
   /**

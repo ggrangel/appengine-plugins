@@ -36,16 +36,26 @@ import org.apache.maven.plugin.logging.Log;
 /** Factory for App Engine dependencies. */
 public class CloudSdkAppEngineFactory implements AppEngineFactory {
 
-  protected CloudSdkFactory cloudSdkFactory;
+  private CloudSdkFactory cloudSdkFactory;
   private CloudSdkMojo mojo;
+  private CloudSdkOperationsFactory cloudSdkOperationsFactory;
 
+  /**
+   * Constructs a new CloudSdkAppEngineFactory
+   *
+   * @param mojo The mojo containing Cloud Sdk configuration parameters
+   */
   public CloudSdkAppEngineFactory(CloudSdkMojo mojo) {
-    this(mojo, new CloudSdkFactory());
+    this(mojo, new CloudSdkFactory(), new CloudSdkOperationsFactory(mojo.getCloudSdkVersion()));
   }
 
-  public CloudSdkAppEngineFactory(CloudSdkMojo mojo, CloudSdkFactory cloudSdkFactory) {
+  private CloudSdkAppEngineFactory(
+      CloudSdkMojo mojo,
+      CloudSdkFactory cloudSdkFactory,
+      CloudSdkOperationsFactory cloudSdkOperationsFactory) {
     this.mojo = mojo;
     this.cloudSdkFactory = cloudSdkFactory;
+    this.cloudSdkOperationsFactory = cloudSdkOperationsFactory;
   }
 
   @Override
@@ -108,9 +118,9 @@ public class CloudSdkAppEngineFactory implements AppEngineFactory {
 
     Path sdkPath = mojo.getCloudSdkHome();
     if (mojo.getCloudSdkHome() == null) {
-      sdkPath = downloadCloudSdk();
+      sdkPath = cloudSdkOperationsFactory.newDownloader().downloadCloudSdk(mojo.getLog());
     } else if (mojo.getCloudSdkVersion() != null) {
-      checkCloudSdk();
+      cloudSdkOperationsFactory.newChecker().checkCloudSdk(mojo.getLog());
     }
 
     ProcessOutputLineListener lineListener = new DefaultProcessOutputLineListener(mojo.getLog());
@@ -126,29 +136,13 @@ public class CloudSdkAppEngineFactory implements AppEngineFactory {
   }
 
   /**
-   * Downloads/installs/updates the Cloud SDK
-   *
-   * @return The cloud SDK installation directory
-   */
-  public Path downloadCloudSdk() {
-    // Just logging a warning here for now so tests don't fail
-    mojo.getLog().warn("Downloading Cloud SDK (not implemented)");
-    return null;
-  }
-
-  /** Verifies the cloud sdk installation */
-  public void checkCloudSdk() {
-    mojo.getLog().warn("Checking Cloud SDK (not implemented)");
-  }
-
-  /**
    * Default output listener that copies output to the Maven Mojo logger with a 'GCLOUD: ' prefix.
    */
   protected static class DefaultProcessOutputLineListener implements ProcessOutputLineListener {
 
     private Log log;
 
-    public DefaultProcessOutputLineListener(Log log) {
+    DefaultProcessOutputLineListener(Log log) {
       this.log = log;
     }
 

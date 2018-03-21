@@ -23,14 +23,8 @@ import com.google.cloud.tools.managedcloudsdk.Version;
 import com.google.common.base.Strings;
 
 public class CloudSdkOperationsFactory {
-  private String version;
-
-  CloudSdkOperationsFactory(String version) {
-    this.version = version;
-  }
-
   /** Build a new ManagedCloudSdk from a given version */
-  public ManagedCloudSdk newManagedSdk()
+  public ManagedCloudSdk newManagedSdk(String version)
       throws UnsupportedOsException, BadCloudSdkVersionException {
     if (Strings.isNullOrEmpty(version)) {
       return ManagedCloudSdk.newManagedSdk();
@@ -40,16 +34,16 @@ public class CloudSdkOperationsFactory {
   }
 
   /** Build a new CloudSdkDownloader */
-  public CloudSdkDownloader newDownloader() {
+  public CloudSdkDownloader newDownloader(String version) {
     try {
-      return new CloudSdkDownloader(newManagedSdk());
+      return new CloudSdkDownloader(newManagedSdk(version));
     } catch (UnsupportedOsException | BadCloudSdkVersionException ex) {
       throw new RuntimeException(ex);
     }
   }
 
   /** Build a new CloudSdkChecker */
-  public CloudSdkChecker newChecker() {
-    return new CloudSdkChecker();
+  public CloudSdkChecker newChecker(String version) {
+    return new CloudSdkChecker(version);
   }
 }

@@ -22,21 +22,40 @@ import com.google.cloud.tools.managedcloudsdk.UnsupportedOsException;
 import com.google.cloud.tools.managedcloudsdk.Version;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class CloudSdkOperationsFactoryTest {
 
   @Test
   public void testNewManagedSdk_null() throws UnsupportedOsException, BadCloudSdkVersionException {
     // There's no way of testing for direct ManagedCloudSdk equality, so compare home paths
-    ManagedCloudSdk sdk = new CloudSdkOperationsFactory(null).newManagedSdk();
+    ManagedCloudSdk sdk = new CloudSdkOperationsFactory().newManagedSdk(null);
     Assert.assertEquals(ManagedCloudSdk.newManagedSdk().getSdkHome(), sdk.getSdkHome());
   }
 
   @Test
   public void testNewManagedSdk_specific()
       throws UnsupportedOsException, BadCloudSdkVersionException {
-    ManagedCloudSdk sdk = new CloudSdkOperationsFactory("191.0.0").newManagedSdk();
+    ManagedCloudSdk sdk = new CloudSdkOperationsFactory().newManagedSdk("191.0.0");
     Assert.assertEquals(
         ManagedCloudSdk.newManagedSdk(new Version("191.0.0")).getSdkHome(), sdk.getSdkHome());
+  }
+
+  @Test
+  public void testNewDownloader() throws BadCloudSdkVersionException, UnsupportedOsException {
+    CloudSdkDownloader expected =
+        new CloudSdkDownloader(ManagedCloudSdk.newManagedSdk(new Version("191.0.0")));
+    CloudSdkDownloader actual = new CloudSdkOperationsFactory().newDownloader("191.0.0");
+    Assert.assertEquals(
+        expected.getManagedCloudSdk().getSdkHome(), actual.getManagedCloudSdk().getSdkHome());
+  }
+
+  @Test
+  public void testNewChecker() {
+    CloudSdkChecker expected = new CloudSdkChecker("191.0.0");
+    CloudSdkChecker actual = new CloudSdkOperationsFactory().newChecker("191.0.0");
+    Assert.assertEquals(expected.getVersion(), actual.getVersion());
   }
 }

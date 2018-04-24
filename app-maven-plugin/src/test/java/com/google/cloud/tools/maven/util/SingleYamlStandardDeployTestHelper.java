@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.cloud.tools.appengine.api.deploy.AppEngineDeployment;
 import com.google.cloud.tools.appengine.api.deploy.AppEngineStandardStaging;
-import com.google.cloud.tools.maven.AbstractSingleYamlDeployMojo;
+import com.google.cloud.tools.maven.AbstractDeployMojo;
 import com.google.cloud.tools.maven.CloudSdkAppEngineFactory;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -23,7 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class SingleYamlStandardDeployTestHelper<M extends AbstractSingleYamlDeployMojo>
+public class SingleYamlStandardDeployTestHelper<M extends AbstractDeployMojo>
     extends ExternalResource {
 
   @Mock private AppEngineStandardStaging standardStagingMock;
@@ -47,6 +47,7 @@ public class SingleYamlStandardDeployTestHelper<M extends AbstractSingleYamlDepl
   public void before() throws IOException {
     mojo.setStagingDirectory(temporaryFolder.newFolder("staging"));
     mojo.setSourceDirectory(temporaryFolder.newFolder("source"));
+    mojo.setProject("test-project");
     MockitoAnnotations.initMocks(this);
 
     // create appengine-web.xml to mark it as standard environment

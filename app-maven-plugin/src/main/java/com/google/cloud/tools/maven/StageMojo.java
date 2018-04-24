@@ -16,28 +16,16 @@
 
 package com.google.cloud.tools.maven;
 
-import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.cloud.tools.appengine.api.deploy.StageFlexibleConfiguration;
 import com.google.cloud.tools.appengine.api.deploy.StageStandardConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 /**
  * Generates a deploy-ready application directory for App Engine standard or flexible environment
@@ -148,13 +136,13 @@ public class StageMojo extends CloudSdkMojo
   private boolean disableUpdateCheck = true;
 
   // allows forcing runtime to 'java' for compat Java 8 projects
-  private String runtime;
+  protected String runtime;
 
   @Parameter(defaultValue = "${basedir}/src/main/docker/Dockerfile", readonly = true)
-  private File dockerfilePrimaryDefaultLocation;
+  protected File dockerfilePrimaryDefaultLocation;
 
   @Parameter(defaultValue = "${basedir}/src/main/appengine/Dockerfile", readonly = true)
-  private File dockerfileSecondaryDefaultLocation;
+  protected File dockerfileSecondaryDefaultLocation;
 
   ///////////////////////////////////
   // Flexible-only params
@@ -195,94 +183,7 @@ public class StageMojo extends CloudSdkMojo
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    if (!"war".equals(getPackaging()) && !"jar".equals(getPackaging())) {
-      // https://github.com/GoogleCloudPlatform/app-maven-plugin/issues/85
-      getLog().info("Staging is only executed for war and jar modules.");
-      return;
-    }
-    // delete staging directory if it exists
-    if (stagingDirectory.exists()) {
-      getLog().info("Deleting the staging directory: " + stagingDirectory);
-      try {
-        FileUtils.deleteDirectory(stagingDirectory);
-      } catch (IOException e) {
-        throw new MojoFailureException("Unable to delete staging directory.", e);
-      }
-    }
-    if (!stagingDirectory.mkdir()) {
-      throw new MojoExecutionException("Unable to create staging directory");
-    }
-
-    getLog().info("Staging the application to: " + stagingDirectory);
-
-    configureAppEngineDirectory();
-
-    if (isStandardStaging()) {
-      getLog().info("Detected App Engine standard environment application.");
-
-      // force runtime to 'java' for compat projects using Java version >1.7
-      AppEngineWebXml appengineWebXml =
-          new AppEngineWebXml(
-              new File(
-                  sourceDirectory
-                      .toPath()
-                      .resolve("WEB-INF")
-                      .resolve("appengine-web.xml")
-                      .toString()));
-      if (Float.parseFloat(getCompileTargetVersion()) > 1.7f && appengineWebXml.isVm()) {
-        runtime = "java";
-      }
-
-      // Dockerfile default location
-      configureDockerfileDefaultLocation();
-
-      try {
-        getAppEngineFactory().standardStaging().stageStandard(this);
-      } catch (AppEngineException ex) {
-        throw new RuntimeException(ex);
-      }
-    } else {
-      getLog().info("Detected App Engine flexible environment application.");
-      try {
-        getAppEngineFactory().flexibleStaging().stageFlexible(this);
-      } catch (AppEngineException ex) {
-        throw new RuntimeException(ex);
-      }
-    }
-  }
-
-  protected boolean isStandardStaging() {
-    return Files.exists(sourceDirectory.toPath().resolve("WEB-INF").resolve("appengine-web.xml"));
-  }
-
-  protected void configureDockerfileDefaultLocation() {
-    if (dockerfile == null) {
-      if (dockerfilePrimaryDefaultLocation != null && dockerfilePrimaryDefaultLocation.exists()) {
-        dockerfile = dockerfilePrimaryDefaultLocation;
-      } else if (dockerfileSecondaryDefaultLocation != null
-          && dockerfileSecondaryDefaultLocation.exists()) {
-        dockerfile = dockerfileSecondaryDefaultLocation;
-      }
-    }
-  }
-
-  /**
-   * Sets {@link #appEngineDirectory} to <code>${basedir}/src/main/appengine</code>.
-   *
-   * <p>Called during {@link #execute()}, subclasses can override to provide a different value for
-   * {@link #appEngineDirectory}.
-   */
-  protected void configureAppEngineDirectory() {
-    if (appEngineDirectory == null) {
-      appEngineDirectory =
-          mavenProject
-              .getBasedir()
-              .toPath()
-              .resolve("src")
-              .resolve("main")
-              .resolve("appengine")
-              .toFile();
-    }
+    AppEngineStager.Factory.newStager(this).stage();
   }
 
   @Override
@@ -358,46 +259,6 @@ public class StageMojo extends CloudSdkMojo
   @Override
   public String getRuntime() {
     return runtime;
-  }
-
-  /**
-   * Simple parser for appengine-web.xml, this should ideally not exist, but we need it to correctly
-   * error when vm=false and the user is using java8 as the target platform
-   */
-  private static class AppEngineWebXml {
-
-    private final Document document;
-
-    private AppEngineWebXml(File appengineWebXml) throws MojoExecutionException {
-      try {
-        if (appengineWebXml.exists()) {
-          document =
-              DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(appengineWebXml);
-        } else {
-          document = null;
-        }
-      } catch (SAXException | IOException | ParserConfigurationException e) {
-        throw new MojoExecutionException("Failed to parse appengine-web.xml", e);
-      }
-    }
-
-    public static AppEngineWebXml parse(File appengineWebXml) throws MojoExecutionException {
-      return new AppEngineWebXml(appengineWebXml);
-    }
-
-    public boolean exists() {
-      return document != null;
-    }
-
-    public boolean isVm() throws MojoExecutionException {
-      try {
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        String expression = "/appengine-web-app/vm/text()='true'";
-        return (Boolean) xpath.evaluate(expression, document, XPathConstants.BOOLEAN);
-      } catch (XPathExpressionException e) {
-        throw new MojoExecutionException("XPath evaluation failed on appengine-web.xml", e);
-      }
-    }
   }
 
   @VisibleForTesting

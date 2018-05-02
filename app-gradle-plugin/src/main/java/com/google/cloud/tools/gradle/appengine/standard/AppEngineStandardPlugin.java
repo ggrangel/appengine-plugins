@@ -21,8 +21,10 @@ import com.google.cloud.tools.gradle.appengine.core.AppEngineCorePluginConfigura
 import com.google.cloud.tools.gradle.appengine.core.CloudSdkBuilderFactory;
 import com.google.cloud.tools.gradle.appengine.core.DeployAllTask;
 import com.google.cloud.tools.gradle.appengine.core.DeployExtension;
+import com.google.cloud.tools.gradle.appengine.core.DeployTask;
 import com.google.cloud.tools.gradle.appengine.core.ToolsExtension;
 import java.io.File;
+import java.util.Collections;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.BasePlugin;
@@ -95,9 +97,6 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
 
           // obtain deploy extension and set defaults
           DeployExtension deploy = appengineExtension.getDeploy();
-          if (deploy.getDeployables() == null) {
-            deploy.setDeployables(new File(stageExtension.getStagingDirectory(), "app.yaml"));
-          }
           if (deploy.getAppEngineDirectory() == null) {
             deploy.setAppEngineDirectory(
                 new File(stageExtension.getStagingDirectory(), "WEB-INF/appengine-generated"));
@@ -121,6 +120,14 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
                       .getByName(AppEngineCorePluginConfiguration.DEPLOY_ALL_TASK_NAME);
           deployAllTask.setStageDirectory(stageExtension.getStagingDirectory());
           deployAllTask.setDeployConfig(deploy);
+
+          DeployTask deployTask =
+              (DeployTask)
+                  project.getTasks().getByName(AppEngineCorePluginConfiguration.DEPLOY_TASK_NAME);
+          deployTask.setDeployConfig(
+              deploy,
+              Collections.singletonList(
+                  new File(stageExtension.getStagingDirectory(), "app.yaml")));
         });
   }
 

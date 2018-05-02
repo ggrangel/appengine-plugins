@@ -20,8 +20,8 @@ package com.google.cloud.tools.gradle.appengine.core;
 import com.google.cloud.tools.appengine.api.deploy.DeployConfiguration;
 import com.google.cloud.tools.appengine.api.deploy.DeployProjectConfigurationConfiguration;
 import com.google.cloud.tools.gradle.appengine.standard.PropertyResolver;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import org.gradle.api.Project;
 
@@ -31,9 +31,9 @@ public class DeployExtension
 
   // named gradleProject to disambiguate with deploy parameter "project"
   private final Project gradleProject;
+  private final ImmutableList<File> deployables;
 
   private String bucket;
-  private List<File> deployables;
   private String imageUrl;
   private String project;
   private Boolean promote;
@@ -45,14 +45,13 @@ public class DeployExtension
 
   public DeployExtension(Project gradleProject) {
     this.gradleProject = gradleProject;
+    this.deployables = ImmutableList.of();
   }
 
-  /** Creates and return a deep copy of the DeployExtension. */
-  public DeployExtension(DeployExtension deployExtension) {
+  /** Creates and returns a copy of the DeployExtension with specified deployables. */
+  public DeployExtension(DeployExtension deployExtension, List<File> deployables) {
     this.gradleProject = deployExtension.gradleProject;
     this.bucket = deployExtension.bucket;
-    this.deployables =
-        deployExtension.deployables == null ? null : new ArrayList<>(deployExtension.deployables);
     this.imageUrl = deployExtension.imageUrl;
     this.project = deployExtension.project;
     this.promote = deployExtension.promote;
@@ -61,6 +60,7 @@ public class DeployExtension
     this.version = deployExtension.version;
     this.appEngineDirectory = deployExtension.appEngineDirectory;
     this.propertyResolver = deployExtension.propertyResolver;
+    this.deployables = ImmutableList.copyOf(deployables);
   }
 
   @Override
@@ -75,10 +75,6 @@ public class DeployExtension
   @Override
   public List<File> getDeployables() {
     return deployables;
-  }
-
-  public void setDeployables(Object deployables) {
-    this.deployables = new ArrayList<>(gradleProject.files(deployables).getFiles());
   }
 
   @Override

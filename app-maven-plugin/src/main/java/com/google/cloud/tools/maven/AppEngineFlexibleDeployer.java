@@ -18,125 +18,152 @@ package com.google.cloud.tools.maven;
 
 import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.nio.file.Path;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 
 public class AppEngineFlexibleDeployer implements AppEngineDeployer {
 
   private AbstractDeployMojo deployMojo;
-  private AppEngineStager stager;
+  private AppEngineFlexibleStager stager;
 
   AppEngineFlexibleDeployer(AbstractDeployMojo deployMojo) {
-    this(deployMojo, AppEngineStager.Factory.newStager(deployMojo));
+    this(deployMojo, new AppEngineFlexibleStager(deployMojo));
   }
 
   @VisibleForTesting
-  AppEngineFlexibleDeployer(AbstractDeployMojo deployMojo, AppEngineStager stager) {
+  AppEngineFlexibleDeployer(AbstractDeployMojo deployMojo, AppEngineFlexibleStager stager) {
     this.deployMojo = deployMojo;
     this.stager = stager;
+
+    stager.overrideAppEngineDirectory();
+    setDeploymentProjectAndVersion();
   }
 
   @Override
-  public void deploy() throws MojoFailureException, MojoExecutionException {
+  public void deploy() throws MojoExecutionException {
     stager.stage();
-    deployMojo.deployables.clear();
-    deployMojo.deployables.add(deployMojo.stagingDirectory);
+    deployMojo.setDeployables(ImmutableList.of(deployMojo.getStagingDirectory()));
 
     try {
       deployMojo.getAppEngineFactory().deployment().deploy(deployMojo);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      throw new MojoExecutionException("Flexible application deployment failed", ex);
     }
   }
 
   @Override
-  public void deployAll() throws MojoExecutionException, MojoFailureException {
+  public void deployAll() throws MojoExecutionException {
     stager.stage();
-    deployMojo.deployables.clear();
+    ImmutableList.Builder<File> flexDeployables = ImmutableList.builder();
 
     // Look for app.yaml
-    File appYaml = deployMojo.stagingDirectory.toPath().resolve("app.yaml").toFile();
+    File appYaml = deployMojo.getStagingDirectory().toPath().resolve("app.yaml").toFile();
     if (!appYaml.exists()) {
-      appYaml = deployMojo.appEngineDirectory.toPath().resolve("app.yaml").toFile();
+      appYaml = deployMojo.getAppEngineDirectory().toPath().resolve("app.yaml").toFile();
       if (!appYaml.exists()) {
         throw new MojoExecutionException("Failed to deploy all: could not find app.yaml.");
       }
     }
     deployMojo.getLog().info("deployAll: Preparing to deploy app.yaml");
-    deployMojo.deployables.add(appYaml);
+    flexDeployables.add(appYaml);
 
     // Look for config yamls
     String[] configYamls = {"cron.yaml", "dispatch.yaml", "dos.yaml", "index.yaml", "queue.yaml"};
-    Path configPath = deployMojo.appEngineDirectory.toPath();
+    Path configPath = deployMojo.getAppEngineDirectory().toPath();
     for (String yamlName : configYamls) {
       File yaml = configPath.resolve(yamlName).toFile();
       if (yaml.exists()) {
         deployMojo.getLog().info("deployAll: Preparing to deploy " + yamlName);
-        deployMojo.deployables.add(yaml);
+        flexDeployables.add(yaml);
       }
     }
+
+    deployMojo.setDeployables(flexDeployables.build());
 
     try {
       deployMojo.getAppEngineFactory().deployment().deploy(deployMojo);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      throw new MojoExecutionException("Failed to deploy", ex);
     }
   }
 
   @Override
-  public void deployCron() throws MojoFailureException, MojoExecutionException {
-    stager.configureAppEngineDirectory();
-    stager.stage();
+  public void deployCron() throws MojoExecutionException {
     try {
       deployMojo.getAppEngineFactory().deployment().deployCron(deployMojo);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      throw new MojoExecutionException("Failed to deploy", ex);
     }
   }
 
   @Override
-  public void deployDispatch() throws MojoFailureException, MojoExecutionException {
-    stager.configureAppEngineDirectory();
-    stager.stage();
+  public void deployDispatch() throws MojoExecutionException {
     try {
       deployMojo.getAppEngineFactory().deployment().deployDispatch(deployMojo);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      throw new MojoExecutionException("Failed to deploy", ex);
     }
   }
 
   @Override
-  public void deployDos() throws MojoFailureException, MojoExecutionException {
-    stager.configureAppEngineDirectory();
-    stager.stage();
+  public void deployDos() throws MojoExecutionException {
     try {
       deployMojo.getAppEngineFactory().deployment().deployDos(deployMojo);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      throw new MojoExecutionException("Failed to deploy", ex);
     }
   }
 
   @Override
-  public void deployIndex() throws MojoFailureException, MojoExecutionException {
-    stager.configureAppEngineDirectory();
-    stager.stage();
+  public void deployIndex() throws MojoExecutionException {
     try {
       deployMojo.getAppEngineFactory().deployment().deployIndex(deployMojo);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      throw new MojoExecutionException("Failed to deploy", ex);
     }
   }
 
   @Override
-  public void deployQueue() throws MojoFailureException, MojoExecutionException {
-    stager.configureAppEngineDirectory();
-    stager.stage();
+  public void deployQueue() throws MojoExecutionException {
     try {
       deployMojo.getAppEngineFactory().deployment().deployQueue(deployMojo);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      throw new MojoExecutionException("Failed to deploy", ex);
+    }
+  }
+
+  @VisibleForTesting
+  private void setDeploymentProjectAndVersion() {
+    String project = deployMojo.getProject();
+    if (project == null || project.trim().isEmpty() || project.equals(APPENGINE_CONFIG)) {
+      throw new IllegalArgumentException(
+          "Deployment project must be defined or configured to read from system state\n"
+              + "1. Set <project>my-project-name</project>\n"
+              + "2. Set <project>"
+              + GCLOUD_CONFIG
+              + "</project> to use project from gcloud config.\n"
+              + "3. Using <project>"
+              + APPENGINE_CONFIG
+              + "</project> is not allowed for flexible environment projects");
+    } else if (project.equals(GCLOUD_CONFIG)) {
+      deployMojo.setProject(null);
+    }
+
+    String version = deployMojo.getVersion();
+    if (version == null || version.trim().isEmpty() || version.equals(APPENGINE_CONFIG)) {
+      throw new IllegalArgumentException(
+          "Deployment version must be defined or configured to read from system state\n"
+              + "1. Set <version>my-version</version>\n"
+              + "2. Set <version>"
+              + GCLOUD_CONFIG
+              + "</version> to use version from gcloud config.\n"
+              + "3. Using <version>"
+              + APPENGINE_CONFIG
+              + "</version> is not allowed for flexible environment projects");
+    } else if (version.equals(GCLOUD_CONFIG)) {
+      deployMojo.setVersion(null);
     }
   }
 }

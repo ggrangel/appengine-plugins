@@ -21,11 +21,9 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.cloud.tools.maven.util.SingleYamlStandardDeployTestHelper;
-import java.io.IOException;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -47,9 +45,8 @@ public class StandardDeployCronMojoTest {
 
   @Test
   @Parameters({"jar", "war"})
-  public void testDeploy(String packaging)
-      throws IOException, MojoFailureException, MojoExecutionException, AppEngineException {
-    when(mojo.mavenProject.getPackaging()).thenReturn(packaging);
+  public void testDeploy(String packaging) throws MojoExecutionException, AppEngineException {
+    when(mojo.getMavenProject().getPackaging()).thenReturn(packaging);
 
     mojo.execute();
 

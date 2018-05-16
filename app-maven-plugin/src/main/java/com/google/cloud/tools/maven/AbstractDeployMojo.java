@@ -18,27 +18,23 @@ package com.google.cloud.tools.maven;
 
 import com.google.cloud.tools.appengine.api.deploy.DeployConfiguration;
 import com.google.cloud.tools.appengine.api.deploy.DeployProjectConfigurationConfiguration;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.maven.plugins.annotations.Parameter;
 
-public abstract class AbstractDeployMojo extends StageMojo
+public abstract class AbstractDeployMojo extends AbstractStageMojo
     implements DeployConfiguration, DeployProjectConfigurationConfiguration {
-  /**
-   * The yaml files for the services or configurations to be deployed. If not given, defaults to
-   * app.yaml in the staging directory. If that is not found, attempts to automatically generate
-   * necessary configuration files (such as app.yaml) in the staging directory.
-   */
-  protected List<File> deployables = new ArrayList<>();
+
+  /** This is not configurable by the user. */
+  private List<File> deployables = new ArrayList<>();
 
   /**
    * The Google Cloud Storage bucket used to stage files associated with the deployment. If this
    * argument is not specified, the application's default code bucket is used.
    */
   @Parameter(alias = "deploy.bucket", property = "app.deploy.bucket")
-  protected String bucket;
+  private String bucket;
 
   /**
    * Deploy with a specific Docker image. Docker url must be from one of the valid gcr hostnames.
@@ -46,30 +42,30 @@ public abstract class AbstractDeployMojo extends StageMojo
    * <p><i>Supported only for flexible environment.</i>
    */
   @Parameter(alias = "deploy.imageUrl", property = "app.deploy.imageUrl")
-  protected String imageUrl;
+  private String imageUrl;
 
   /** Promote the deployed version to receive all traffic. True by default. */
   @Parameter(alias = "deploy.promote", property = "app.deploy.promote")
-  protected Boolean promote;
+  private Boolean promote;
 
   /** The App Engine server to connect to. You will not typically need to change this value. */
   @Parameter(alias = "deploy.server", property = "app.deploy.server")
-  protected String server;
+  private String server;
 
   /** Stop the previously running version when deploying a new version that receives all traffic. */
   @Parameter(alias = "deploy.stopPreviousVersion", property = "app.deploy.stopPreviousVersion")
-  protected Boolean stopPreviousVersion;
+  private Boolean stopPreviousVersion;
 
   /**
    * The version of the app that will be created or replaced by this deployment. If you do not
    * specify a version, one will be generated for you.
    */
   @Parameter(alias = "deploy.version", property = "app.deploy.version")
-  protected String version;
+  private String version;
 
   /** The Google Cloud Platform project name to use for this invocation. */
   @Parameter(alias = "deploy.project", property = "app.deploy.project")
-  protected String project;
+  private String project;
 
   @Override
   public List<File> getDeployables() {
@@ -111,8 +107,15 @@ public abstract class AbstractDeployMojo extends StageMojo
     return project;
   }
 
-  @VisibleForTesting
   public void setProject(String project) {
     this.project = project;
+  }
+
+  public void setVersion(String version) {
+    this.version = version;
+  }
+
+  public void setDeployables(List<File> deployables) {
+    this.deployables = deployables;
   }
 }

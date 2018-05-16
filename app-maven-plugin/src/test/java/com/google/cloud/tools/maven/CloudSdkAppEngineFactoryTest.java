@@ -89,7 +89,7 @@ public class CloudSdkAppEngineFactoryTest {
     when(mojoMock.getArtifactVersion()).thenReturn(ARTIFACT_VERSION);
     when(mojoMock.getLog()).thenReturn(logMock);
 
-    mojoMock.mavenProject = projectMock;
+    when(mojoMock.getMavenProject()).thenReturn(projectMock);
     when(projectMock.getBuild()).thenReturn(buildMock);
     File outFolder = tempFolder.newFolder("tempOut");
     when(buildMock.getDirectory()).thenReturn(outFolder.getAbsolutePath());

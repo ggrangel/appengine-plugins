@@ -270,7 +270,7 @@ public class RunMojo extends CloudSdkMojo implements RunConfiguration {
   public void execute() throws MojoExecutionException, MojoFailureException {
     SupportedDevServerVersion convertedVersion = convertDevserverVersionString();
     if (services == null || services.isEmpty()) {
-      Build build = mavenProject.getBuild();
+      Build build = getMavenProject().getBuild();
       services =
           Collections.singletonList(
               new File(build.getDirectory()).toPath().resolve(build.getFinalName()).toFile());
@@ -304,12 +304,12 @@ public class RunMojo extends CloudSdkMojo implements RunConfiguration {
 
   /** Determine if the built application is a Standard Environment app. */
   protected boolean isStandardEnvironmentApp() {
-    return mavenProject != null
-        && mavenProject.getBuild() != null
+    return getMavenProject() != null
+        && getMavenProject().getBuild() != null
         && new File(
-                mavenProject.getBuild().getDirectory()
+                getMavenProject().getBuild().getDirectory()
                     + "/"
-                    + mavenProject.getBuild().getFinalName()
+                    + getMavenProject().getBuild().getFinalName()
                     + "/WEB-INF/appengine-web.xml")
             .exists();
   }

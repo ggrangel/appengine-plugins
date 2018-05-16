@@ -17,22 +17,26 @@
 package com.google.cloud.tools.maven;
 
 import com.google.cloud.tools.appengine.api.AppEngineException;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 
 public class AppEngineFlexibleStager implements AppEngineStager {
 
-  private StageMojo stageMojo;
+  private boolean configured = false;
+  private final AbstractStageMojo stageMojo;
 
-  AppEngineFlexibleStager(StageMojo stageMojo) {
-    this.stageMojo = stageMojo;
+  public AppEngineFlexibleStager(AbstractStageMojo stageConfiguration) {
+    this.stageMojo = stageConfiguration;
   }
 
   @Override
-  public void stage() throws MojoExecutionException, MojoFailureException {
-    stageMojo.getLog().info("Staging the application to: " + stageMojo.stagingDirectory);
+  public void stage() throws MojoExecutionException {
+    // since staging is all crazy, ensure the application developer has called the override first.
+    Preconditions.checkState(configured, "Must call overrideAppEngineDirectory first");
+
+    stageMojo.getLog().info("Staging the application to: " + stageMojo.getStagingDirectory());
     stageMojo.getLog().info("Detected App Engine flexible environment application.");
 
     if (!"war".equals(stageMojo.getPackaging()) && !"jar".equals(stageMojo.getPackaging())) {
@@ -41,20 +45,16 @@ public class AppEngineFlexibleStager implements AppEngineStager {
     }
 
     // delete staging directory if it exists
-    if (stageMojo.stagingDirectory.exists()) {
-      stageMojo.getLog().info("Deleting the staging directory: " + stageMojo.stagingDirectory);
+    if (stageMojo.getStagingDirectory().exists()) {
+      stageMojo.getLog().info("Deleting the staging directory: " + stageMojo.getStagingDirectory());
       try {
-        FileUtils.deleteDirectory(stageMojo.stagingDirectory);
+        FileUtils.deleteDirectory(stageMojo.getStagingDirectory());
       } catch (IOException ex) {
-        throw new MojoFailureException("Unable to delete staging directory.", ex);
+        throw new MojoExecutionException("Unable to delete staging directory.", ex);
       }
     }
-    if (!stageMojo.stagingDirectory.mkdir()) {
+    if (!stageMojo.getStagingDirectory().mkdir()) {
       throw new MojoExecutionException("Unable to create staging directory");
-    }
-
-    if (stageMojo.appEngineDirectory == null) {
-      configureAppEngineDirectory();
     }
 
     try {
@@ -65,15 +65,19 @@ public class AppEngineFlexibleStager implements AppEngineStager {
   }
 
   @Override
-  public void configureAppEngineDirectory() {
-    stageMojo.appEngineDirectory =
-        stageMojo
-            .mavenProject
-            .getBasedir()
-            .toPath()
-            .resolve("src")
-            .resolve("main")
-            .resolve("appengine")
-            .toFile();
+  public void overrideAppEngineDirectory() {
+    configured = true;
+    // can be user configured
+    if (stageMojo.getAppEngineDirectory() == null) {
+      stageMojo.setAppEngineDirectory(
+          stageMojo
+              .getMavenProject()
+              .getBasedir()
+              .toPath()
+              .resolve("src")
+              .resolve("main")
+              .resolve("appengine")
+              .toFile());
+    }
   }
 }

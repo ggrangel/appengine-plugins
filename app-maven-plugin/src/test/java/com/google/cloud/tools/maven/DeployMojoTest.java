@@ -67,11 +67,11 @@ public class DeployMojoTest {
   @Before
   public void wireUpDeployMojo() throws IOException {
     MockitoAnnotations.initMocks(this);
-    deployMojo.deployables = new ArrayList<>();
-    deployMojo.stagingDirectory = tempFolder.newFolder("staging");
+    deployMojo.setDeployables(new ArrayList<File>());
+    deployMojo.setStagingDirectory(tempFolder.newFolder("staging"));
     deployMojo.sourceDirectory = tempFolder.newFolder("source");
-    deployMojo.project = "project";
-    deployMojo.version = "version";
+    deployMojo.setProject("project");
+    deployMojo.setVersion("version");
     when(project.getProperties()).thenReturn(new Properties());
     when(project.getBasedir()).thenReturn(new File("/fake/project/base/dir"));
   }
@@ -95,7 +95,7 @@ public class DeployMojoTest {
     deployMojo.execute();
 
     // verify
-    assertEquals(1, deployMojo.deployables.size());
+    assertEquals(1, deployMojo.getDeployables().size());
     verify(standardStagingMock).stageStandard(deployMojo);
     verify(deploymentMock).deploy(deployMojo);
   }
@@ -113,8 +113,8 @@ public class DeployMojoTest {
     deployMojo.execute();
 
     // verify
-    assertEquals(1, deployMojo.deployables.size());
-    assertEquals(deployMojo.stagingDirectory, deployMojo.deployables.get(0));
+    assertEquals(1, deployMojo.getDeployables().size());
+    assertEquals(deployMojo.getStagingDirectory(), deployMojo.getDeployables().get(0));
     verify(flexibleStagingMock).stageFlexible(deployMojo);
     verify(deploymentMock).deploy(deployMojo);
   }

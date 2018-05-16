@@ -16,9 +16,6 @@
 
 package com.google.cloud.tools.maven;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
-import java.io.File;
 import java.io.IOException;
 import junitparams.JUnitParamsRunner;
 import org.junit.Assert;
@@ -28,6 +25,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(JUnitParamsRunner.class)
@@ -44,10 +42,8 @@ public class AppEngineStagerTest {
   }
 
   @Test
-  public void testNewStager_standard() throws IOException {
-    File appengineWebXml = new File(tempFolder.newFolder("source", "WEB-INF"), "appengine-web.xml");
-    appengineWebXml.createNewFile();
-    Files.write("<appengine-web-app></appengine-web-app>", appengineWebXml, Charsets.UTF_8);
+  public void testNewStager_standard() {
+    Mockito.when(stageMojo.isStandardStaging()).thenReturn(true);
 
     AppEngineStager stager = AppEngineStager.Factory.newStager(stageMojo);
     Assert.assertTrue(stager.getClass().equals(AppEngineStandardStager.class));

@@ -16,11 +16,9 @@
 
 package com.google.cloud.tools.maven;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
-import java.io.File;
 import java.io.IOException;
 import junitparams.JUnitParamsRunner;
+import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,6 +26,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(JUnitParamsRunner.class)
@@ -36,18 +35,22 @@ public class AppEngineDeployerTest {
   @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Mock private DeployMojo deployMojo;
+  @Mock private MavenProject mavenProject;
 
   @Before
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
-    deployMojo.sourceDirectory = tempFolder.newFolder("source");
+    Mockito.when(deployMojo.getSourceDirectory()).thenReturn(tempFolder.getRoot());
+    Mockito.when(deployMojo.getMavenProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getBasedir()).thenReturn(tempFolder.getRoot());
+    Mockito.when(deployMojo.getProject()).thenReturn("someproject");
+    Mockito.when(deployMojo.getVersion()).thenReturn("someversion");
+    Mockito.when(deployMojo.getStagingDirectory()).thenReturn(tempFolder.getRoot());
   }
 
   @Test
   public void testNewStager_standard() throws IOException {
-    File appengineWebXml = new File(tempFolder.newFolder("source", "WEB-INF"), "appengine-web.xml");
-    appengineWebXml.createNewFile();
-    Files.write("<appengine-web-app></appengine-web-app>", appengineWebXml, Charsets.UTF_8);
+    Mockito.when(deployMojo.isStandardStaging()).thenReturn(true);
 
     AppEngineDeployer deployer = AppEngineDeployer.Factory.newDeployer(deployMojo);
     Assert.assertTrue(deployer.getClass().equals(AppEngineStandardDeployer.class));

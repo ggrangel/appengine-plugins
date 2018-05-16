@@ -16,35 +16,33 @@
 
 package com.google.cloud.tools.maven;
 
-import java.nio.file.Files;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 
 public interface AppEngineDeployer {
+
+  String APPENGINE_CONFIG = "APPENGINE_CONFIG";
+  String GCLOUD_CONFIG = "GCLOUD_CONFIG";
+
   class Factory {
-    static AppEngineDeployer newDeployer(AbstractDeployMojo config) {
-      boolean isStandardStaging =
-          Files.exists(
-              config.sourceDirectory.toPath().resolve("WEB-INF").resolve("appengine-web.xml"));
-      if (isStandardStaging) {
-        return new AppEngineStandardDeployer(config);
-      } else {
-        return new AppEngineFlexibleDeployer(config);
-      }
+
+    static AppEngineDeployer newDeployer(AbstractDeployMojo deployConfiguration) {
+      return deployConfiguration.isStandardStaging()
+          ? new AppEngineStandardDeployer(deployConfiguration)
+          : new AppEngineFlexibleDeployer(deployConfiguration);
     }
   }
 
-  void deploy() throws MojoExecutionException, MojoFailureException;
+  void deploy() throws MojoExecutionException;
 
-  void deployAll() throws MojoExecutionException, MojoFailureException;
+  void deployAll() throws MojoExecutionException;
 
-  void deployCron() throws MojoExecutionException, MojoFailureException;
+  void deployCron() throws MojoExecutionException;
 
-  void deployDispatch() throws MojoExecutionException, MojoFailureException;
+  void deployDispatch() throws MojoExecutionException;
 
-  void deployDos() throws MojoExecutionException, MojoFailureException;
+  void deployDos() throws MojoExecutionException;
 
-  void deployIndex() throws MojoExecutionException, MojoFailureException;
+  void deployIndex() throws MojoExecutionException;
 
-  void deployQueue() throws MojoExecutionException, MojoFailureException;
+  void deployQueue() throws MojoExecutionException;
 }

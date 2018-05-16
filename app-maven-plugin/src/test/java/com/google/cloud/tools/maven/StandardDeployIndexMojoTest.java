@@ -49,7 +49,7 @@ public class StandardDeployIndexMojoTest {
   @Parameters({"jar", "war"})
   public void testDeploy(String packaging)
       throws IOException, MojoFailureException, MojoExecutionException, AppEngineException {
-    when(mojo.mavenProject.getPackaging()).thenReturn(packaging);
+    when(mojo.getMavenProject().getPackaging()).thenReturn(packaging);
 
     mojo.execute();
 

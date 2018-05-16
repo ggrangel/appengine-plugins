@@ -161,7 +161,7 @@ public class CloudSdkAppEngineFactory {
   public AppEngineDevServer devServerRunAsync(
       int startSuccessTimeout, SupportedDevServerVersion version) {
     Path logDir =
-        Paths.get(mojo.mavenProject.getBuild().getDirectory()).resolve("dev-appserver-out");
+        Paths.get(mojo.getMavenProject().getBuild().getDirectory()).resolve("dev-appserver-out");
     if (!Files.exists(logDir)) {
       try {
         logDir = Files.createDirectories(logDir);

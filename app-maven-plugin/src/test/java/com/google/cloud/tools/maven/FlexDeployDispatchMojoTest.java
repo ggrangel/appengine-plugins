@@ -24,7 +24,6 @@ import com.google.cloud.tools.maven.util.SingleYamlFlexibleDeployTestHelper;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -47,8 +46,8 @@ public class FlexDeployDispatchMojoTest {
   @Test
   @Parameters({"jar", "war"})
   public void testDeployFlexible(String packaging)
-      throws MojoExecutionException, MojoFailureException, AppEngineException {
-    when(mojo.mavenProject.getPackaging()).thenReturn(packaging);
+      throws MojoExecutionException, AppEngineException {
+    when(mojo.getMavenProject().getPackaging()).thenReturn(packaging);
 
     mojo.execute();
 

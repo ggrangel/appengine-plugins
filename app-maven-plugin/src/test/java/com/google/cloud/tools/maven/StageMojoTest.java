@@ -64,7 +64,7 @@ public class StageMojoTest {
   @Before
   public void configureStageMojo() throws IOException {
     MockitoAnnotations.initMocks(this);
-    stageMojo.stagingDirectory = tempFolder.newFolder("staging");
+    stageMojo.setStagingDirectory(tempFolder.newFolder("staging"));
     stageMojo.sourceDirectory = tempFolder.newFolder("source");
     when(mavenProject.getProperties()).thenReturn(new Properties());
     when(mavenProject.getBasedir()).thenReturn(new File("/fake/project/base/dir"));
@@ -75,7 +75,7 @@ public class StageMojoTest {
   public void testStandardStaging(String packaging) throws Exception {
 
     // wire up
-    when(stageMojo.mavenProject.getPackaging()).thenReturn(packaging);
+    when(stageMojo.getMavenProject().getPackaging()).thenReturn(packaging);
     when(factoryMock.standardStaging()).thenReturn(standardStagingMock);
 
     // create appengine-web.xml to mark it as standard environment
@@ -96,7 +96,7 @@ public class StageMojoTest {
   public void testFlexibleStaging(String packaging) throws Exception {
 
     // wire up
-    when(stageMojo.mavenProject.getPackaging()).thenReturn(packaging);
+    when(stageMojo.getMavenProject().getPackaging()).thenReturn(packaging);
     when(factoryMock.flexibleStaging()).thenReturn(flexibleStagingMock);
 
     // invoke
@@ -112,11 +112,11 @@ public class StageMojoTest {
   public void testRun_packagingIsNotJarOrWar(String packaging)
       throws MojoFailureException, MojoExecutionException, IOException {
     // wire up
-    stageMojo.stagingDirectory = mock(File.class);
-    when(stageMojo.mavenProject.getPackaging()).thenReturn(packaging);
+    stageMojo.setStagingDirectory(mock(File.class));
+    when(stageMojo.getMavenProject().getPackaging()).thenReturn(packaging);
 
     stageMojo.execute();
-    verify(stageMojo.stagingDirectory, never()).exists();
+    verify(stageMojo.getStagingDirectory(), never()).exists();
   }
 
   @SuppressWarnings("unused") // used for testRun_packagingIsNotJarOrWar()

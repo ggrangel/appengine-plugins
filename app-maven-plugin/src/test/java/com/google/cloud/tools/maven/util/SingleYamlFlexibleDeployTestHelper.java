@@ -1,9 +1,7 @@
 package com.google.cloud.tools.maven.util;
 
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.cloud.tools.appengine.api.deploy.AppEngineDeployment;
 import com.google.cloud.tools.appengine.api.deploy.AppEngineFlexibleStaging;
 import com.google.cloud.tools.maven.AbstractDeployMojo;
@@ -12,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 import org.apache.maven.project.MavenProject;
-import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.InjectMocks;
@@ -43,21 +40,14 @@ public class SingleYamlFlexibleDeployTestHelper<M extends AbstractDeployMojo>
   public void before() throws IOException {
     mojo.setStagingDirectory(temporaryFolder.newFolder("staging"));
     mojo.setSourceDirectory(temporaryFolder.newFolder("source"));
+    mojo.setProject("some-project");
+    mojo.setVersion("some-version");
     MockitoAnnotations.initMocks(this);
 
     when(mavenProject.getProperties()).thenReturn(new Properties());
     when(mavenProject.getBasedir()).thenReturn(new File("/fake/project/base/dir"));
     when(factoryMock.flexibleStaging()).thenReturn(flexibleStagingMock);
     when(factoryMock.deployment()).thenReturn(deploymentMock);
-  }
-
-  @Override
-  public void after() {
-    try {
-      verify(flexibleStagingMock).stageFlexible(mojo);
-    } catch (AppEngineException ex) {
-      Assert.fail(ex.getMessage());
-    }
   }
 
   public AppEngineDeployment getDeploymentMock() {

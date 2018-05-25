@@ -50,7 +50,8 @@ public class CloudSdkAuthTest {
   }
 
   @Test
-  public void testLogin_withUser() throws AppEngineException, ProcessHandlerException, IOException {
+  public void testLogin_withUser()
+      throws AppEngineException, ProcessHandlerException, IOException {
     String testUsername = "potato@potato.com";
     new CloudSdkAuth(gcloudRunner).login(testUsername);
     Mockito.verify(gcloudRunner).run(eq(Arrays.asList("auth", "login", testUsername)), isNull());
@@ -67,14 +68,15 @@ public class CloudSdkAuthTest {
           e.getMessage(), CoreMatchers.containsString("Invalid email address: " + testUsername));
       // pass
     }
+  }
 
+  @Test
+  public void testLogin_withNullUser() throws AppEngineException {
     try {
       new CloudSdkAuth(gcloudRunner).login(null);
       Assert.fail("Should have failed with bad user.");
     } catch (NullPointerException npe) {
       // pass
-    } catch (AppEngineException e) {
-      e.printStackTrace();
     }
   }
 

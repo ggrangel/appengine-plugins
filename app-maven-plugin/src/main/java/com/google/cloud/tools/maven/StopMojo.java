@@ -18,9 +18,9 @@ package com.google.cloud.tools.maven;
 
 import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.cloud.tools.appengine.api.devserver.StopConfiguration;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkNotFoundException;
 import com.google.cloud.tools.maven.CloudSdkAppEngineFactory.SupportedDevServerVersion;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
@@ -57,7 +57,7 @@ public class StopMojo extends CloudSdkMojo implements StopConfiguration {
   protected Integer adminPort;
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  public void execute() throws MojoExecutionException {
     SupportedDevServerVersion convertedVersion = null;
     try {
       convertedVersion = SupportedDevServerVersion.parse(devserverVersion);
@@ -66,8 +66,10 @@ public class StopMojo extends CloudSdkMojo implements StopConfiguration {
     }
     try {
       getAppEngineFactory().devServerStop(convertedVersion).stop(this);
+    } catch (CloudSdkNotFoundException ex) {
+      throw new MojoExecutionException("Stop failed", ex);
     } catch (AppEngineException ex) {
-      throw new RuntimeException(ex);
+      getLog().error("Failed to stop server: " + ex.getMessage());
     }
   }
 

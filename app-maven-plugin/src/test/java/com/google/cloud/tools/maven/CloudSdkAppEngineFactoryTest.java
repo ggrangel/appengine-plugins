@@ -203,7 +203,7 @@ public class CloudSdkAppEngineFactoryTest {
   }
 
   @Test
-  public void testDevServer1Stop() {
+  public void testDevServer1Stop() throws CloudSdkNotFoundException {
     // invoke
     factory.devServerStop(SupportedDevServerVersion.V1);
 
@@ -212,7 +212,7 @@ public class CloudSdkAppEngineFactoryTest {
   }
 
   @Test
-  public void testDevServer2Stop() {
+  public void testDevServer2Stop() throws CloudSdkNotFoundException {
     // invoke
     factory.devServerStop(SupportedDevServerVersion.V2ALPHA);
 

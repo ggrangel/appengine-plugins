@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -267,7 +266,7 @@ public class RunMojo extends CloudSdkMojo implements RunConfiguration {
   // RunAsyncMojo should override #runServer(version) so that other configuration changing code
   // shared between these classes is executed
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  public void execute() throws MojoExecutionException {
     SupportedDevServerVersion convertedVersion = convertDevserverVersionString();
     if (services == null || services.isEmpty()) {
       Build build = getMavenProject().getBuild();

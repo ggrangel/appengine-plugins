@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.appengine.api.AppEngineException;
 import com.google.cloud.tools.appengine.api.devserver.RunConfiguration;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkNotFoundException;
 import com.google.cloud.tools.maven.CloudSdkAppEngineFactory.SupportedDevServerVersion;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
@@ -91,7 +92,7 @@ public class RunMojoTest extends AbstractDevServerTest {
   @Test
   @Parameters({"1,V1", "2-alpha,V2ALPHA"})
   public void testRun_servicesIsUsed(String version, SupportedDevServerVersion mockVersion)
-      throws MojoFailureException, MojoExecutionException, IOException {
+      throws MojoFailureException, MojoExecutionException, IOException, CloudSdkNotFoundException {
     runMojo.devserverVersion = version;
     setUpAppEngineWebXml();
     runMojo.services = Collections.singletonList(new File("src/main/appengine"));
@@ -105,7 +106,7 @@ public class RunMojoTest extends AbstractDevServerTest {
   @Test
   @Parameters({"1,V1", "2-alpha,V2ALPHA"})
   public void testRunFlexible(String version, SupportedDevServerVersion mockVersion)
-      throws MojoFailureException, MojoExecutionException, IOException {
+      throws MojoFailureException, MojoExecutionException, IOException, CloudSdkNotFoundException {
     // wire up
     runMojo.devserverVersion = version;
     when(factoryMock.devServerRunSync(mockVersion)).thenReturn(devServerMock);

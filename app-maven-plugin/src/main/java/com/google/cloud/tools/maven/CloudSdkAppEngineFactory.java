@@ -129,16 +129,14 @@ public class CloudSdkAppEngineFactory {
    *
    * @return a dev server for the run goal
    */
-  public AppEngineDevServer devServerRunSync(SupportedDevServerVersion version) {
+  public AppEngineDevServer devServerRunSync(SupportedDevServerVersion version)
+      throws CloudSdkNotFoundException {
     return createDevServerForVersion(version);
   }
 
-  private AppEngineDevServer createDevServerForVersion(SupportedDevServerVersion version) {
-    try {
-      return createDevServerForVersion(version, defaultCloudSdkBuilder().build());
-    } catch (CloudSdkNotFoundException ex) {
-      throw new RuntimeException(ex);
-    }
+  private AppEngineDevServer createDevServerForVersion(SupportedDevServerVersion version)
+      throws CloudSdkNotFoundException {
+    return createDevServerForVersion(version, defaultCloudSdkBuilder().build());
   }
 
   private AppEngineDevServer createDevServerForVersion(
@@ -191,7 +189,8 @@ public class CloudSdkAppEngineFactory {
    *
    * @return a dev server for the stop goal
    */
-  public AppEngineDevServer devServerStop(SupportedDevServerVersion version) {
+  public AppEngineDevServer devServerStop(SupportedDevServerVersion version)
+      throws CloudSdkNotFoundException {
     return createDevServerForVersion(version);
   }
 

@@ -30,9 +30,7 @@ import org.mockito.Mock;
 public abstract class AbstractDevServerTest {
 
   @Mock protected CloudSdkAppEngineFactory factoryMock;
-
   @Mock protected AppEngineDevServer devServerMock;
-
   @Mock protected MavenProject mavenProjectMock;
 
   protected void setUpAppEngineWebXml() throws IOException {

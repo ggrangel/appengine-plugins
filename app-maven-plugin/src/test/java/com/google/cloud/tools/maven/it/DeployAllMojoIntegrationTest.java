@@ -17,10 +17,7 @@
 package com.google.cloud.tools.maven.it;
 
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkNotFoundException;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkOutOfDateException;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkVersionFileException;
-import com.google.cloud.tools.appengine.cloudsdk.InvalidJavaSdkException;
-import com.google.cloud.tools.appengine.cloudsdk.internal.process.ProcessRunnerException;
+import com.google.cloud.tools.appengine.cloudsdk.process.ProcessHandlerException;
 import com.google.cloud.tools.maven.it.verifier.FlexibleVerifier;
 import com.google.cloud.tools.maven.it.verifier.StandardVerifier;
 import java.io.IOException;
@@ -33,9 +30,8 @@ public class DeployAllMojoIntegrationTest extends AbstractMojoIntegrationTest {
 
   @Test
   public void testDeployAllStandard()
-      throws IOException, VerificationException, CloudSdkOutOfDateException,
-          CloudSdkNotFoundException, ProcessRunnerException, CloudSdkVersionFileException,
-          InvalidJavaSdkException {
+      throws IOException, VerificationException, CloudSdkNotFoundException,
+          ProcessHandlerException {
 
     Verifier verifier = new StandardVerifier("testDeployStandard");
 
@@ -58,9 +54,8 @@ public class DeployAllMojoIntegrationTest extends AbstractMojoIntegrationTest {
 
   @Test
   public void testDeployAllFlexible()
-      throws IOException, VerificationException, CloudSdkOutOfDateException,
-          CloudSdkNotFoundException, ProcessRunnerException, CloudSdkVersionFileException,
-          InvalidJavaSdkException {
+      throws IOException, VerificationException, CloudSdkNotFoundException,
+          ProcessHandlerException {
 
     Verifier verifier = new FlexibleVerifier("testDeployFlexible");
 

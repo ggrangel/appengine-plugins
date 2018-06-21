@@ -17,10 +17,6 @@
 package com.google.cloud.tools.maven;
 
 import com.google.cloud.tools.appengine.api.AppEngineException;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdk;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAuth;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 
 /** Login and set the Cloud SDK common configuration user. */
@@ -28,10 +24,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 public class CloudSdkLoginMojo extends CloudSdkMojo {
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  public void execute() {
     try {
-      CloudSdk sdk = getAppEngineFactory().defaultCloudSdkBuilder().build();
-      new CloudSdkAuth(sdk).login();
+      getAppEngineFactory().auth().login();
     } catch (AppEngineException ex) {
       throw new RuntimeException(ex);
     }

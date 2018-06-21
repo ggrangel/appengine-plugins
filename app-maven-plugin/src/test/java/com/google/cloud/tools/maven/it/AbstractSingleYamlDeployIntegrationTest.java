@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.maven.it;
 
-import com.google.cloud.tools.appengine.cloudsdk.internal.process.ProcessRunnerException;
 import com.google.cloud.tools.maven.it.verifier.FlexibleVerifier;
 import com.google.cloud.tools.maven.it.verifier.StandardVerifier;
 import java.io.IOException;
@@ -28,8 +27,7 @@ import org.junit.Test;
 public abstract class AbstractSingleYamlDeployIntegrationTest extends AbstractMojoIntegrationTest {
 
   @Test
-  public void testDeployStandard()
-      throws IOException, VerificationException, ProcessRunnerException {
+  public void testDeployStandard() throws IOException, VerificationException {
 
     Verifier verifier = new StandardVerifier("testDeployStandard");
 
@@ -43,8 +41,7 @@ public abstract class AbstractSingleYamlDeployIntegrationTest extends AbstractMo
   }
 
   @Test
-  public void testDeployFlexible()
-      throws IOException, VerificationException, ProcessRunnerException {
+  public void testDeployFlexible() throws IOException, VerificationException {
 
     Verifier verifier = new FlexibleVerifier("testDeployFlexible");
 

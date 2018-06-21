@@ -21,19 +21,20 @@ import com.google.cloud.tools.appengine.api.deploy.AppEngineDeployment;
 import com.google.cloud.tools.appengine.api.deploy.AppEngineFlexibleStaging;
 import com.google.cloud.tools.appengine.api.deploy.AppEngineStandardStaging;
 import com.google.cloud.tools.appengine.api.devserver.AppEngineDevServer;
+import com.google.cloud.tools.appengine.cloudsdk.AppCfg;
 import com.google.cloud.tools.appengine.cloudsdk.AppEngineJavaComponentsNotInstalledException;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdk;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDeployment;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer1;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer2;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineFlexibleStaging;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineStandardStaging;
-import com.google.cloud.tools.appengine.cloudsdk.CloudSdkGenRepoInfoFile;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAuth;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkNotFoundException;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkOutOfDateException;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkVersionFileException;
+import com.google.cloud.tools.appengine.cloudsdk.Gcloud;
 import com.google.cloud.tools.appengine.cloudsdk.InvalidJavaSdkException;
+import com.google.cloud.tools.appengine.cloudsdk.LocalRun;
+import com.google.cloud.tools.appengine.cloudsdk.process.LegacyProcessHandler;
 import com.google.cloud.tools.appengine.cloudsdk.process.NonZeroExceptionExitListener;
+import com.google.cloud.tools.appengine.cloudsdk.process.ProcessHandler;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessOutputLineListener;
 import java.io.File;
 import java.io.IOException;
@@ -47,9 +48,8 @@ import org.apache.maven.plugin.logging.Log;
 /** Factory for App Engine dependencies. */
 public class CloudSdkAppEngineFactory {
 
-  private CloudSdkFactory cloudSdkFactory;
-  private CloudSdkMojo mojo;
-  private CloudSdkOperationsFactory cloudSdkOperationsFactory;
+  private final CloudSdk cloudSdk;
+  private final CloudSdkMojo mojo;
 
   /** Supported dev app server versions. */
   public enum SupportedDevServerVersion {
@@ -77,87 +77,120 @@ public class CloudSdkAppEngineFactory {
    * @param mojo The mojo containing Cloud Sdk configuration parameters
    */
   public CloudSdkAppEngineFactory(CloudSdkMojo mojo) {
-    this(mojo, new CloudSdkFactory(), new CloudSdkOperationsFactory());
+    this(mojo, defaultCloudSdk(mojo, new CloudSdkOperationsFactory()));
   }
 
-  private CloudSdkAppEngineFactory(
-      CloudSdkMojo mojo,
-      CloudSdkFactory cloudSdkFactory,
-      CloudSdkOperationsFactory cloudSdkOperationsFactory) {
+  private CloudSdkAppEngineFactory(CloudSdkMojo mojo, CloudSdk cloudSdk) {
     this.mojo = mojo;
-    this.cloudSdkFactory = cloudSdkFactory;
-    this.cloudSdkOperationsFactory = cloudSdkOperationsFactory;
+    this.cloudSdk = cloudSdk;
   }
 
-  /**
-   * Constructs an object used for standard staging
-   *
-   * @return a cloud sdk object for standard staging
-   */
+  /** Constructs an object used for auth */
+  public CloudSdkAuth auth() {
+    return getGcloud().newAuth(newDefaultProcessHandler());
+  }
+
+  /** Constructs an object used for standard staging */
   public AppEngineStandardStaging standardStaging() {
-    try {
-      return cloudSdkFactory.standardStaging(defaultCloudSdkBuilder().build());
-    } catch (CloudSdkNotFoundException ex) {
-      throw new RuntimeException(ex);
-    }
+    return getAppCfg().newStaging(newDefaultProcessHandler());
   }
 
-  /**
-   * Constructs an object used for flexible staging
-   *
-   * @return a cloud sdk object for flexible staging
-   */
+  /** Constructs an object used for flexible staging */
   public AppEngineFlexibleStaging flexibleStaging() {
-    return cloudSdkFactory.flexibleStaging();
+    return new CloudSdkAppEngineFlexibleStaging();
   }
 
-  /**
-   * Constructs an object used for deployment
-   *
-   * @return a cloud sdk object for deployment
-   */
+  /** Constructs an object used for deployment */
   public AppEngineDeployment deployment() {
-    try {
-      return cloudSdkFactory.deployment(defaultCloudSdkBuilder().build());
-    } catch (CloudSdkNotFoundException ex) {
-      throw new RuntimeException(ex);
-    }
+    return getGcloud().newDeployment(newDefaultProcessHandler());
   }
 
-  /**
-   * Constructs a dev server for the run goal
-   *
-   * @return a dev server for the run goal
-   */
-  public AppEngineDevServer devServerRunSync(SupportedDevServerVersion version)
-      throws CloudSdkNotFoundException {
-    return createDevServerForVersion(version);
+  /** Constructs a dev server for the run goal */
+  public AppEngineDevServer devServerRunSync(SupportedDevServerVersion version) {
+    return createDevServerForVersion(version, newDefaultProcessHandler());
   }
 
-  private AppEngineDevServer createDevServerForVersion(SupportedDevServerVersion version)
-      throws CloudSdkNotFoundException {
-    return createDevServerForVersion(version, defaultCloudSdkBuilder().build());
-  }
-
-  private AppEngineDevServer createDevServerForVersion(
-      SupportedDevServerVersion version, CloudSdk cloudSdk) {
+  AppEngineDevServer createDevServerForVersion(
+      SupportedDevServerVersion version, ProcessHandler processHandler) {
     switch (version) {
       case V1:
-        return cloudSdkFactory.devServer1(cloudSdk);
+        return getLocalRun().newDevAppServer1(processHandler);
       case V2ALPHA:
-        return cloudSdkFactory.devServer(cloudSdk);
+        return getLocalRun().newDevAppServer2(processHandler);
       default:
         throw new IllegalArgumentException("Unsupported dev server version: " + version);
     }
   }
 
-  /**
-   * Constructs a dev server
-   *
-   * @return a dev server for the runAsync goal
-   */
+  /** Constructs a dev server in async mode */
   public AppEngineDevServer devServerRunAsync(
       int startSuccessTimeout, SupportedDevServerVersion version) {
+
+    ProcessHandler ph = newDevAppServerAsyncHandler(startSuccessTimeout);
+    return createDevServerForVersion(version, ph);
+  }
+
+  /** Constructs a dev server for the stop goal */
+  public AppEngineDevServer devServerStop(SupportedDevServerVersion version) {
+    return createDevServerForVersion(version, newDefaultProcessHandler());
+  }
+
+  /** Constructs an object used for the genRepoInfoFile goal */
+  public GenRepoInfoFile genRepoInfoFile() {
+    return getGcloud().newGenRepoInfo(newDefaultProcessHandler());
+  }
+
+  static CloudSdk defaultCloudSdk(
+      CloudSdkMojo mojo, CloudSdkOperationsFactory cloudSdkOperationsFactory) {
+    Path sdkPath = mojo.getCloudSdkHome();
+    if (mojo.getCloudSdkHome() == null) {
+      sdkPath =
+          cloudSdkOperationsFactory
+              .newDownloader(mojo.getCloudSdkVersion())
+              .downloadCloudSdk(mojo.getLog());
+    }
+
+    try {
+      CloudSdk cloudSdk = new CloudSdk.Builder().sdkPath(sdkPath).build();
+
+      if (mojo.getCloudSdkHome() != null && mojo.getCloudSdkVersion() != null) {
+        cloudSdkOperationsFactory.newChecker(mojo.getCloudSdkVersion()).checkCloudSdk(cloudSdk);
+      }
+      return cloudSdk;
+    } catch (CloudSdkNotFoundException
+        | CloudSdkVersionFileException
+        | InvalidJavaSdkException
+        | AppEngineJavaComponentsNotInstalledException
+        | CloudSdkOutOfDateException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  Gcloud getGcloud() {
+    return Gcloud.builder(cloudSdk)
+        .setMetricsEnvironment(mojo.getArtifactId(), mojo.getArtifactVersion())
+        .setCredentialFile(mojo.getServiceAccountKeyFile())
+        .build();
+  }
+
+  private AppCfg getAppCfg() {
+    return AppCfg.builder(cloudSdk).build();
+  }
+
+  private LocalRun getLocalRun() {
+    return LocalRun.builder(cloudSdk).build();
+  }
+
+  private ProcessHandler newDefaultProcessHandler() {
+    ProcessOutputLineListener lineListener = new DefaultProcessOutputLineListener(mojo.getLog());
+    return LegacyProcessHandler.builder()
+        .addStdOutLineListener(lineListener)
+        .addStdErrLineListener(lineListener)
+        .setExitListener(new NonZeroExceptionExitListener())
+        .build();
+  }
+
+  private ProcessHandler newDevAppServerAsyncHandler(int timeout) {
     Path logDir =
         Paths.get(mojo.getMavenProject().getBuild().getDirectory()).resolve("dev-appserver-out");
     if (!Files.exists(logDir)) {
@@ -171,76 +204,15 @@ public class CloudSdkAppEngineFactory {
     FileOutputLineListener fileListener = new FileOutputLineListener(logFile);
     mojo.getLog().info("Dev App Server output written to : " + logFile);
 
-    CloudSdk.Builder builder =
-        defaultCloudSdkBuilder()
-            .async(true)
-            .addStdOutLineListener(fileListener)
-            .addStdErrLineListener(fileListener)
-            .runDevAppServerWait(startSuccessTimeout);
-    try {
-      return createDevServerForVersion(version, builder.build());
-    } catch (CloudSdkNotFoundException ex) {
-      throw new RuntimeException(ex);
-    }
-  }
-
-  /**
-   * Constructs a dev server for the stop goal
-   *
-   * @return a dev server for the stop goal
-   */
-  public AppEngineDevServer devServerStop(SupportedDevServerVersion version)
-      throws CloudSdkNotFoundException {
-    return createDevServerForVersion(version);
-  }
-
-  /**
-   * Constructs a cloud sdk object used for the genRepoInfoFile goal
-   *
-   * @return a cloud sdk object used for the genRepoInfoFile goal
-   */
-  public GenRepoInfoFile genRepoInfoFile() {
-    try {
-      return cloudSdkFactory.genRepoInfoFile(defaultCloudSdkBuilder().build());
-    } catch (CloudSdkNotFoundException ex) {
-      throw new RuntimeException(ex);
-    }
-  }
-
-  protected CloudSdk.Builder defaultCloudSdkBuilder() {
-    Path sdkPath = mojo.getCloudSdkHome();
-    if (mojo.getCloudSdkHome() == null) {
-      sdkPath =
-          cloudSdkOperationsFactory
-              .newDownloader(mojo.getCloudSdkVersion())
-              .downloadCloudSdk(mojo.getLog());
-    }
-
-    CloudSdk.Builder cloudSdkBuilder = cloudSdkFactory.cloudSdkBuilder().sdkPath(sdkPath);
-
-    if (mojo.getCloudSdkHome() != null && mojo.getCloudSdkVersion() != null) {
-      try {
-        cloudSdkOperationsFactory
-            .newChecker(mojo.getCloudSdkVersion())
-            .checkCloudSdk(cloudSdkBuilder.build());
-      } catch (CloudSdkNotFoundException
-          | CloudSdkVersionFileException
-          | InvalidJavaSdkException
-          | AppEngineJavaComponentsNotInstalledException
-          | CloudSdkOutOfDateException ex) {
-        throw new RuntimeException(ex);
-      }
-    }
-
     ProcessOutputLineListener lineListener = new DefaultProcessOutputLineListener(mojo.getLog());
 
-    return cloudSdkBuilder
+    return LegacyProcessHandler.builder()
         .addStdOutLineListener(lineListener)
+        .addStdOutLineListener(fileListener)
         .addStdErrLineListener(lineListener)
-        .exitListener(new NonZeroExceptionExitListener())
-        .appCommandMetricsEnvironment(mojo.getArtifactId())
-        .appCommandMetricsEnvironmentVersion(mojo.getArtifactVersion())
-        .appCommandCredentialFile(mojo.getServiceAccountKeyFile());
+        .addStdErrLineListener(fileListener)
+        .setExitListener(new NonZeroExceptionExitListener())
+        .buildDevAppServerAsync(timeout);
   }
 
   /**
@@ -283,37 +255,6 @@ public class CloudSdkAppEngineFactory {
     @Override
     public void onOutputLine(String line) {
       logFilePrinter.println(line);
-    }
-  }
-
-  protected static class CloudSdkFactory {
-
-    public CloudSdk.Builder cloudSdkBuilder() {
-      return new CloudSdk.Builder();
-    }
-
-    public AppEngineStandardStaging standardStaging(CloudSdk cloudSdk) {
-      return new CloudSdkAppEngineStandardStaging(cloudSdk);
-    }
-
-    public AppEngineFlexibleStaging flexibleStaging() {
-      return new CloudSdkAppEngineFlexibleStaging();
-    }
-
-    public AppEngineDeployment deployment(CloudSdk cloudSdk) {
-      return new CloudSdkAppEngineDeployment(cloudSdk);
-    }
-
-    public AppEngineDevServer devServer(CloudSdk cloudSdk) {
-      return new CloudSdkAppEngineDevServer2(cloudSdk);
-    }
-
-    public AppEngineDevServer devServer1(CloudSdk cloudSdk) {
-      return new CloudSdkAppEngineDevServer1(cloudSdk);
-    }
-
-    public GenRepoInfoFile genRepoInfoFile(CloudSdk cloudSdk) {
-      return new CloudSdkGenRepoInfoFile(cloudSdk);
     }
   }
 }

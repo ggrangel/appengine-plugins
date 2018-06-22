@@ -48,7 +48,6 @@ import org.apache.maven.plugin.logging.Log;
 /** Factory for App Engine dependencies. */
 public class CloudSdkAppEngineFactory {
 
-  private final CloudSdk cloudSdk;
   private final CloudSdkMojo mojo;
 
   /** Supported dev app server versions. */
@@ -71,18 +70,8 @@ public class CloudSdkAppEngineFactory {
     }
   }
 
-  /**
-   * Constructs a new CloudSdkAppEngineFactory
-   *
-   * @param mojo The mojo containing Cloud Sdk configuration parameters
-   */
   public CloudSdkAppEngineFactory(CloudSdkMojo mojo) {
-    this(mojo, defaultCloudSdk(mojo, new CloudSdkOperationsFactory()));
-  }
-
-  private CloudSdkAppEngineFactory(CloudSdkMojo mojo, CloudSdk cloudSdk) {
     this.mojo = mojo;
-    this.cloudSdk = cloudSdk;
   }
 
   /** Constructs an object used for auth */
@@ -140,10 +129,14 @@ public class CloudSdkAppEngineFactory {
     return getGcloud().newGenRepoInfo(newDefaultProcessHandler());
   }
 
+  private CloudSdk getCloudSdk() {
+    return defaultCloudSdk(mojo, new CloudSdkOperationsFactory());
+  }
+
   static CloudSdk defaultCloudSdk(
       CloudSdkMojo mojo, CloudSdkOperationsFactory cloudSdkOperationsFactory) {
     Path sdkPath = mojo.getCloudSdkHome();
-    if (mojo.getCloudSdkHome() == null) {
+    if (sdkPath == null) {
       sdkPath =
           cloudSdkOperationsFactory
               .newDownloader(mojo.getCloudSdkVersion())
@@ -167,18 +160,18 @@ public class CloudSdkAppEngineFactory {
   }
 
   Gcloud getGcloud() {
-    return Gcloud.builder(cloudSdk)
+    return Gcloud.builder(getCloudSdk())
         .setMetricsEnvironment(mojo.getArtifactId(), mojo.getArtifactVersion())
         .setCredentialFile(mojo.getServiceAccountKeyFile())
         .build();
   }
 
   private AppCfg getAppCfg() {
-    return AppCfg.builder(cloudSdk).build();
+    return AppCfg.builder(getCloudSdk()).build();
   }
 
   private LocalRun getLocalRun() {
-    return LocalRun.builder(cloudSdk).build();
+    return LocalRun.builder(getCloudSdk()).build();
   }
 
   private ProcessHandler newDefaultProcessHandler() {

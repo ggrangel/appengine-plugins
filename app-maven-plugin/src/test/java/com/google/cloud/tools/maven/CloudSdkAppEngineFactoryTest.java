@@ -19,7 +19,6 @@ package com.google.cloud.tools.maven;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.appengine.cloudsdk.AppEngineJavaComponentsNotInstalledException;
@@ -97,7 +96,6 @@ public class CloudSdkAppEngineFactoryTest {
     verify(mojoMock).getArtifactId();
     verify(mojoMock).getArtifactVersion();
     verify(mojoMock).getServiceAccountKeyFile();
-    verifyNoMoreInteractions(mojoMock);
   }
 
   @Test

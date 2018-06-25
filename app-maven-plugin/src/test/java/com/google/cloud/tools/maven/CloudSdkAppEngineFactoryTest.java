@@ -17,8 +17,8 @@
 package com.google.cloud.tools.maven;
 
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.appengine.cloudsdk.AppEngineJavaComponentsNotInstalledException;
@@ -28,7 +28,6 @@ import com.google.cloud.tools.appengine.cloudsdk.CloudSdkAppEngineDevServer2;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkNotFoundException;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkOutOfDateException;
 import com.google.cloud.tools.appengine.cloudsdk.CloudSdkVersionFileException;
-import com.google.cloud.tools.appengine.cloudsdk.InvalidJavaSdkException;
 import com.google.cloud.tools.appengine.cloudsdk.process.ProcessHandler;
 import com.google.cloud.tools.maven.CloudSdkAppEngineFactory.SupportedDevServerVersion;
 import java.io.File;
@@ -67,7 +66,6 @@ public class CloudSdkAppEngineFactoryTest {
 
   @Mock private CloudSdk cloudSdk;
 
-  @Mock private CloudSdkOperationsFactory cloudSdkOperationsFactoryMock;
   @Mock private CloudSdkDownloader cloudSdkDownloader;
   @Mock private CloudSdkChecker cloudSdkChecker;
   @Mock private ProcessHandler processHandler;
@@ -87,7 +85,10 @@ public class CloudSdkAppEngineFactoryTest {
     File outFolder = tempFolder.newFolder("tempOut");
     when(buildMock.getDirectory()).thenReturn(outFolder.getAbsolutePath());
 
-    doReturn(INSTALL_SDK_PATH).when(cloudSdkDownloader).downloadCloudSdk(logMock);
+    doReturn(INSTALL_SDK_PATH).when(cloudSdkDownloader).downloadIfNecessary(null, logMock);
+    doReturn(INSTALL_SDK_PATH)
+        .when(cloudSdkDownloader)
+        .downloadIfNecessary(Mockito.anyString(), Mockito.eq(logMock));
   }
 
   @Test
@@ -109,74 +110,64 @@ public class CloudSdkAppEngineFactoryTest {
   }
 
   @Test
-  public void testDefaultCloudSdkBuilder_downloadWithVersion()
-      throws CloudSdkOutOfDateException, CloudSdkNotFoundException, InvalidJavaSdkException,
-          CloudSdkVersionFileException, AppEngineJavaComponentsNotInstalledException {
+  public void testDefaultCloudSdkBuilder_downloadWithVersion() {
     when(mojoMock.getCloudSdkHome()).thenReturn(null);
     when(mojoMock.getCloudSdkVersion()).thenReturn(CLOUD_SDK_VERSION);
-    when(cloudSdkOperationsFactoryMock.newDownloader(CLOUD_SDK_VERSION))
-        .thenReturn(cloudSdkDownloader);
 
     // invoke
     CloudSdk sdk =
-        CloudSdkAppEngineFactory.defaultCloudSdk(mojoMock, cloudSdkOperationsFactoryMock);
+        CloudSdkAppEngineFactory.buildCloudSdk(mojoMock, cloudSdkChecker, cloudSdkDownloader);
 
     // verify
     Assert.assertEquals(INSTALL_SDK_PATH, sdk.getPath());
-    verify(cloudSdkDownloader).downloadCloudSdk(logMock);
-    verify(cloudSdkChecker, never()).checkCloudSdk(Mockito.any(CloudSdk.class));
+    verify(cloudSdkDownloader).downloadIfNecessary(CLOUD_SDK_VERSION, logMock);
+    verifyNoMoreInteractions(cloudSdkChecker);
   }
 
   @Test
-  public void testDefaultCloudSdkBuilder_downloadWithoutVersion()
-      throws CloudSdkOutOfDateException, CloudSdkNotFoundException, InvalidJavaSdkException,
-          CloudSdkVersionFileException, AppEngineJavaComponentsNotInstalledException {
+  public void testDefaultCloudSdkBuilder_downloadWithoutVersion() {
     when(mojoMock.getCloudSdkHome()).thenReturn(null);
     when(mojoMock.getCloudSdkVersion()).thenReturn(null);
-    when(cloudSdkOperationsFactoryMock.newDownloader(null)).thenReturn(cloudSdkDownloader);
 
     // invoke
     CloudSdk sdk =
-        CloudSdkAppEngineFactory.defaultCloudSdk(mojoMock, cloudSdkOperationsFactoryMock);
+        CloudSdkAppEngineFactory.buildCloudSdk(mojoMock, cloudSdkChecker, cloudSdkDownloader);
 
     // verify
     Assert.assertEquals(INSTALL_SDK_PATH, sdk.getPath());
-    verify(cloudSdkDownloader).downloadCloudSdk(logMock);
-    verify(cloudSdkChecker, never()).checkCloudSdk(Mockito.any(CloudSdk.class));
+    verify(cloudSdkDownloader).downloadIfNecessary(null, logMock);
+    verifyNoMoreInteractions(cloudSdkChecker);
   }
 
   @Test
   public void testDefaultCloudSdkBuilder_check()
-      throws CloudSdkOutOfDateException, CloudSdkNotFoundException, InvalidJavaSdkException,
-          CloudSdkVersionFileException, AppEngineJavaComponentsNotInstalledException {
+      throws CloudSdkOutOfDateException, CloudSdkNotFoundException, CloudSdkVersionFileException,
+          AppEngineJavaComponentsNotInstalledException {
     when(mojoMock.getCloudSdkHome()).thenReturn(CLOUD_SDK_HOME);
     when(mojoMock.getCloudSdkVersion()).thenReturn(CLOUD_SDK_VERSION);
-    when(cloudSdkOperationsFactoryMock.newChecker(CLOUD_SDK_VERSION)).thenReturn(cloudSdkChecker);
 
     // invoke
     CloudSdk sdk =
-        CloudSdkAppEngineFactory.defaultCloudSdk(mojoMock, cloudSdkOperationsFactoryMock);
+        CloudSdkAppEngineFactory.buildCloudSdk(mojoMock, cloudSdkChecker, cloudSdkDownloader);
 
     // verify
     Assert.assertEquals(CLOUD_SDK_HOME, sdk.getPath());
-    verify(cloudSdkDownloader, never()).downloadCloudSdk(logMock);
-    verify(cloudSdkChecker).checkCloudSdk(sdk);
+    verify(cloudSdkChecker).checkCloudSdk(sdk, CLOUD_SDK_VERSION);
+    verifyNoMoreInteractions(cloudSdkDownloader);
   }
 
   @Test
-  public void testDefaultCloudSdkBuilder_noCheck()
-      throws CloudSdkOutOfDateException, CloudSdkNotFoundException, InvalidJavaSdkException,
-          CloudSdkVersionFileException, AppEngineJavaComponentsNotInstalledException {
+  public void testDefaultCloudSdkBuilder_noCheck() {
     when(mojoMock.getCloudSdkHome()).thenReturn(CLOUD_SDK_HOME);
     when(mojoMock.getCloudSdkVersion()).thenReturn(null);
 
     // invoke
     CloudSdk sdk =
-        CloudSdkAppEngineFactory.defaultCloudSdk(mojoMock, cloudSdkOperationsFactoryMock);
+        CloudSdkAppEngineFactory.buildCloudSdk(mojoMock, cloudSdkChecker, cloudSdkDownloader);
 
     // verify
     Assert.assertEquals(CLOUD_SDK_HOME, sdk.getPath());
-    verify(cloudSdkDownloader, never()).downloadCloudSdk(logMock);
-    verify(cloudSdkChecker, never()).checkCloudSdk(Mockito.any(CloudSdk.class));
+    verifyNoMoreInteractions(cloudSdkDownloader);
+    verifyNoMoreInteractions(cloudSdkChecker);
   }
 }

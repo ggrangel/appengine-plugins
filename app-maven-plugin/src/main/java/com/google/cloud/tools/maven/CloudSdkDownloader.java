@@ -16,31 +16,30 @@
 
 package com.google.cloud.tools.maven;
 
+import com.google.cloud.tools.managedcloudsdk.BadCloudSdkVersionException;
 import com.google.cloud.tools.managedcloudsdk.ConsoleListener;
 import com.google.cloud.tools.managedcloudsdk.ManagedCloudSdk;
 import com.google.cloud.tools.managedcloudsdk.ManagedSdkVerificationException;
 import com.google.cloud.tools.managedcloudsdk.ManagedSdkVersionMismatchException;
 import com.google.cloud.tools.managedcloudsdk.ProgressListener;
+import com.google.cloud.tools.managedcloudsdk.UnsupportedOsException;
+import com.google.cloud.tools.managedcloudsdk.Version;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
 import com.google.cloud.tools.managedcloudsdk.install.SdkInstallerException;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Function;
 import org.apache.maven.plugin.logging.Log;
 
 public class CloudSdkDownloader {
 
-  private final ManagedCloudSdk managedCloudSdk;
+  private final Function<String, ManagedCloudSdk> managedCloudSdkFactory;
 
-  CloudSdkDownloader(ManagedCloudSdk managedCloudSdk) {
-    this.managedCloudSdk = managedCloudSdk;
-  }
-
-  @VisibleForTesting
-  public ManagedCloudSdk getManagedCloudSdk() {
-    return managedCloudSdk;
+  public CloudSdkDownloader(Function<String, ManagedCloudSdk> managedCloudSdkFactory) {
+    this.managedCloudSdkFactory = managedCloudSdkFactory;
   }
 
   /**
@@ -48,7 +47,8 @@ public class CloudSdkDownloader {
    *
    * @return The cloud SDK installation directory
    */
-  public Path downloadCloudSdk(Log log) {
+  public Path downloadIfNecessary(String version, Log log) {
+    ManagedCloudSdk managedCloudSdk = managedCloudSdkFactory.apply(version);
     try {
       ProgressListener progressListener = new NoOpProgressListener();
       ConsoleListener consoleListener = new CloudSdkDownloaderConsoleListener(log);
@@ -77,5 +77,20 @@ public class CloudSdkDownloader {
         | ManagedSdkVerificationException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  // for delayed instantiation because it can error unnecessarily
+  static Function<String, ManagedCloudSdk> newManagedSdkFactory() {
+    return (version) -> {
+      try {
+        if (Strings.isNullOrEmpty(version)) {
+          return ManagedCloudSdk.newManagedSdk();
+        } else {
+          return ManagedCloudSdk.newManagedSdk(new Version(version));
+        }
+      } catch (UnsupportedOsException | BadCloudSdkVersionException ex) {
+        throw new RuntimeException(ex);
+      }
+    };
   }
 }

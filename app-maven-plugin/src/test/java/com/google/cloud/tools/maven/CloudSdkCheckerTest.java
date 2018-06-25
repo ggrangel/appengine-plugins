@@ -38,16 +38,15 @@ public class CloudSdkCheckerTest {
 
   @Mock private CloudSdk sdk;
 
-  private CloudSdkChecker cloudSdkChecker;
+  private CloudSdkChecker cloudSdkChecker = new CloudSdkChecker();
 
   @Test
   public void testCheckCloudSdk_versionMismatch()
       throws CloudSdkVersionFileException, CloudSdkOutOfDateException, CloudSdkNotFoundException,
-          InvalidJavaSdkException, AppEngineJavaComponentsNotInstalledException {
-    cloudSdkChecker = new CloudSdkChecker("191.0.0");
+          AppEngineJavaComponentsNotInstalledException {
     when(sdk.getVersion()).thenReturn(new CloudSdkVersion("190.0.0"));
     try {
-      cloudSdkChecker.checkCloudSdk(sdk);
+      cloudSdkChecker.checkCloudSdk(sdk, "191.0.0");
       Assert.fail();
     } catch (RuntimeException ex) {
       Assert.assertEquals(
@@ -60,10 +59,9 @@ public class CloudSdkCheckerTest {
   public void testCheckCloudSdk_callPluginsCoreChecks()
       throws CloudSdkVersionFileException, InvalidJavaSdkException, CloudSdkNotFoundException,
           CloudSdkOutOfDateException, AppEngineJavaComponentsNotInstalledException {
-    cloudSdkChecker = new CloudSdkChecker("192.0.0");
     when(sdk.getVersion()).thenReturn(new CloudSdkVersion("192.0.0"));
 
-    cloudSdkChecker.checkCloudSdk(sdk);
+    cloudSdkChecker.checkCloudSdk(sdk, "192.0.0");
 
     verify(sdk).getVersion();
     verify(sdk).validateCloudSdk();

@@ -33,7 +33,6 @@ import java.util.Properties;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.Before;
@@ -62,6 +61,8 @@ public class DeployMojoTest {
 
   @Mock private Log log;
 
+  @Mock private File artifact;
+
   @InjectMocks private DeployMojo deployMojo;
 
   @Before
@@ -72,6 +73,7 @@ public class DeployMojoTest {
     deployMojo.sourceDirectory = tempFolder.newFolder("source");
     deployMojo.setProject("project");
     deployMojo.setVersion("version");
+    when(artifact.exists()).thenReturn(true);
     when(project.getProperties()).thenReturn(new Properties());
     when(project.getBasedir()).thenReturn(new File("/fake/project/base/dir"));
   }
@@ -79,7 +81,7 @@ public class DeployMojoTest {
   @Test
   @Parameters({"jar", "war"})
   public void testDeployStandard(String packaging)
-      throws IOException, MojoFailureException, MojoExecutionException, AppEngineException {
+      throws IOException, MojoExecutionException, AppEngineException {
 
     // wire up
     when(project.getPackaging()).thenReturn(packaging);

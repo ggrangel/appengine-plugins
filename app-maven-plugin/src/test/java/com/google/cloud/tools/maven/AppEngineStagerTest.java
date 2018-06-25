@@ -18,6 +18,7 @@ package com.google.cloud.tools.maven;
 
 import java.io.IOException;
 import junitparams.JUnitParamsRunner;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,16 +43,32 @@ public class AppEngineStagerTest {
   }
 
   @Test
-  public void testNewStager_standard() {
+  public void testNewStager_standard() throws MojoExecutionException {
     Mockito.when(stageMojo.isStandardStaging()).thenReturn(true);
+    Mockito.when(stageMojo.getArtifact()).thenReturn(tempFolder.getRoot());
 
     AppEngineStager stager = AppEngineStager.Factory.newStager(stageMojo);
     Assert.assertTrue(stager.getClass().equals(AppEngineStandardStager.class));
   }
 
   @Test
-  public void testNewStager_flexible() {
+  public void testNewStager_flexible() throws MojoExecutionException {
+    Mockito.when(stageMojo.getArtifact()).thenReturn(tempFolder.getRoot());
+
     AppEngineStager stager = AppEngineStager.Factory.newStager(stageMojo);
     Assert.assertTrue(stager.getClass().equals(AppEngineFlexibleStager.class));
+  }
+
+  @Test
+  public void testNewStager_noArtifact() {
+    try {
+      AppEngineStager stager = AppEngineStager.Factory.newStager(stageMojo);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "\nCould not determine appengine environment, did you package your application?"
+              + "\nRun 'mvn package appengine:stage'",
+          ex.getMessage());
+    }
   }
 }

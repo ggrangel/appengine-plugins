@@ -21,7 +21,13 @@ import org.apache.maven.plugin.MojoExecutionException;
 public interface AppEngineStager {
 
   class Factory {
-    static AppEngineStager newStager(AbstractStageMojo stageConfiguration) {
+    static AppEngineStager newStager(AbstractStageMojo stageConfiguration)
+        throws MojoExecutionException {
+      if (stageConfiguration.getArtifact() == null || !stageConfiguration.getArtifact().exists()) {
+        throw new MojoExecutionException(
+            "\nCould not determine appengine environment, did you package your application?"
+                + "\nRun 'mvn package appengine:stage'");
+      }
       return stageConfiguration.isStandardStaging()
           ? new AppEngineStandardStager(stageConfiguration)
           : new AppEngineFlexibleStager(stageConfiguration);

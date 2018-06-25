@@ -34,6 +34,8 @@ public class SingleYamlStandardDeployTestHelper<M extends AbstractDeployMojo>
 
   @Mock private MavenProject mavenProject;
 
+  @Mock private File artifact;
+
   @InjectMocks protected M mojo;
 
   private TemporaryFolder temporaryFolder;
@@ -57,6 +59,7 @@ public class SingleYamlStandardDeployTestHelper<M extends AbstractDeployMojo>
     File appengineWebXml = webInfDirectory.toPath().resolve("appengine-web.xml").toFile();
     Assert.assertTrue(appengineWebXml.createNewFile());
     Files.write("<appengine-web-app></appengine-web-app>", appengineWebXml, Charsets.UTF_8);
+    when(artifact.exists()).thenReturn(true);
     when(factoryMock.standardStaging()).thenReturn(standardStagingMock);
     when(factoryMock.deployment()).thenReturn(deploymentMock);
     when(mavenProject.getProperties()).thenReturn(new Properties());

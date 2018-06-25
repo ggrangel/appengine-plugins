@@ -59,6 +59,8 @@ public class StageMojoTest {
 
   @Mock private Log logMock;
 
+  @Mock File artifact;
+
   @InjectMocks private StageMojo stageMojo;
 
   @Before
@@ -66,6 +68,7 @@ public class StageMojoTest {
     MockitoAnnotations.initMocks(this);
     stageMojo.setStagingDirectory(tempFolder.newFolder("staging"));
     stageMojo.sourceDirectory = tempFolder.newFolder("source");
+    when(artifact.exists()).thenReturn(true);
     when(mavenProject.getProperties()).thenReturn(new Properties());
     when(mavenProject.getBasedir()).thenReturn(new File("/fake/project/base/dir"));
   }

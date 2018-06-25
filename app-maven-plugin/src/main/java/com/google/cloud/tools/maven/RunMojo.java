@@ -318,7 +318,9 @@ public class RunMojo extends CloudSdkMojo implements RunConfiguration {
   protected void verifyAppEngineStandardApp() throws MojoExecutionException {
     if (!isStandardEnvironmentApp()) {
       throw new MojoExecutionException(
-          "Dev App Server does not support App Engine Flexible Environment applications.");
+          "\nCould not find appengine-web.xml all services, perhaps you need to run "
+              + "'mvn package appengine:run/start'."
+              + "\nDev App Server does not support App Engine Flexible Environment applications.");
     }
   }
 

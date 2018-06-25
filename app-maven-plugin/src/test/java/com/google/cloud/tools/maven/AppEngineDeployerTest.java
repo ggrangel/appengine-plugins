@@ -18,6 +18,7 @@ package com.google.cloud.tools.maven;
 
 import java.io.IOException;
 import junitparams.JUnitParamsRunner;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,16 +50,32 @@ public class AppEngineDeployerTest {
   }
 
   @Test
-  public void testNewStager_standard() throws IOException {
+  public void testNewDeployer_standard() throws MojoExecutionException {
     Mockito.when(deployMojo.isStandardStaging()).thenReturn(true);
+    Mockito.when(deployMojo.getArtifact()).thenReturn(tempFolder.getRoot());
 
     AppEngineDeployer deployer = AppEngineDeployer.Factory.newDeployer(deployMojo);
     Assert.assertTrue(deployer.getClass().equals(AppEngineStandardDeployer.class));
   }
 
   @Test
-  public void testNewStager_flexible() {
+  public void testNewDeployer_flexible() throws MojoExecutionException {
+    Mockito.when(deployMojo.getArtifact()).thenReturn(tempFolder.getRoot());
+
     AppEngineDeployer deployer = AppEngineDeployer.Factory.newDeployer(deployMojo);
     Assert.assertTrue(deployer.getClass().equals(AppEngineFlexibleDeployer.class));
+  }
+
+  @Test
+  public void testNewDeployer_noArtifact() {
+    try {
+      AppEngineDeployer.Factory.newDeployer(deployMojo);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "\nCould not determine appengine environment, did you package your application?"
+              + "\nRun 'mvn package appengine:deploy'",
+          ex.getMessage());
+    }
   }
 }

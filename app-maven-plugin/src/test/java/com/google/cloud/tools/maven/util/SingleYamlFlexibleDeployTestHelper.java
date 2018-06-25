@@ -27,6 +27,8 @@ public class SingleYamlFlexibleDeployTestHelper<M extends AbstractDeployMojo>
 
   @Mock private MavenProject mavenProject;
 
+  @Mock private File artifact;
+
   @InjectMocks protected M mojo;
 
   private TemporaryFolder temporaryFolder;
@@ -44,6 +46,7 @@ public class SingleYamlFlexibleDeployTestHelper<M extends AbstractDeployMojo>
     mojo.setVersion("some-version");
     MockitoAnnotations.initMocks(this);
 
+    when(artifact.exists()).thenReturn(true);
     when(mavenProject.getProperties()).thenReturn(new Properties());
     when(mavenProject.getBasedir()).thenReturn(new File("/fake/project/base/dir"));
     when(factoryMock.flexibleStaging()).thenReturn(flexibleStagingMock);

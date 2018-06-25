@@ -303,14 +303,12 @@ public class RunMojo extends CloudSdkMojo implements RunConfiguration {
 
   /** Determine if the built application is a Standard Environment app. */
   protected boolean isStandardEnvironmentApp() {
-    return getMavenProject() != null
-        && getMavenProject().getBuild() != null
-        && new File(
-                getMavenProject().getBuild().getDirectory()
-                    + "/"
-                    + getMavenProject().getBuild().getFinalName()
-                    + "/WEB-INF/appengine-web.xml")
-            .exists();
+    for (File service : services) {
+      if (!new File(service, "/WEB-INF/appengine-web.xml").exists()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

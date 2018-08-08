@@ -17,8 +17,10 @@
 
 package com.google.cloud.tools.gradle.appengine;
 
-import com.google.common.collect.FluentIterable;
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.gradle.testkit.runner.BuildResult;
 
 /** ToolsExtension to filter gradle test kit runner results. */
@@ -27,8 +29,11 @@ public class BuildResultFilter {
   /** Extract task as a list of path strings. */
   public static List<String> extractTasks(BuildResult buildResult) {
 
-    return FluentIterable.from(buildResult.getTasks())
-        .transform(buildTask -> buildTask.getPath())
-        .toList();
+    // we can't use buildResult.getTasks() because it ignores skipped tasks
+    return new BufferedReader(new StringReader(buildResult.getOutput()))
+        .lines()
+        .filter(str -> str.startsWith(":"))
+        .map(str -> str.split(" ")[0])
+        .collect(Collectors.toList());
   }
 }

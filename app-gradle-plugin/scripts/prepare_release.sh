@@ -20,20 +20,24 @@ Die() {
 }
 
 DieUsage() {
-    Die "Usage: ./prepare_release.sh <release version>"
+    Die "Usage: ./prepare_release.sh <release version> [<post-release version>]"
 }
 
 # Usage: CheckVersion <version>
 CheckVersion() {
-    [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || Die "Version not in ###.###.### format."
+  [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+)?$ ]] || Die "Version not in ###.###.### format."
 }
 
-[ $# -ne 2 ] || DieUsage
+[ $# -ne 2 ] || [ $# -ne 3 ] || DieUsage
 
 EchoGreen '===== RELEASE SETUP SCRIPT ====='
 
 VERSION=$1
 CheckVersion ${VERSION}
+if [ $2 ]; then
+  POST_RELEASE_VERSION=$2
+  CheckVersion ${POST_RELEASE_VERSION}
+fi
 
 if [[ $(git status -uno --porcelain) ]]; then
     Die 'There are uncommitted changes.'
@@ -43,7 +47,7 @@ fi
 git checkout -b release_v${VERSION}
 
 # Changes the version for release and creates the commits/tags.
-echo | ./gradlew release -PreleaseVersion=${VERSION}
+echo | ./gradlew release -Prelease.releaseVersion=${VERSION} ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
 
 # Pushes the release branch to Github.
 git push origin release_v${VERSION}

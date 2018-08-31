@@ -33,7 +33,7 @@ public class DeployExtension
 
   private String bucket;
   private String imageUrl;
-  private String project;
+  private String projectId;
   private Boolean promote;
   private String server;
   private Boolean stopPreviousVersion;
@@ -41,7 +41,6 @@ public class DeployExtension
   private File appEngineDirectory;
 
   @InternalProperty private final ImmutableList<File> deployables;
-  @InternalProperty private DeployTargetResolver deployTargetResolver;
 
   public DeployExtension(Project gradleProject) {
     this.gradleProject = gradleProject;
@@ -53,13 +52,12 @@ public class DeployExtension
     this.gradleProject = deployExtension.gradleProject;
     this.bucket = deployExtension.bucket;
     this.imageUrl = deployExtension.imageUrl;
-    this.project = deployExtension.project;
+    this.projectId = deployExtension.projectId;
     this.promote = deployExtension.promote;
     this.server = deployExtension.server;
     this.stopPreviousVersion = deployExtension.stopPreviousVersion;
     this.version = deployExtension.version;
     this.appEngineDirectory = deployExtension.appEngineDirectory;
-    this.deployTargetResolver = deployExtension.deployTargetResolver;
     this.deployables = ImmutableList.copyOf(deployables);
   }
 
@@ -87,12 +85,12 @@ public class DeployExtension
   }
 
   @Override
-  public String getProject() {
-    return deployTargetResolver.getProject(project);
+  public String getProjectId() {
+    return projectId;
   }
 
-  public void setProject(String project) {
-    this.project = project;
+  public void setProjectId(String projectId) {
+    this.projectId = projectId;
   }
 
   @Override
@@ -124,7 +122,7 @@ public class DeployExtension
 
   @Override
   public String getVersion() {
-    return deployTargetResolver.getVersion(version);
+    return version;
   }
 
   public void setVersion(String version) {
@@ -138,9 +136,5 @@ public class DeployExtension
   @Override
   public File getAppEngineDirectory() {
     return appEngineDirectory;
-  }
-
-  public void setDeployTargetResolver(DeployTargetResolver deployTargetResolver) {
-    this.deployTargetResolver = deployTargetResolver;
   }
 }

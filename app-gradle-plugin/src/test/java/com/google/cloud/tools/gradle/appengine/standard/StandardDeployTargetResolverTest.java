@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Google Inc. All Right Reserved.
+ * Copyright 2018 Google LLC. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,13 @@
 
 package com.google.cloud.tools.gradle.appengine.standard;
 
-import com.google.cloud.tools.gradle.appengine.core.DeployTargetResolver;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkNotFoundException;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkOutOfDateException;
+import com.google.cloud.tools.appengine.cloudsdk.CloudSdkVersionFileException;
+import com.google.cloud.tools.appengine.cloudsdk.Gcloud;
+import com.google.cloud.tools.appengine.cloudsdk.process.ProcessHandlerException;
+import com.google.cloud.tools.appengine.cloudsdk.serialization.CloudSdkConfig;
+import com.google.cloud.tools.gradle.appengine.core.ConfigReader;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import java.io.File;
@@ -28,66 +34,83 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class StandardDeployTargetResolverTest {
   private static final String PROJECT_XML = "project-xml";
   private static final String VERSION_XML = "version-xml";
+  private static final String PROJECT_GCLOUD = "project-gcloud";
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private File appengineWebXml;
 
+  @Mock Gcloud gcloud;
+  @Mock CloudSdkConfig cloudSdkConfig;
+
   /** Setup PropertyResolverTest. */
   @Before
-  public void setup() throws IOException {
+  public void setup()
+      throws IOException, CloudSdkNotFoundException, ProcessHandlerException,
+          CloudSdkOutOfDateException, CloudSdkVersionFileException {
     appengineWebXml = new File(temporaryFolder.newFolder("source", "WEB-INF"), "appengine-web.xml");
+    Mockito.when(gcloud.getConfig()).thenReturn(cloudSdkConfig);
+    Mockito.when(cloudSdkConfig.getProject()).thenReturn(PROJECT_GCLOUD);
+
     appengineWebXml.createNewFile();
-    Files.write(
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-            + "<appengine-web-app xmlns=\"http://appengine.google.com/ns/1.0\"><application>"
-            + PROJECT_XML
-            + "</application><version>"
-            + VERSION_XML
-            + "</version></appengine-web-app>",
-        appengineWebXml,
-        Charsets.UTF_8);
+    Files.asCharSink(appengineWebXml, Charsets.UTF_8)
+        .write(
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                + "<appengine-web-app xmlns=\"http://appengine.google.com/ns/1.0\"><application>"
+                + PROJECT_XML
+                + "</application><version>"
+                + VERSION_XML
+                + "</version></appengine-web-app>");
   }
 
   @Test
   public void testGetProject_buildConfig() {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
     String result = deployTargetResolver.getProject("some-project");
     Assert.assertEquals("some-project", result);
   }
 
   @Test
   public void testGetProject_appengineConfig() {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
-    String result = deployTargetResolver.getProject(DeployTargetResolver.APPENGINE_CONFIG);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
+    String result = deployTargetResolver.getProject(ConfigReader.APPENGINE_CONFIG);
     Assert.assertEquals(PROJECT_XML, result);
   }
 
   @Test
   public void testGetProject_gcloudConfig() {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
-    String result = deployTargetResolver.getProject(DeployTargetResolver.GCLOUD_CONFIG);
-    Assert.assertNull(result);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
+    String result = deployTargetResolver.getProject(ConfigReader.GCLOUD_CONFIG);
+    Assert.assertEquals(PROJECT_GCLOUD, result);
   }
 
   @Test
   public void testGetProject_nothingSet() throws IOException {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
     try {
       String result = deployTargetResolver.getProject(null);
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "Deployment project must be defined or configured to read from system state\n"
-              + "1. Set appengine.deploy.project = 'my-project-name'\n"
-              + "2. Set appengine.deploy.project = '"
-              + DeployTargetResolver.APPENGINE_CONFIG
+          "Deployment projectId must be defined or configured to read from system state\n"
+              + "1. Set appengine.deploy.projectId = 'my-project-id'\n"
+              + "2. Set appengine.deploy.projectId = '"
+              + ConfigReader.APPENGINE_CONFIG
               + "' to use <application> from appengine-web.xml\n"
-              + "3. Set appengine.deploy.project = '"
-              + DeployTargetResolver.GCLOUD_CONFIG
+              + "3. Set appengine.deploy.projectId = '"
+              + ConfigReader.GCLOUD_CONFIG
               + "' to use project from gcloud config",
           ex.getMessage());
     }
@@ -95,40 +118,44 @@ public class StandardDeployTargetResolverTest {
 
   @Test
   public void testGetVersion_buildConfig() {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
     String result = deployTargetResolver.getVersion("some-version");
     Assert.assertEquals("some-version", result);
   }
 
   @Test
   public void testGetVersion_appengineConfig() {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
-    String result = deployTargetResolver.getVersion(DeployTargetResolver.APPENGINE_CONFIG);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
+    String result = deployTargetResolver.getVersion(ConfigReader.APPENGINE_CONFIG);
     Assert.assertEquals(VERSION_XML, result);
   }
 
   @Test
   public void testGetVersion_gcloudConfig() {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
-    String result = deployTargetResolver.getVersion(DeployTargetResolver.GCLOUD_CONFIG);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
+    String result = deployTargetResolver.getVersion(ConfigReader.GCLOUD_CONFIG);
     Assert.assertNull(result);
   }
 
   @Test
   public void testGetVersion_nothingSet() throws IOException {
-    DeployTargetResolver deployTargetResolver = new StandardDeployTargetResolver(appengineWebXml);
+    StandardDeployTargetResolver deployTargetResolver =
+        new StandardDeployTargetResolver(appengineWebXml, gcloud);
     try {
-      String result = deployTargetResolver.getVersion(null);
+      deployTargetResolver.getVersion(null);
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
           "Deployment version must be defined or configured to read from system state\n"
               + "1. Set appengine.deploy.version = 'my-version'\n"
               + "2. Set appengine.deploy.version = '"
-              + DeployTargetResolver.APPENGINE_CONFIG
+              + ConfigReader.APPENGINE_CONFIG
               + "' to use <version> from appengine-web.xml\n"
               + "3. Set appengine.deploy.version = '"
-              + DeployTargetResolver.GCLOUD_CONFIG
+              + ConfigReader.GCLOUD_CONFIG
               + "' to have gcloud generate a version for you.",
           ex.getMessage());
     }

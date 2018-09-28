@@ -105,6 +105,20 @@ public class CloudSdkTest {
   }
 
   @Test
+  public void testValidateCloudSdk_versionFileContentInvalid()
+      throws IOException, CloudSdkNotFoundException, CloudSdkOutOfDateException,
+          CloudSdkVersionFileException {
+    String fileContents = "this is not a valid version string";
+    writeVersionFile(fileContents);
+    root.resolve("bin").toFile().mkdir();
+    // fake SDK contents
+    root.resolve("bin/gcloud").toFile().createNewFile();
+    root.resolve("bin/gcloud.cmd").toFile().createNewFile(); // for Windows
+    root.resolve("bin/dev_appserver.py").toFile().createNewFile();
+    sdk.validateCloudSdk();
+  }
+
+  @Test
   public void testGetVersion_fileContentValid() throws IOException, CloudSdkVersionFileException {
     String version = "136.0.0";
     writeVersionFile(version);

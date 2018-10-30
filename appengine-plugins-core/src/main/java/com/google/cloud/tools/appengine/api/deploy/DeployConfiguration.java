@@ -16,32 +16,156 @@
 
 package com.google.cloud.tools.appengine.api.deploy;
 
-import com.google.cloud.tools.appengine.api.Configuration;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Configuration for {@link AppEngineDeployment#deploy(DeployConfiguration)}. */
-public interface DeployConfiguration extends Configuration {
+public class DeployConfiguration {
 
-  @Nullable
-  List<File> getDeployables();
+  @Nullable private final String bucket;
+  private final List<File> deployables;
+  @Nullable private final String imageUrl;
+  @Nullable private final String projectId;
+  @Nullable private final Boolean promote;
+  @Nullable private final String server;
+  @Nullable private final Boolean stopPreviousVersion;
+  @Nullable private final String version;
 
-  @Nullable
-  String getBucket();
+  private DeployConfiguration(
+      @Nullable String bucket,
+      List<File> deployables,
+      @Nullable String imageUrl,
+      @Nullable String projectId,
+      @Nullable Boolean promote,
+      @Nullable String server,
+      @Nullable Boolean stopPreviousVersion,
+      @Nullable String version) {
+    this.bucket = bucket;
+    this.deployables = deployables;
+    this.imageUrl = imageUrl;
+    this.projectId = projectId;
+    this.promote = promote;
+    this.server = server;
+    this.stopPreviousVersion = stopPreviousVersion;
+    this.version = version;
+  }
 
+  /** GCS storage bucket used for staging files associated with deployment. */
   @Nullable
-  String getImageUrl();
+  public String getBucket() {
+    return bucket;
+  }
 
-  @Nullable
-  Boolean getPromote();
+  /** List of deployable target directories or yaml files. */
+  public List<File> getDeployables() {
+    return deployables;
+  }
 
+  /** Docker image to use during deployment (only for app.yaml deployments). */
   @Nullable
-  String getServer();
+  public String getImageUrl() {
+    return imageUrl;
+  }
 
+  /** Google Cloud Project ID to deploy to. */
   @Nullable
-  Boolean getStopPreviousVersion();
+  public String getProjectId() {
+    return projectId;
+  }
 
+  /** Promote the deployed version to receive all traffic. */
   @Nullable
-  String getVersion();
+  public Boolean getPromote() {
+    return promote;
+  }
+
+  /** The App Engine server to use. Users typically will never set this value. */
+  @Nullable
+  public String getServer() {
+    return server;
+  }
+
+  /** Stop the previous running version when deploying and promote this new version. */
+  @Nullable
+  public Boolean getStopPreviousVersion() {
+    return stopPreviousVersion;
+  }
+
+  /** Version to deploy. */
+  @Nullable
+  public String getVersion() {
+    return version;
+  }
+
+  public static Builder builder(List<File> deployables) {
+    return new Builder(deployables);
+  }
+
+  public static final class Builder {
+    @Nullable private String bucket;
+    private List<File> deployables;
+    @Nullable private String imageUrl;
+    @Nullable private String projectId;
+    @Nullable private Boolean promote;
+    @Nullable private String server;
+    @Nullable private Boolean stopPreviousVersion;
+    @Nullable private String version;
+
+    private Builder(List<File> deployables) {
+      if (deployables == null || deployables.size() == 0) {
+        throw new IllegalArgumentException("Null/empty deployables");
+      }
+      this.deployables = deployables;
+    }
+
+    public DeployConfiguration.Builder setBucket(@Nullable String bucket) {
+      this.bucket = bucket;
+      return this;
+    }
+
+    public DeployConfiguration.Builder setImageUrl(@Nullable String imageUrl) {
+      this.imageUrl = imageUrl;
+      return this;
+    }
+
+    public DeployConfiguration.Builder setProjectId(@Nullable String projectId) {
+      this.projectId = projectId;
+      return this;
+    }
+
+    public DeployConfiguration.Builder setPromote(@Nullable Boolean promote) {
+      this.promote = promote;
+      return this;
+    }
+
+    public DeployConfiguration.Builder setServer(@Nullable String server) {
+      this.server = server;
+      return this;
+    }
+
+    public DeployConfiguration.Builder setStopPreviousVersion(
+        @Nullable Boolean stopPreviousVersion) {
+      this.stopPreviousVersion = stopPreviousVersion;
+      return this;
+    }
+
+    public DeployConfiguration.Builder setVersion(@Nullable String version) {
+      this.version = version;
+      return this;
+    }
+
+    /** Build a {@link DeployConfiguration}. */
+    public DeployConfiguration build() {
+      return new DeployConfiguration(
+          this.bucket,
+          this.deployables,
+          this.imageUrl,
+          this.projectId,
+          this.promote,
+          this.server,
+          this.stopPreviousVersion,
+          this.version);
+    }
+  }
 }

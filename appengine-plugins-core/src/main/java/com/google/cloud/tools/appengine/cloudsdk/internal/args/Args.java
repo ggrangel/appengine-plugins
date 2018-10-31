@@ -19,7 +19,6 @@ package com.google.cloud.tools.appengine.cloudsdk.internal.args;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,31 +89,19 @@ class Args {
    */
   static List<String> integerWithEq(String name, @Nullable Integer value) {
     if (value != null) {
-      return Arrays.asList("--" + name + "=" + value.toString());
+      return Collections.singletonList("--" + name + "=" + value.toString());
     }
     return Collections.emptyList();
   }
 
   /**
-   * Produces the flag form of a file object, using {@link File#toPath()}.
+   * Produces the flag form of a path object, using {@link Path#toAbsolutePath()} as a string.
    *
-   * @return {@code [--name, file.toPath().toString()]} or {@code []} if file is null.
-   */
-  static List<String> filePath(String name, @Nullable File file) {
-    if (file != null) {
-      return path(name, file.toPath());
-    }
-    return Collections.emptyList();
-  }
-
-  /**
-   * Produces the flag form of a path object, using {@link Path#toString()}.
-   *
-   * @return {@code [--name, path.toString()]} or {@code []} if path is null or not set.
+   * @return {@code [--name, "/absolute/path"]} or {@code []} if path is null or not set.
    */
   static List<String> path(String name, @Nullable Path path) {
     if (path != null && !path.toString().isEmpty()) {
-      return Arrays.asList("--" + name, path.toString());
+      return Arrays.asList("--" + name, path.toAbsolutePath().toString());
     }
     return Collections.emptyList();
   }

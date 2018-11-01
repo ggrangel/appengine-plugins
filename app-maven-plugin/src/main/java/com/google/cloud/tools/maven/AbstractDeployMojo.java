@@ -39,7 +39,7 @@ public abstract class AbstractDeployMojo extends AbstractStageMojo
   /**
    * Deploy with a specific Docker image. Docker url must be from one of the valid gcr hostnames.
    *
-   * <p><i>Supported only for flexible environment.</i>
+   * <p><i>Supported only for app.yaml based deployments.</i>
    */
   @Parameter(alias = "deploy.imageUrl", property = "app.deploy.imageUrl")
   private String imageUrl;
@@ -110,9 +110,15 @@ public abstract class AbstractDeployMojo extends AbstractStageMojo
   @Override
   public String getProjectId() {
     if (project != null) {
-      throw new IllegalArgumentException(
-          "Configuring <project> is deprecated, use <projectId> to set your "
-              + "Google Cloud ProjectId");
+      if (projectId != null) {
+        throw new IllegalArgumentException(
+            "Configuring <project> and <projectId> is not allowed, please use only <projectId>");
+      }
+      getLog()
+          .warn(
+              "Configuring <project> is deprecated,"
+                  + " use <projectId> to set your Google Cloud ProjectId");
+      return project;
     }
     return projectId;
   }

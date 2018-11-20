@@ -20,21 +20,24 @@ import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 
-/** Configuration for {@link AppEngineFlexibleStaging#stageFlexible(StageFlexibleConfiguration)}. */
-public class StageFlexibleConfiguration {
+/** Configuration for {@link AppEngineArchiveStaging#stageArchive(StageArchiveConfiguration)}. */
+public class StageArchiveConfiguration {
 
   private final Path appEngineDirectory;
   @Nullable private final Path dockerDirectory;
+  @Nullable private final Path extraFilesDirectory;
   private final Path artifact;
   private final Path stagingDirectory;
 
-  private StageFlexibleConfiguration(
+  private StageArchiveConfiguration(
       Path appEngineDirectory,
       @Nullable Path dockerDirectory,
+      @Nullable Path extraFilesDirectory,
       Path artifact,
       Path stagingDirectory) {
     this.appEngineDirectory = appEngineDirectory;
     this.dockerDirectory = dockerDirectory;
+    this.extraFilesDirectory = extraFilesDirectory;
     this.artifact = artifact;
     this.stagingDirectory = stagingDirectory;
   }
@@ -48,6 +51,12 @@ public class StageFlexibleConfiguration {
   @Nullable
   public Path getDockerDirectory() {
     return dockerDirectory;
+  }
+
+  /** Directory containing other files to be deployed with the application. */
+  @Nullable
+  public Path getExtraFilesDirectory() {
+    return extraFilesDirectory;
   }
 
   /** Artifact to deploy such as WAR or JAR. */
@@ -70,6 +79,7 @@ public class StageFlexibleConfiguration {
   public static final class Builder {
     private Path appEngineDirectory;
     @Nullable private Path dockerDirectory;
+    @Nullable private Path extraFilesDirectory;
     private Path artifact;
     private Path stagingDirectory;
 
@@ -83,15 +93,25 @@ public class StageFlexibleConfiguration {
       this.stagingDirectory = stagingDirectory;
     }
 
-    public StageFlexibleConfiguration.Builder dockerDirectory(@Nullable Path dockerDirectory) {
+    public StageArchiveConfiguration.Builder dockerDirectory(@Nullable Path dockerDirectory) {
       this.dockerDirectory = dockerDirectory;
       return this;
     }
 
-    /** Build a {@link StageFlexibleConfiguration}. */
-    public StageFlexibleConfiguration build() {
-      return new StageFlexibleConfiguration(
-          this.appEngineDirectory, this.dockerDirectory, this.artifact, this.stagingDirectory);
+    public StageArchiveConfiguration.Builder extraFilesDirectory(
+        @Nullable Path extraFilesDirectory) {
+      this.extraFilesDirectory = extraFilesDirectory;
+      return this;
+    }
+
+    /** Build a {@link StageArchiveConfiguration}. */
+    public StageArchiveConfiguration build() {
+      return new StageArchiveConfiguration(
+          this.appEngineDirectory,
+          this.dockerDirectory,
+          this.extraFilesDirectory,
+          this.artifact,
+          this.stagingDirectory);
     }
   }
 }

@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.maven.util;
+package com.google.cloud.tools.maven.run;
 
-import java.io.IOException;
-import java.net.ServerSocket;
+import com.google.cloud.tools.maven.run.Runner.Factory;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 
-/** Helper methods to handle sockets. */
-public class SocketUtil {
+/** Run App Engine Development App Server synchronously. */
+@Mojo(name = "run", defaultPhase = LifecyclePhase.DEPLOY)
+public class RunMojo extends AbstractRunMojo {
 
-  /**
-   * Returns a port that's available.
-   *
-   * <p><i>Note: the port may become unavailabe by the time the caller tries to use it.</i>
-   */
-  public static int findPort() throws IOException {
-    try (ServerSocket serverSocket = new ServerSocket(0)) {
-      serverSocket.setReuseAddress(true);
-      return serverSocket.getLocalPort();
-    }
+  private Runner.Factory factory = new Factory();
+
+  @Override
+  public void execute() throws MojoExecutionException {
+    factory.newRunner(this).run();
   }
 }

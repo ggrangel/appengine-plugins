@@ -22,8 +22,11 @@ import java.nio.file.Path;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Configuration for {@link AppEngineAppYamlStaging#stageArchive(StageAppYamlConfiguration)}. */
-public class StageAppYamlConfiguration {
+/**
+ * Arguments needed to stage an App Engine app.yaml based application. Null return values indicate
+ * that the configuration was not set, and thus assumes the tool default value.
+ */
+public class AppYamlProjectStageConfiguration {
 
   private final Path appEngineDirectory;
   @Nullable private final Path dockerDirectory;
@@ -31,7 +34,7 @@ public class StageAppYamlConfiguration {
   private final Path artifact;
   private final Path stagingDirectory;
 
-  private StageAppYamlConfiguration(
+  private AppYamlProjectStageConfiguration(
       Path appEngineDirectory,
       @Nullable Path dockerDirectory,
       @Nullable List<Path> extraFilesDirectories,
@@ -96,20 +99,21 @@ public class StageAppYamlConfiguration {
       this.stagingDirectory = stagingDirectory;
     }
 
-    public StageAppYamlConfiguration.Builder dockerDirectory(@Nullable Path dockerDirectory) {
+    public AppYamlProjectStageConfiguration.Builder dockerDirectory(
+        @Nullable Path dockerDirectory) {
       this.dockerDirectory = dockerDirectory;
       return this;
     }
 
-    public StageAppYamlConfiguration.Builder extraFilesDirectories(
+    public AppYamlProjectStageConfiguration.Builder extraFilesDirectories(
         @Nullable List<Path> extraFilesDirectories) {
       this.extraFilesDirectories = extraFilesDirectories;
       return this;
     }
 
-    /** Build a {@link StageAppYamlConfiguration}. */
-    public StageAppYamlConfiguration build() {
-      return new StageAppYamlConfiguration(
+    /** Build a {@link AppYamlProjectStageConfiguration}. */
+    public AppYamlProjectStageConfiguration build() {
+      return new AppYamlProjectStageConfiguration(
           this.appEngineDirectory,
           this.dockerDirectory,
           this.extraFilesDirectories,

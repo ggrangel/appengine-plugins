@@ -19,6 +19,10 @@ package com.google.cloud.tools.gradle.appengine.util;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,5 +39,53 @@ public class NullSafeTest {
     Path testPath = Paths.get("some/path");
     File expectedResult = testPath.toFile();
     Assert.assertEquals(expectedResult, NullSafe.convert(testPath, Path::toFile));
+  }
+
+  @Test
+  public void testConvert_listNull() {
+    List<File> testFile = null;
+    Assert.assertNull(NullSafe.convert(testFile, File::toPath));
+  }
+
+  @Test
+  public void testConvert_listWithNull() {
+    File file1 = new File("test/file1");
+    File file2 = new File("test/file2");
+    List<File> testFiles = Arrays.asList(file1, null, file2);
+
+    List<Path> expected = Arrays.asList(file1.toPath(), file2.toPath());
+
+    Assert.assertEquals(expected, NullSafe.convert(testFiles, File::toPath));
+  }
+
+  @Test
+  public void testConvert_listWithOnlyNull() {
+    List<File> testFiles = Arrays.asList(null, null);
+
+    List<Path> expected = Collections.emptyList();
+
+    Assert.assertEquals(expected, NullSafe.convert(testFiles, File::toPath));
+  }
+
+  @Test
+  public void testConvert_listWithConversionsToNull() {
+    File file1 = new File("test/file1");
+    File file2 = new File("test/file2");
+    List<File> testFiles = Arrays.asList(file1, file2, null);
+
+    List<Path> expected = Collections.emptyList();
+
+    Assert.assertEquals(expected, NullSafe.convert(testFiles, (Function<File, Path>) file -> null));
+  }
+
+  @Test
+  public void testConvert_list() {
+    File file1 = new File("test/file1");
+    File file2 = new File("test/file2");
+    List<File> testFiles = Arrays.asList(file1, file2);
+
+    List<Path> expected = Arrays.asList(file1.toPath(), file2.toPath());
+
+    Assert.assertEquals(expected, NullSafe.convert(testFiles, File::toPath));
   }
 }

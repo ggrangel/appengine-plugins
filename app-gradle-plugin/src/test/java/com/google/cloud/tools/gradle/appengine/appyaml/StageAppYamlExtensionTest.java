@@ -17,14 +17,19 @@
 package com.google.cloud.tools.gradle.appengine.appyaml;
 
 import com.google.cloud.tools.appengine.configuration.AppYamlProjectStageConfiguration;
+import com.google.cloud.tools.gradle.appengine.TestProject;
+import com.google.common.base.Charsets;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
+import org.gradle.testkit.runner.BuildResult;
+import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -54,7 +59,7 @@ public class StageAppYamlExtensionTest {
   }
 
   @Test
-  public void testToStageArchiveConfiguration_allValuesSet() {
+  public void testToAppYamlProjectStageConfiguration_allValuesSet() {
     StageAppYamlExtension extension = new StageAppYamlExtension(testContextProject);
 
     extension.setStagingDirectory(stagingDirectory);
@@ -63,7 +68,8 @@ public class StageAppYamlExtensionTest {
     extension.setDockerDirectory(dockerDirectory);
     extension.setExtraFilesDirectories(extraFilesDirectories);
 
-    AppYamlProjectStageConfiguration generatedConfig = extension.toStageArchiveConfiguration();
+    AppYamlProjectStageConfiguration generatedConfig =
+        extension.toAppYamlProjectStageConfiguration();
     Assert.assertEquals(appEngineDirectory.toPath(), generatedConfig.getAppEngineDirectory());
     Assert.assertEquals(stagingDirectory.toPath(), generatedConfig.getStagingDirectory());
     Assert.assertEquals(artifact.toPath(), generatedConfig.getArtifact());
@@ -74,7 +80,7 @@ public class StageAppYamlExtensionTest {
   }
 
   @Test
-  public void testToStageArchiveConfiguration_nullExtraFiles() {
+  public void testToAppYamlProjectStageConfiguration_nullExtraFiles() {
     StageAppYamlExtension extension = new StageAppYamlExtension(testContextProject);
 
     extension.setStagingDirectory(stagingDirectory);
@@ -83,7 +89,8 @@ public class StageAppYamlExtensionTest {
     extension.setDockerDirectory(dockerDirectory);
     // extraFilesDirectories is not set (default = null)
 
-    AppYamlProjectStageConfiguration generatedConfig = extension.toStageArchiveConfiguration();
+    AppYamlProjectStageConfiguration generatedConfig =
+        extension.toAppYamlProjectStageConfiguration();
     Assert.assertEquals(appEngineDirectory.toPath(), generatedConfig.getAppEngineDirectory());
     Assert.assertEquals(stagingDirectory.toPath(), generatedConfig.getStagingDirectory());
     Assert.assertEquals(artifact.toPath(), generatedConfig.getArtifact());
@@ -92,7 +99,7 @@ public class StageAppYamlExtensionTest {
   }
 
   @Test
-  public void testToStageArchiveConfiguration_emptyExtraFiles() {
+  public void testToAppYamlProjectStageConfiguration_emptyExtraFiles() {
     StageAppYamlExtension extension = new StageAppYamlExtension(testContextProject);
 
     extension.setStagingDirectory(stagingDirectory);
@@ -101,11 +108,38 @@ public class StageAppYamlExtensionTest {
     extension.setDockerDirectory(dockerDirectory);
     extension.setExtraFilesDirectories(Collections.emptyList());
 
-    AppYamlProjectStageConfiguration generatedConfig = extension.toStageArchiveConfiguration();
+    AppYamlProjectStageConfiguration generatedConfig =
+        extension.toAppYamlProjectStageConfiguration();
     Assert.assertEquals(appEngineDirectory.toPath(), generatedConfig.getAppEngineDirectory());
     Assert.assertEquals(stagingDirectory.toPath(), generatedConfig.getStagingDirectory());
     Assert.assertEquals(artifact.toPath(), generatedConfig.getArtifact());
     Assert.assertEquals(dockerDirectory.toPath(), generatedConfig.getDockerDirectory());
     Assert.assertEquals(0, generatedConfig.getExtraFilesDirectory().size());
+  }
+
+  @Test
+  public void testGetExtraFilesDirectoriesAsInputFiles_indirectFunctional() throws IOException {
+    TestProject testProject =
+        new TestProject(testProjectDir.getRoot())
+            .addAppYamlBuildFileWithExtraFilesDirectories()
+            .addAppYaml("java11");
+    Files.write(
+        testProject.getProjectRoot().toPath().resolve("src/main/extras/test1.txt"),
+        "hello".getBytes(Charsets.UTF_8));
+
+    BuildResult firstRun = testProject.applyGradleRunner("appengineStage");
+    Assert.assertEquals(TaskOutcome.SUCCESS, firstRun.task(":appengineStage").getOutcome());
+
+    BuildResult secondRunNoChange = testProject.applyGradleRunner("appengineStage");
+    Assert.assertEquals(
+        TaskOutcome.UP_TO_DATE, secondRunNoChange.task(":appengineStage").getOutcome());
+
+    Files.write(
+        testProject.getProjectRoot().toPath().resolve("src/main/extras/test2.txt"),
+        "hello".getBytes(Charsets.UTF_8));
+
+    BuildResult runWithNewFileAdded = testProject.applyGradleRunner("appengineStage");
+    Assert.assertEquals(
+        TaskOutcome.SUCCESS, runWithNewFileAdded.task(":appengineStage").getOutcome());
   }
 }

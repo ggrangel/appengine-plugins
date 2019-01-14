@@ -31,13 +31,13 @@ import java.util.Objects;
  * <p>For example, in a Cloud SDK Version like <code>"0.1.0-beta.1"</code>, the pre-release field is
  * <code>"beta.1"</code>.
  */
-class CloudSdkVersionPreRelease implements Comparable<CloudSdkVersionPreRelease> {
+final class CloudSdkVersionPreRelease implements Comparable<CloudSdkVersionPreRelease> {
 
   private List<PreReleaseSegment> segments;
   private final String preRelease;
 
   /** Constructs a new CloudSdkVersionPreRelease from a string representation. */
-  public CloudSdkVersionPreRelease(String preRelease) {
+  CloudSdkVersionPreRelease(String preRelease) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(preRelease));
 
     this.segments = new ArrayList<>();
@@ -90,7 +90,7 @@ class CloudSdkVersionPreRelease implements Comparable<CloudSdkVersionPreRelease>
     if (obj == this) {
       return true;
     }
-    if (this.getClass() != obj.getClass()) {
+    if (!(obj instanceof CloudSdkVersionPreRelease)) {
       return false;
     }
     CloudSdkVersionPreRelease other = (CloudSdkVersionPreRelease) obj;
@@ -145,7 +145,7 @@ class CloudSdkVersionPreRelease implements Comparable<CloudSdkVersionPreRelease>
       if (obj == this) {
         return true;
       }
-      if (this.getClass() != obj.getClass()) {
+      if (!(obj instanceof PreReleaseSegment)) {
         return false;
       }
       PreReleaseSegment other = (PreReleaseSegment) obj;

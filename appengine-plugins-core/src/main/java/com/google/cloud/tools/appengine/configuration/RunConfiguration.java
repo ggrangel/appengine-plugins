@@ -18,6 +18,7 @@ package com.google.cloud.tools.appengine.configuration;
 
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -37,7 +38,7 @@ public class RunConfiguration {
   @Nullable private final String threadsafeOverride;
   @Nullable private final String pythonStartupScript;
   @Nullable private final String pythonStartupArgs;
-  @Nullable private final List<String> jvmFlags;
+  private final List<String> jvmFlags;
   @Nullable private final String customEntrypoint;
   @Nullable private final String runtime;
   @Nullable private final Boolean allowSkippedFiles;
@@ -66,7 +67,7 @@ public class RunConfiguration {
       @Nullable String threadsafeOverride,
       @Nullable String pythonStartupScript,
       @Nullable String pythonStartupArgs,
-      @Nullable List<String> jvmFlags,
+      List<String> jvmFlags,
       @Nullable String customEntrypoint,
       @Nullable String runtime,
       @Nullable Boolean allowSkippedFiles,
@@ -114,7 +115,6 @@ public class RunConfiguration {
    * directory, it must include WEB-INF/appengine-web.xml. For dev appserver 2, this may instead
    * include references to app.yamls.
    */
-  @Nullable
   public List<Path> getServices() {
     return services;
   }
@@ -179,9 +179,13 @@ public class RunConfiguration {
     return pythonStartupArgs;
   }
 
-  @Nullable
+  /**
+   * Returns command line flags that will be passed to the Java virtual machine that runs the local
+   * development server.
+   */
   public List<String> getJvmFlags() {
-    return jvmFlags;
+    ArrayList<String> copy = new ArrayList<>(jvmFlags);
+    return copy;
   }
 
   @Nullable
@@ -240,8 +244,8 @@ public class RunConfiguration {
   }
 
   /**
-   * Any additional arguments to be passed to the appserver. These arguments are neither parsed nor
-   * validated.
+   * Any additional arguments to be passed to the local development server. These arguments are
+   * neither parsed nor validated.
    */
   @Nullable
   public List<String> getAdditionalArguments() {
@@ -272,7 +276,7 @@ public class RunConfiguration {
     @Nullable private String threadsafeOverride;
     @Nullable private String pythonStartupScript;
     @Nullable private String pythonStartupArgs;
-    @Nullable private List<String> jvmFlags;
+    private List<String> jvmFlags = new ArrayList<>();
     @Nullable private String customEntrypoint;
     @Nullable private String runtime;
     @Nullable private Boolean allowSkippedFiles;
@@ -289,7 +293,6 @@ public class RunConfiguration {
 
     private Builder(List<Path> services) {
       Preconditions.checkNotNull(services);
-      Preconditions.checkArgument(services.size() != 0);
       this.services = services;
     }
 
@@ -353,8 +356,12 @@ public class RunConfiguration {
       return this;
     }
 
+    /** Sets extra flags to be passed to the Java virtual machine. */
     public Builder jvmFlags(@Nullable List<String> jvmFlags) {
-      this.jvmFlags = jvmFlags;
+      this.jvmFlags.clear();
+      if (jvmFlags != null) {
+        this.jvmFlags.addAll(jvmFlags);
+      }
       return this;
     }
 
@@ -454,5 +461,38 @@ public class RunConfiguration {
           additionalArguments,
           projectId);
     }
+  }
+
+  /** Returns a mutable builder initialized with the values of this runtime configuration. */
+  public Builder toBuilder() {
+    Builder builder =
+        builder(getServices())
+            .additionalArguments(getAdditionalArguments())
+            .adminHost(adminHost)
+            .adminPort(adminPort)
+            .allowSkippedFiles(allowSkippedFiles)
+            .apiPort(apiPort)
+            .authDomain(authDomain)
+            .automaticRestart(automaticRestart)
+            .clearDatastore(clearDatastore)
+            .customEntrypoint(customEntrypoint)
+            .datastorePath(datastorePath)
+            .defaultGcsBucketName(defaultGcsBucketName)
+            .devAppserverLogLevel(devAppserverLogLevel)
+            .environment(getEnvironment())
+            .host(host)
+            .jvmFlags(getJvmFlags())
+            .logLevel(logLevel)
+            .maxModuleInstances(maxModuleInstances)
+            .port(port)
+            .projectId(projectId)
+            .pythonStartupArgs(pythonStartupArgs)
+            .pythonStartupScript(pythonStartupScript)
+            .runtime(runtime)
+            .skipSdkUpdateCheck(skipSdkUpdateCheck)
+            .storagePath(storagePath)
+            .threadsafeOverride(threadsafeOverride)
+            .useMtimeFileWatcher(useMtimeFileWatcher);
+    return builder;
   }
 }

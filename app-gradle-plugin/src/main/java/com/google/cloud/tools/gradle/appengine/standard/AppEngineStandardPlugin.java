@@ -120,11 +120,6 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
                   .resolve("appengine-web.xml")
                   .toFile();
 
-          // configure the resolver for projectId/version parameters
-          DeployTargetResolver standardResolver =
-              new StandardDeployTargetResolver(appengineWebXml, cloudSdkOperations);
-          deploy.setDeployTargetResolver(standardResolver);
-
           DeployAllTask deployAllTask =
               (DeployAllTask)
                   project
@@ -144,7 +139,7 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
           if (Strings.isNullOrEmpty(runExtension.getProjectId())) {
             runExtension.setProjectId(deploy.getProjectId());
           }
-          runExtension.setDeployTargetResolver(standardResolver);
+          runExtension.setDeployTargetResolver(new DeployTargetResolver(cloudSdkOperations));
         });
   }
 

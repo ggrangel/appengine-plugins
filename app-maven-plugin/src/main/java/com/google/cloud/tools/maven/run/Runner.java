@@ -18,7 +18,6 @@ package com.google.cloud.tools.maven.run;
 
 import com.google.cloud.tools.appengine.AppEngineException;
 import com.google.cloud.tools.appengine.configuration.RunConfiguration;
-import com.google.cloud.tools.maven.cloudsdk.CloudSdkAppEngineFactory.SupportedDevServerVersion;
 import com.google.cloud.tools.maven.cloudsdk.ConfigReader;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Files;
@@ -32,7 +31,16 @@ import org.apache.maven.plugin.MojoExecutionException;
 public class Runner {
 
   static class Factory {
-    public Runner newRunner(AbstractRunMojo runMojo) {
+    public Runner newRunner(AbstractRunMojo runMojo) throws MojoExecutionException {
+      for (Path service : runMojo.getServices()) {
+        if (!Files.isRegularFile(service.resolve("WEB-INF").resolve("appengine-web.xml"))) {
+          throw new MojoExecutionException(
+              "appengine:run is only available for appengine-web.xml based projects,"
+                  + " the service defined in: "
+                  + service.toString()
+                  + " cannot be run by the dev appserver.");
+        }
+      }
       return new Runner(runMojo, new ConfigBuilder(runMojo));
     }
   }
@@ -47,12 +55,10 @@ public class Runner {
 
   /** Run the dev appserver. */
   public void run() throws MojoExecutionException {
-    SupportedDevServerVersion convertedVersion = convertVersionString();
-
     try {
       runMojo
           .getAppEngineFactory()
-          .devServerRunSync(convertedVersion)
+          .devServerRunSync()
           .run(configBuilder.buildRunConfiguration(processServices(), processProjectId()));
     } catch (AppEngineException ex) {
       throw new MojoExecutionException("Failed to run devappserver", ex);
@@ -61,25 +67,18 @@ public class Runner {
 
   /** Run the dev appserver in async mode. */
   public void runAsync(int startSuccessTimeout) throws MojoExecutionException {
-    SupportedDevServerVersion convertedVersion = convertVersionString();
-
     runMojo
         .getLog()
-        .info(
-            "Waiting "
-                + startSuccessTimeout
-                + " seconds for the Dev App Server "
-                + runMojo.getDevserverVersion()
-                + " to start.");
+        .info("Waiting " + startSuccessTimeout + " seconds for the Dev App Server to start.");
     try {
       runMojo
           .getAppEngineFactory()
-          .devServerRunAsync(startSuccessTimeout, convertedVersion)
+          .devServerRunAsync(startSuccessTimeout)
           .run(configBuilder.buildRunConfiguration(processServices(), processProjectId()));
     } catch (AppEngineException ex) {
       throw new RuntimeException(ex);
     }
-    runMojo.getLog().info("Dev App Server " + runMojo.getDevserverVersion() + " started.");
+    runMojo.getLog().info("Dev App Server started.");
     runMojo.getLog().info("Use the 'mvn appengine:stop' command to stop the server.");
   }
 
@@ -119,20 +118,6 @@ public class Runner {
     return projectId;
   }
 
-  /**
-   * Verifies that {@code version} is of the supported values.
-   *
-   * @throws MojoExecutionException if {@code version} cannot be converted to {@link
-   *     SupportedDevServerVersion}
-   */
-  private SupportedDevServerVersion convertVersionString() throws MojoExecutionException {
-    try {
-      return SupportedDevServerVersion.parse(runMojo.getDevserverVersion());
-    } catch (IllegalArgumentException ex) {
-      throw new MojoExecutionException("Invalid version", ex);
-    }
-  }
-
   static class ConfigBuilder {
 
     private final AbstractRunMojo runMojo;
@@ -144,32 +129,14 @@ public class Runner {
     protected RunConfiguration buildRunConfiguration(List<Path> services, String projectId) {
 
       return RunConfiguration.builder(services)
-          .projectId(projectId)
-          .host(runMojo.getHost())
-          .port(runMojo.getPort())
-          .adminHost(runMojo.getAdminHost())
-          .adminPort(runMojo.getAdminPort())
           .additionalArguments(runMojo.getAdditionalArguments())
-          .allowSkippedFiles(runMojo.getAllowSkippedFiles())
-          .apiPort(runMojo.getApiPort())
-          .authDomain(runMojo.getAuthDomain())
           .automaticRestart(runMojo.getAutomaticRestart())
-          .clearDatastore(runMojo.getClearDatastore())
-          .customEntrypoint(runMojo.getCustomEntrypoint())
-          .datastorePath(runMojo.getDatastorePath())
           .defaultGcsBucketName(runMojo.getDefaultGcsBucketName())
-          .devAppserverLogLevel(runMojo.getDevAppserverLogLevel())
+          .projectId(projectId)
           .environment(runMojo.getEnvironment())
+          .host(runMojo.getHost())
           .jvmFlags(runMojo.getJvmFlags())
-          .logLevel(runMojo.getLogLevel())
-          .maxModuleInstances(runMojo.getMaxModuleInstances())
-          .pythonStartupArgs(runMojo.getPythonStartupArgs())
-          .pythonStartupScript(runMojo.getPythonStartupScript())
-          .runtime(runMojo.getRuntime())
-          .skipSdkUpdateCheck(runMojo.getSkipSdkUpdateCheck())
-          .storagePath(runMojo.getStoragePath())
-          .threadsafeOverride(runMojo.getThreadsafeOverride())
-          .useMtimeFileWatcher(runMojo.getUseMtimeFileWatcher())
+          .port(runMojo.getPort())
           .build();
     }
   }

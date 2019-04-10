@@ -26,7 +26,6 @@ import com.google.cloud.tools.appengine.AppEngineException;
 import com.google.cloud.tools.appengine.operations.DevServer;
 import com.google.cloud.tools.appengine.operations.Gcloud;
 import com.google.cloud.tools.maven.cloudsdk.CloudSdkAppEngineFactory;
-import com.google.cloud.tools.maven.cloudsdk.CloudSdkAppEngineFactory.SupportedDevServerVersion;
 import com.google.cloud.tools.maven.cloudsdk.ConfigReader;
 import com.google.cloud.tools.maven.run.Runner.ConfigBuilder;
 import com.google.common.collect.ImmutableList;
@@ -35,8 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -50,9 +47,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(JUnitParamsRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class RunnerTest {
 
   private static final Path STANDARD_PROJECT_WEBAPP =
@@ -79,7 +76,6 @@ public class RunnerTest {
   @Before
   public void setUp() throws IOException {
     appDir = tempFolder.newFolder("artifact").toPath();
-    MockitoAnnotations.initMocks(this);
     when(mavenProject.getBuild()).thenReturn(mock(Build.class));
     when(mavenProject.getBuild().getDirectory())
         .thenReturn(appDir.getParent().toAbsolutePath().toString());
@@ -87,7 +83,6 @@ public class RunnerTest {
     when(runMojo.getMavenProject()).thenReturn(mavenProject);
     when(runMojo.getLog()).thenReturn(logMock);
     when(runMojo.getAppEngineFactory()).thenReturn(appengineFactory);
-    when(appengineFactory.getGcloud()).thenReturn(gcloud);
     when(appengineFactory.newConfigReader()).thenReturn(configReader);
   }
 
@@ -97,13 +92,9 @@ public class RunnerTest {
   }
 
   @Test
-  @Parameters({"1,V1", "2-alpha,V2ALPHA"})
-  public void testRun(String version, SupportedDevServerVersion mockVersion)
-      throws MojoExecutionException, IOException, AppEngineException {
+  public void testRun() throws MojoExecutionException, IOException, AppEngineException {
 
-    System.out.println(version);
-    when(runMojo.getDevserverVersion()).thenReturn(version);
-    when(appengineFactory.devServerRunSync(mockVersion)).thenReturn(devServer);
+    when(appengineFactory.devServerRunSync()).thenReturn(devServer);
     setUpAppEngineWebXml();
 
     testRunner.run();
@@ -112,14 +103,10 @@ public class RunnerTest {
   }
 
   @Test
-  @Parameters({"1,V1", "2-alpha,V2ALPHA"})
-  public void testRunAsync(String version, SupportedDevServerVersion mockVersion)
-      throws MojoExecutionException, IOException, AppEngineException {
+  public void testRunAsync() throws MojoExecutionException, IOException, AppEngineException {
     final int START_SUCCESS_TIMEOUT = 25;
 
-    when(runMojo.getDevserverVersion()).thenReturn(version);
-    when(appengineFactory.devServerRunAsync(START_SUCCESS_TIMEOUT, mockVersion))
-        .thenReturn(devServer);
+    when(appengineFactory.devServerRunAsync(START_SUCCESS_TIMEOUT)).thenReturn(devServer);
     setUpAppEngineWebXml();
 
     testRunner.runAsync(START_SUCCESS_TIMEOUT);
@@ -127,32 +114,6 @@ public class RunnerTest {
     verify(devServer).run(configBuilder.buildRunConfiguration(ImmutableList.of(appDir), null));
     verify(logMock).info(contains("25 seconds"));
     verify(logMock).info(contains("started"));
-  }
-
-  @Test
-  public void testInvalidVersionStringSync() throws IOException {
-    when(runMojo.getDevserverVersion()).thenReturn("bogus-version");
-    setUpAppEngineWebXml();
-
-    try {
-      testRunner.run();
-      fail();
-    } catch (MojoExecutionException ex) {
-      Assert.assertEquals("Invalid version", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testInvalidVersionStringAsync() throws IOException {
-    when(runMojo.getDevserverVersion()).thenReturn("bogus-version");
-    setUpAppEngineWebXml();
-
-    try {
-      testRunner.runAsync(123);
-      fail();
-    } catch (MojoExecutionException ex) {
-      Assert.assertEquals("Invalid version", ex.getMessage());
-    }
   }
 
   @Test
@@ -211,5 +172,62 @@ public class RunnerTest {
   @Test
   public void testProcessProjectId_nullIgnored() {
     Assert.assertNull(testRunner.processProjectId());
+  }
+
+  @Test
+  public void testRunnerFactory_appengineWebXml() throws IOException, MojoExecutionException {
+    List<Path> services = ImmutableList.of(createAppEngineWebXmlApp());
+    Mockito.when(runMojo.getServices()).thenReturn(services);
+
+    Assert.assertNotNull(new Runner.Factory().newRunner(runMojo));
+  }
+
+  @Test
+  public void testRunnerFactory_appYaml() throws IOException {
+    List<Path> services = ImmutableList.of(createAppYamlApp());
+    Mockito.when(runMojo.getServices()).thenReturn(services);
+
+    try {
+      new Runner.Factory().newRunner(runMojo);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "appengine:run is only available for appengine-web.xml based projects, the service defined in: "
+              + services.get(0).toString()
+              + " cannot be run by the dev appserver.",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testRunnerFactory_mixed() throws IOException {
+    List<Path> services = ImmutableList.of(createAppEngineWebXmlApp(), createAppYamlApp());
+    Mockito.when(runMojo.getServices()).thenReturn(services);
+
+    try {
+      new Runner.Factory().newRunner(runMojo);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "appengine:run is only available for appengine-web.xml based projects, the service defined in: "
+              + services.get(1).toString()
+              + " cannot be run by the dev appserver.",
+          ex.getMessage());
+    }
+  }
+
+  private Path createAppEngineWebXmlApp() throws IOException {
+    Path appRoot = Files.createDirectory(tempFolder.getRoot().toPath().resolve("xml-app"));
+    Path webinf = Files.createDirectory(appRoot.resolve("WEB-INF"));
+    Files.createFile(webinf.resolve("appengine-web.xml"));
+
+    return appRoot;
+  }
+
+  private Path createAppYamlApp() throws IOException {
+    Path appRoot = Files.createDirectory(tempFolder.getRoot().toPath().resolve("yaml-app"));
+    Files.createFile(appRoot.resolve("app.yaml"));
+
+    return appRoot;
   }
 }

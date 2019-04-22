@@ -36,7 +36,6 @@ public class DeployerTest {
   @Mock private AbstractDeployMojo deployMojo;
 
   private Path stagingDirectory;
-  private Path yamlConfigDirectory;
   @Mock private CloudSdkAppEngineFactory appEngineFactory;
   @Mock private Deployment appEngineDeployment;
   @Mock private Path appengineDirectory;
@@ -48,7 +47,6 @@ public class DeployerTest {
   @Before
   public void setup() throws IOException {
     stagingDirectory = tempFolder.newFolder("staging").toPath();
-    yamlConfigDirectory = tempFolder.newFolder("yaml-config").toPath();
 
     Mockito.when(deployMojo.getStagingDirectory()).thenReturn(stagingDirectory);
     Mockito.when(deployMojo.getAppEngineFactory()).thenReturn(appEngineFactory);

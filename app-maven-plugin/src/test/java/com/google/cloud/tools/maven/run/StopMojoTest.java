@@ -42,7 +42,7 @@ public class StopMojoTest {
   @InjectMocks private StopMojo stopMojo;
 
   @Before
-  public void setUp() throws MojoExecutionException {
+  public void setUp() {
     Mockito.when(factoryMock.devServerStop()).thenReturn(devServerMock);
   }
 

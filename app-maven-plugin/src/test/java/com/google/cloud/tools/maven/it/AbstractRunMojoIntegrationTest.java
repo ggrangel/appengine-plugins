@@ -43,12 +43,10 @@ import org.junit.runner.RunWith;
 public class AbstractRunMojoIntegrationTest extends AbstractMojoIntegrationTest {
 
   private int serverPort;
-  private int adminPort;
 
   @Before
   public void initPorts() throws IOException {
     serverPort = SocketUtil.findPort();
-    adminPort = SocketUtil.findPort();
   }
 
   @Test

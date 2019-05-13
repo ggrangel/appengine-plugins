@@ -1,9 +1,5 @@
 # User guide 2.+
 
-| NOTE             |
-| :---------------- |
-| The behavior of the appengine-maven-plugin has changed since v1.+; please see the [CHANGELOG](CHANGELOG.md) for a full list of changes. If you are having trouble using or updating your plugin, please file a [new issue](https://github.com/GoogleCloudPlatform/app-maven-plugin/issues).|
-
 ## Applying the Plugin
 For both _`appengine-web.xml`_ and _`app.yaml`_ based applications, include the plugin in your pom.xml:
 

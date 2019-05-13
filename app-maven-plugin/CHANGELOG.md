@@ -1,6 +1,27 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.0.0
+See 2.0.0-rc1 - 2.0.0-rc6 for details
+### Key Changes
+* Dev App Server `v2-alpha` support removed.
+* Cloud Sdk
+  * `cloudSdkHome`, `cloudSdkVersion`, `serviceAccountKeyFile` added to configuration
+  * `appengine:cloudSdkLogin` to trigger cloud sdk login flow
+  * `checkCloudSdk` validates version of installed sdk on system
+  * Managed Cloud SDK
+    * Auto download google cloud sdk if no `cloudSdkHome` provided
+    * Skip download in `--offline` mode
+    * Do not download appengine components for app.yaml based deployments
+* Support for multiple extra files directories: `extraFilesDirectory` -> `extraFilesDirectories`
+* Support for app.yaml based standard deployments
+* `project` is renamed to `projectId`
+* `projectId` and `version` are required parameters. Must be set to a value or to `GCLOUD_CONFIG` to delegate to gcloud.
+* `projectId` can be configured for multi-module dev appserver runs
+* `deployables` config parameter removed
+* `appYamls` config paramter removed
+* Added `skip` on plugin configuration to skip all appengine goals.
+
 ## 2.0.0-rc6
 ### Added
 * Allow configuring `skip` on plugin configuration ([#379](../../pull/379))

@@ -176,6 +176,7 @@ public class AppDeployer implements Deployer {
     DeployConfiguration buildDeployConfiguration(List<Path> deployables) {
       return DeployConfiguration.builder(deployables)
           .bucket(deployMojo.getBucket())
+          .gcloudMode(deployMojo.getGcloudMode())
           .imageUrl(deployMojo.getImageUrl())
           .projectId(configProcessor.processProjectId(deployMojo.getProjectId()))
           .promote(deployMojo.getPromote())

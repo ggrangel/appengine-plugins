@@ -194,6 +194,7 @@ public class AppDeployerTest {
   public void testBuildDeployConfiguration() {
     AbstractDeployMojo deployMojo = Mockito.mock(AbstractDeployMojo.class);
     Mockito.when(deployMojo.getBucket()).thenReturn("testBucket");
+    Mockito.when(deployMojo.getGcloudMode()).thenReturn("beta");
     Mockito.when(deployMojo.getImageUrl()).thenReturn("testImageUrl");
     Mockito.when(deployMojo.getProjectId()).thenReturn("testProjectId");
     Mockito.when(deployMojo.getPromote()).thenReturn(false);
@@ -211,6 +212,7 @@ public class AppDeployerTest {
         new ConfigBuilder(deployMojo, configProcessor).buildDeployConfiguration(deployables);
 
     Assert.assertEquals(deployables, deployConfig.getDeployables());
+    Assert.assertEquals("beta", deployConfig.getGcloudMode());
     Assert.assertEquals("testBucket", deployConfig.getBucket());
     Assert.assertEquals("testImageUrl", deployConfig.getImageUrl());
     Assert.assertEquals("processedTestProjectId", deployConfig.getProjectId());

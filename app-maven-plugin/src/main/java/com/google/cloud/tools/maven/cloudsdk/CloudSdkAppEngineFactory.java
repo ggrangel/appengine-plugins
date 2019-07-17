@@ -34,6 +34,7 @@ import com.google.cloud.tools.appengine.operations.cloudsdk.process.LegacyProces
 import com.google.cloud.tools.appengine.operations.cloudsdk.process.NonZeroExceptionExitListener;
 import com.google.cloud.tools.appengine.operations.cloudsdk.process.ProcessHandler;
 import com.google.cloud.tools.appengine.operations.cloudsdk.process.ProcessOutputLineListener;
+import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +43,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.maven.plugin.logging.Log;
 
 /** Factory for App Engine dependencies. */
@@ -130,12 +133,16 @@ public class CloudSdkAppEngineFactory {
         return cloudSdk;
       } else {
         // we need to use a managed cloud sdk
+        List<SdkComponent> requiredComponents = new ArrayList<>();
+        if (requiresAppEngineComponents) {
+          requiredComponents.add(SdkComponent.APP_ENGINE_JAVA);
+        }
         return new CloudSdk.Builder()
             .sdkPath(
                 cloudSdkDownloader.downloadIfNecessary(
                     mojo.getCloudSdkVersion(),
                     mojo.getLog(),
-                    requiresAppEngineComponents,
+                    requiredComponents,
                     mojo.getMavenSession().isOffline()))
             .build();
       }

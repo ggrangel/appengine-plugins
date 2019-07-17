@@ -26,6 +26,8 @@ import com.google.cloud.tools.appengine.operations.cloudsdk.AppEngineJavaCompone
 import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkNotFoundException;
 import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkOutOfDateException;
 import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkVersionFileException;
+import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.maven.execution.MavenSession;
@@ -70,11 +72,17 @@ public class CloudSdkAppEngineFactoryTest {
     doReturn(INSTALL_SDK_PATH)
         .when(cloudSdkDownloader)
         .downloadIfNecessary(
-            Mockito.isNull(), Mockito.eq(logMock), Mockito.anyBoolean(), Mockito.anyBoolean());
+            Mockito.isNull(),
+            Mockito.eq(logMock),
+            Mockito.<SdkComponent>anyList(),
+            Mockito.anyBoolean());
     doReturn(INSTALL_SDK_PATH)
         .when(cloudSdkDownloader)
         .downloadIfNecessary(
-            Mockito.anyString(), Mockito.eq(logMock), Mockito.anyBoolean(), Mockito.anyBoolean());
+            Mockito.anyString(),
+            Mockito.eq(logMock),
+            Mockito.<SdkComponent>anyList(),
+            Mockito.anyBoolean());
   }
 
   @Test
@@ -96,7 +104,9 @@ public class CloudSdkAppEngineFactoryTest {
 
     // verify
     Assert.assertEquals(INSTALL_SDK_PATH, sdk.getPath());
-    verify(cloudSdkDownloader).downloadIfNecessary(CLOUD_SDK_VERSION, logMock, true, false);
+    verify(cloudSdkDownloader)
+        .downloadIfNecessary(
+            CLOUD_SDK_VERSION, logMock, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA), false);
     verifyNoMoreInteractions(cloudSdkChecker);
   }
 
@@ -111,7 +121,8 @@ public class CloudSdkAppEngineFactoryTest {
 
     // verify
     Assert.assertEquals(INSTALL_SDK_PATH, sdk.getPath());
-    verify(cloudSdkDownloader).downloadIfNecessary(null, logMock, true, false);
+    verify(cloudSdkDownloader)
+        .downloadIfNecessary(null, logMock, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA), false);
     verifyNoMoreInteractions(cloudSdkChecker);
   }
 
@@ -126,7 +137,8 @@ public class CloudSdkAppEngineFactoryTest {
         CloudSdkAppEngineFactory.buildCloudSdk(mojoMock, cloudSdkChecker, cloudSdkDownloader, true);
 
     Assert.assertEquals(INSTALL_SDK_PATH, sdk.getPath());
-    verify(cloudSdkDownloader).downloadIfNecessary(null, logMock, true, true);
+    verify(cloudSdkDownloader)
+        .downloadIfNecessary(null, logMock, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA), true);
     verify(mavenSession).isOffline();
     verifyNoMoreInteractions(cloudSdkChecker);
   }

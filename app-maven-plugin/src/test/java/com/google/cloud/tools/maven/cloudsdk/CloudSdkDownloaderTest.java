@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.maven.cloudsdk;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -27,10 +30,14 @@ import com.google.cloud.tools.managedcloudsdk.ManagedSdkVerificationException;
 import com.google.cloud.tools.managedcloudsdk.ManagedSdkVersionMismatchException;
 import com.google.cloud.tools.managedcloudsdk.UnsupportedOsException;
 import com.google.cloud.tools.managedcloudsdk.Version;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
+import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
 import com.google.cloud.tools.managedcloudsdk.components.SdkComponentInstaller;
 import com.google.cloud.tools.managedcloudsdk.components.SdkUpdater;
 import com.google.cloud.tools.managedcloudsdk.install.SdkInstaller;
+import com.google.common.collect.ImmutableList;
+import java.util.Collections;
 import java.util.function.Function;
 import org.apache.maven.plugin.logging.Log;
 import org.junit.Assert;
@@ -67,25 +74,56 @@ public class CloudSdkDownloaderTest {
   public void testDownloadCloudSdk_install()
       throws ManagedSdkVerificationException, ManagedSdkVersionMismatchException {
     when(managedCloudSdk.isInstalled()).thenReturn(false);
-    downloader.downloadIfNecessary(version, log, true, false);
+    downloader.downloadIfNecessary(
+        version, log, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA), false);
     verify(managedCloudSdk).newInstaller();
   }
 
   @Test
-  public void testDownloadCloudSdk_installAppEngine()
+  public void testDownloadCloudSdk_installSingeComponent()
       throws ManagedSdkVerificationException, ManagedSdkVersionMismatchException {
     when(managedCloudSdk.isInstalled()).thenReturn(true);
     when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(false);
-    downloader.downloadIfNecessary(version, log, true, false);
+    downloader.downloadIfNecessary(
+        version, log, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA), false);
     verify(managedCloudSdk, never()).newInstaller();
     verify(managedCloudSdk).newComponentInstaller();
   }
 
   @Test
-  public void testDownloadCloudSdk_ignoreAppEngineComponent()
+  public void testDownloadCloudSdk_installMultipleComponents()
+      throws ManagedSdkVerificationException, ManagedSdkVersionMismatchException,
+          InterruptedException, CommandExitException, CommandExecutionException {
+    when(managedCloudSdk.isInstalled()).thenReturn(true);
+    when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(false);
+    when(managedCloudSdk.hasComponent(SdkComponent.BETA)).thenReturn(false);
+    downloader.downloadIfNecessary(
+        version, log, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA, SdkComponent.BETA), false);
+    verify(managedCloudSdk, never()).newInstaller();
+    verify(managedCloudSdk, times(2)).newComponentInstaller();
+    verify(componentInstaller).installComponent(eq(SdkComponent.APP_ENGINE_JAVA), any(), any());
+    verify(componentInstaller).installComponent(eq(SdkComponent.BETA), any(), any());
+  }
+
+  @Test
+  public void testDownloadCloudSdk_installSomeOfMultipleComponents()
+      throws ManagedSdkVerificationException, ManagedSdkVersionMismatchException,
+          InterruptedException, CommandExitException, CommandExecutionException {
+    when(managedCloudSdk.isInstalled()).thenReturn(true);
+    when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(false);
+    when(managedCloudSdk.hasComponent(SdkComponent.BETA)).thenReturn(true);
+    downloader.downloadIfNecessary(
+        version, log, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA, SdkComponent.BETA), false);
+    verify(managedCloudSdk, never()).newInstaller();
+    verify(managedCloudSdk).newComponentInstaller();
+    verify(componentInstaller).installComponent(eq(SdkComponent.APP_ENGINE_JAVA), any(), any());
+  }
+
+  @Test
+  public void testDownloadCloudSdk_ignoreComponents()
       throws ManagedSdkVerificationException, ManagedSdkVersionMismatchException {
     when(managedCloudSdk.isInstalled()).thenReturn(true);
-    downloader.downloadIfNecessary(version, log, false, false);
+    downloader.downloadIfNecessary(version, log, Collections.emptyList(), false);
     verify(managedCloudSdk, never()).newInstaller();
     verify(managedCloudSdk, never()).newComponentInstaller();
   }
@@ -96,7 +134,8 @@ public class CloudSdkDownloaderTest {
     when(managedCloudSdk.isInstalled()).thenReturn(true);
     when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(true);
     when(managedCloudSdk.isUpToDate()).thenReturn(false);
-    downloader.downloadIfNecessary(version, log, true, false);
+    downloader.downloadIfNecessary(
+        version, log, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA), false);
     verify(managedCloudSdk, never()).newInstaller();
     verify(managedCloudSdk, never()).newComponentInstaller();
     verify(managedCloudSdk).newUpdater();
@@ -104,7 +143,8 @@ public class CloudSdkDownloaderTest {
 
   @Test
   public void testDownloadCloudSdk_offlineMode() {
-    downloader.downloadIfNecessary(version, log, true, true);
+    downloader.downloadIfNecessary(
+        version, log, ImmutableList.of(SdkComponent.APP_ENGINE_JAVA), true);
     verify(managedCloudSdk).getSdkHome();
     verifyNoMoreInteractions(managedCloudSdk);
   }

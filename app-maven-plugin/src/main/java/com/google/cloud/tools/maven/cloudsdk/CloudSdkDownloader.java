@@ -31,6 +31,7 @@ import com.google.cloud.tools.managedcloudsdk.install.SdkInstallerException;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Function;
 import org.apache.maven.plugin.logging.Log;
 
@@ -48,7 +49,7 @@ public class CloudSdkDownloader {
    * @return The cloud SDK installation directory
    */
   public Path downloadIfNecessary(
-      String version, Log log, boolean requiresAppEngineComponents, boolean offline) {
+      String version, Log log, List<SdkComponent> components, boolean offline) {
     ManagedCloudSdk managedCloudSdk = managedCloudSdkFactory.apply(version);
     if (offline) { // in offline mode, don't download anything
       return managedCloudSdk.getSdkHome();
@@ -61,11 +62,15 @@ public class CloudSdkDownloader {
         managedCloudSdk.newInstaller().install(progressListener, consoleListener);
       }
 
-      if (requiresAppEngineComponents
-          && !managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)) {
-        managedCloudSdk
-            .newComponentInstaller()
-            .installComponent(SdkComponent.APP_ENGINE_JAVA, progressListener, consoleListener);
+      // install requested components
+      if (components != null) {
+        for (SdkComponent component : components) {
+          if (!managedCloudSdk.hasComponent(component)) {
+            managedCloudSdk
+                .newComponentInstaller()
+                .installComponent(component, progressListener, consoleListener);
+          }
+        }
       }
 
       if (!managedCloudSdk.isUpToDate()) {

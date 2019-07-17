@@ -17,9 +17,9 @@ package com.google.cloud.tools.maven.deploy;
 
 import org.apache.maven.plugin.logging.Log;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -27,6 +27,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class AbstractDeployMojoTest {
 
+  @InjectMocks
   private final AbstractDeployMojo testMojo =
       new AbstractDeployMojo() {
         @Override
@@ -36,11 +37,6 @@ public class AbstractDeployMojoTest {
       };
 
   @Mock private Log mockLog;
-
-  @Before
-  public void setUp() {
-    testMojo.setLog(mockLog);
-  }
 
   @Test
   public void testGetProjectId_onlyProject() {

@@ -29,6 +29,10 @@ public abstract class AbstractDeployMojo extends AbstractStageMojo {
   @Parameter(alias = "deploy.bucket", property = "app.deploy.bucket")
   private String bucket;
 
+  /** The preview mode to use gcloud injected before "app": gcloud "mode" app deploy. */
+  @Parameter(alias = "deploy.gcloudMode", property = "app.deploy.gcloudMode")
+  private String gcloudMode;
+
   /**
    * Deploy with a specific Docker image. Docker url must be from one of the valid gcr hostnames.
    *
@@ -106,5 +110,9 @@ public abstract class AbstractDeployMojo extends AbstractStageMojo {
 
   public String getVersion() {
     return version;
+  }
+
+  public String getGcloudMode() {
+    return gcloudMode;
   }
 }

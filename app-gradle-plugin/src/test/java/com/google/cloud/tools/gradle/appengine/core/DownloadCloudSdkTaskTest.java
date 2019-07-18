@@ -17,7 +17,10 @@
 
 package com.google.cloud.tools.gradle.appengine.core;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -89,6 +92,7 @@ public class DownloadCloudSdkTaskTest {
     when(managedCloudSdk.isInstalled()).thenReturn(false);
     downloadCloudSdkTask.downloadCloudSdkAction();
     verify(managedCloudSdk).newInstaller();
+    verify(managedCloudSdk, never()).newComponentInstaller();
   }
 
   @Test
@@ -97,12 +101,48 @@ public class DownloadCloudSdkTaskTest {
           InterruptedException, CommandExecutionException, SdkInstallerException, IOException,
           CommandExitException {
     downloadCloudSdkTask.setManagedCloudSdk(managedCloudSdk);
-    downloadCloudSdkTask.requiresAppEngineJava(true);
+    downloadCloudSdkTask.requiresComponent(SdkComponent.APP_ENGINE_JAVA);
     when(managedCloudSdk.isInstalled()).thenReturn(true);
     when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(false);
     downloadCloudSdkTask.downloadCloudSdkAction();
     verify(managedCloudSdk, never()).newInstaller();
     verify(managedCloudSdk).newComponentInstaller();
+    verify(componentInstaller).installComponent(eq(SdkComponent.APP_ENGINE_JAVA), any(), any());
+  }
+
+  @Test
+  public void testDownloadCloudSdkAction_installMultipleComponents()
+      throws ManagedSdkVerificationException, ManagedSdkVersionMismatchException,
+          InterruptedException, CommandExecutionException, SdkInstallerException, IOException,
+          CommandExitException {
+    downloadCloudSdkTask.setManagedCloudSdk(managedCloudSdk);
+    downloadCloudSdkTask.requiresComponent(SdkComponent.APP_ENGINE_JAVA);
+    downloadCloudSdkTask.requiresComponent(SdkComponent.BETA);
+    when(managedCloudSdk.isInstalled()).thenReturn(true);
+    when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(false);
+    when(managedCloudSdk.hasComponent(SdkComponent.BETA)).thenReturn(false);
+    downloadCloudSdkTask.downloadCloudSdkAction();
+    verify(managedCloudSdk, never()).newInstaller();
+    verify(managedCloudSdk, times(2)).newComponentInstaller();
+    verify(componentInstaller).installComponent(eq(SdkComponent.APP_ENGINE_JAVA), any(), any());
+    verify(componentInstaller).installComponent(eq(SdkComponent.BETA), any(), any());
+  }
+
+  @Test
+  public void testDownloadCloudSdkAction_installSomeOfMultipleComponents()
+      throws ManagedSdkVerificationException, ManagedSdkVersionMismatchException,
+          InterruptedException, CommandExecutionException, SdkInstallerException, IOException,
+          CommandExitException {
+    downloadCloudSdkTask.setManagedCloudSdk(managedCloudSdk);
+    downloadCloudSdkTask.requiresComponent(SdkComponent.APP_ENGINE_JAVA);
+    downloadCloudSdkTask.requiresComponent(SdkComponent.BETA);
+    when(managedCloudSdk.isInstalled()).thenReturn(true);
+    when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(false);
+    when(managedCloudSdk.hasComponent(SdkComponent.BETA)).thenReturn(true);
+    downloadCloudSdkTask.downloadCloudSdkAction();
+    verify(managedCloudSdk, never()).newInstaller();
+    verify(managedCloudSdk).newComponentInstaller();
+    verify(componentInstaller).installComponent(eq(SdkComponent.APP_ENGINE_JAVA), any(), any());
   }
 
   @Test
@@ -111,8 +151,9 @@ public class DownloadCloudSdkTaskTest {
           InterruptedException, CommandExecutionException, SdkInstallerException, IOException,
           CommandExitException {
     downloadCloudSdkTask.setManagedCloudSdk(managedCloudSdk);
-    downloadCloudSdkTask.requiresAppEngineJava(false);
+    downloadCloudSdkTask.requiresComponent(SdkComponent.APP_ENGINE_JAVA);
     when(managedCloudSdk.isInstalled()).thenReturn(true);
+    when(managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)).thenReturn(true);
     downloadCloudSdkTask.downloadCloudSdkAction();
     verify(managedCloudSdk, never()).newInstaller();
     verify(managedCloudSdk, never()).newComponentInstaller();

@@ -25,26 +25,36 @@ import com.google.cloud.tools.managedcloudsdk.ProgressListener;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
-import com.google.cloud.tools.managedcloudsdk.components.SdkComponentInstaller;
 import com.google.cloud.tools.managedcloudsdk.components.SdkUpdater;
 import com.google.cloud.tools.managedcloudsdk.install.SdkInstaller;
 import com.google.cloud.tools.managedcloudsdk.install.SdkInstallerException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 
 public class DownloadCloudSdkTask extends DefaultTask {
 
   private ManagedCloudSdk managedCloudSdk;
-  private boolean requiresAppEngineJava;
+  private final List<SdkComponent> components = new ArrayList<>();
 
   public void setManagedCloudSdk(ManagedCloudSdk managedCloudSdk) {
     this.managedCloudSdk = managedCloudSdk;
   }
 
-  public void requiresAppEngineJava(boolean requiresAppEngineJava) {
-    this.requiresAppEngineJava = requiresAppEngineJava;
+  public void requiresComponent(SdkComponent component) {
+    components.add(component);
+  }
+
+  @VisibleForTesting
+  @Internal
+  List<SdkComponent> getComponents() {
+    return ImmutableList.copyOf(components);
   }
 
   /** Task entrypoint : Download/update Cloud SDK. */
@@ -67,12 +77,14 @@ public class DownloadCloudSdkTask extends DefaultTask {
       installer.install(progressListener, consoleListener);
     }
 
-    // optionally Install app engine component
-    if (requiresAppEngineJava) {
-      if (!managedCloudSdk.hasComponent(SdkComponent.APP_ENGINE_JAVA)) {
-        SdkComponentInstaller componentInstaller = managedCloudSdk.newComponentInstaller();
-        componentInstaller.installComponent(
-            SdkComponent.APP_ENGINE_JAVA, progressListener, consoleListener);
+    // install components
+    if (components != null) {
+      for (SdkComponent component : components) {
+        if (!managedCloudSdk.hasComponent(component)) {
+          managedCloudSdk
+              .newComponentInstaller()
+              .installComponent(component, progressListener, consoleListener);
+        }
       }
     }
 

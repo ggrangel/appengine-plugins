@@ -55,6 +55,7 @@ public class DeployExtensionTest {
     testExtension.setDeployTargetResolver(deployTargetResolver);
 
     testExtension.setBucket("test-bucket");
+    testExtension.setGcloudMode("beta");
     testExtension.setImageUrl("test-img-url");
     testExtension.setProjectId("test-project-id");
     testExtension.setPromote(true);
@@ -63,16 +64,17 @@ public class DeployExtensionTest {
     testExtension.setVersion("test-version");
 
     List<Path> projects = ImmutableList.of(Paths.get("project1"), Paths.get("project2"));
-    DeployConfiguration x = testExtension.toDeployConfiguration(projects);
+    DeployConfiguration config = testExtension.toDeployConfiguration(projects);
 
-    Assert.assertEquals(projects, x.getDeployables());
-    Assert.assertEquals("test-bucket", x.getBucket());
-    Assert.assertEquals("test-img-url", x.getImageUrl());
-    Assert.assertEquals("processed-project-id", x.getProjectId());
-    Assert.assertEquals(Boolean.TRUE, x.getPromote());
-    Assert.assertEquals("test-server", x.getServer());
-    Assert.assertEquals(Boolean.TRUE, x.getStopPreviousVersion());
-    Assert.assertEquals("processed-version", x.getVersion());
+    Assert.assertEquals(projects, config.getDeployables());
+    Assert.assertEquals("test-bucket", config.getBucket());
+    Assert.assertEquals("beta", config.getGcloudMode());
+    Assert.assertEquals("test-img-url", config.getImageUrl());
+    Assert.assertEquals("processed-project-id", config.getProjectId());
+    Assert.assertEquals(Boolean.TRUE, config.getPromote());
+    Assert.assertEquals("test-server", config.getServer());
+    Assert.assertEquals(Boolean.TRUE, config.getStopPreviousVersion());
+    Assert.assertEquals("processed-version", config.getVersion());
 
     Mockito.verify(deployTargetResolver).getProject("test-project-id");
     Mockito.verify(deployTargetResolver).getVersion("test-version");
@@ -88,16 +90,17 @@ public class DeployExtensionTest {
     testExtension.setVersion("test-version");
 
     List<Path> projects = ImmutableList.of(Paths.get("project1"), Paths.get("project2"));
-    DeployConfiguration x = testExtension.toDeployConfiguration(projects);
+    DeployConfiguration config = testExtension.toDeployConfiguration(projects);
 
-    Assert.assertEquals("processed-project-id", x.getProjectId());
-    Assert.assertEquals("processed-version", x.getVersion());
+    Assert.assertEquals("processed-project-id", config.getProjectId());
+    Assert.assertEquals("processed-version", config.getVersion());
 
-    Assert.assertNull(x.getBucket());
-    Assert.assertNull(x.getImageUrl());
-    Assert.assertNull(x.getPromote());
-    Assert.assertNull(x.getServer());
-    Assert.assertNull(x.getStopPreviousVersion());
+    Assert.assertNull(config.getBucket());
+    Assert.assertNull(config.getGcloudMode());
+    Assert.assertNull(config.getImageUrl());
+    Assert.assertNull(config.getPromote());
+    Assert.assertNull(config.getServer());
+    Assert.assertNull(config.getStopPreviousVersion());
 
     Mockito.verify(deployTargetResolver).getProject("test-project-id");
     Mockito.verify(deployTargetResolver).getVersion("test-version");

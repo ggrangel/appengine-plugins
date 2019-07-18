@@ -34,6 +34,7 @@ public class DeployExtension {
   private final Project gradleProject;
 
   private String bucket;
+  private String gcloudMode;
   private String imageUrl;
   private String projectId;
   @Deprecated private String project;
@@ -54,8 +55,10 @@ public class DeployExtension {
   DeployConfiguration toDeployConfiguration(List<Path> deployables) {
     String processedProjectId = deployTargetResolver.getProject(projectId);
     String processedVersion = deployTargetResolver.getVersion(version);
+
     return DeployConfiguration.builder(deployables)
         .bucket(bucket)
+        .gcloudMode(gcloudMode)
         .imageUrl(imageUrl)
         .projectId(processedProjectId)
         .promote(promote)
@@ -79,6 +82,14 @@ public class DeployExtension {
 
   public void setBucket(String bucket) {
     this.bucket = bucket;
+  }
+
+  public String getGcloudMode() {
+    return gcloudMode;
+  }
+
+  public void setGcloudMode(String gcloudMode) {
+    this.gcloudMode = gcloudMode;
   }
 
   public String getImageUrl() {

@@ -21,6 +21,7 @@ import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkNotFoundExce
 import com.google.cloud.tools.managedcloudsdk.BadCloudSdkVersionException;
 import com.google.cloud.tools.managedcloudsdk.ManagedCloudSdk;
 import com.google.cloud.tools.managedcloudsdk.UnsupportedOsException;
+import com.google.cloud.tools.managedcloudsdk.components.SdkComponent;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.util.GradleVersion;
@@ -126,7 +127,11 @@ public class AppEngineCorePluginConfiguration {
             downloadCloudSdkTask -> {
               downloadCloudSdkTask.setGroup(taskGroup);
               downloadCloudSdkTask.setDescription("Download the Cloud SDK");
-              downloadCloudSdkTask.requiresAppEngineJava(requiresAppEngineJava);
+
+              // make sure we download our required components
+              if (requiresAppEngineJava) {
+                downloadCloudSdkTask.requiresComponent(SdkComponent.APP_ENGINE_JAVA);
+              }
 
               project.afterEvaluate(
                   p -> {

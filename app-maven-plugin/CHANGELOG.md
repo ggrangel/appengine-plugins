@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+### 2.1.0
+### Added
+* `gcloudMode` to `appengine.deploy` block ([#394](../../pull/394))
+
 ## 2.0.0
 See 2.0.0-rc1 - 2.0.0-rc6 for details
 ### Key Changes

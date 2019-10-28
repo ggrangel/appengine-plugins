@@ -79,7 +79,10 @@ public class AppYamlProjectStagingTest {
     Files.createFile(dockerFile);
 
     config =
-        AppYamlProjectStageConfiguration.builder(appEngineDirectory, artifact, stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(artifact)
+            .stagingDirectory(stagingDirectory)
             .dockerDirectory(dockerDirectory)
             .extraFilesDirectories(extraFilesDirectories)
             .build();
@@ -136,7 +139,10 @@ public class AppYamlProjectStagingTest {
   public void testCopyDockerContext_runtimeJavaNoWarning() throws AppEngineException, IOException {
     dockerDirectory = temporaryFolder.getRoot().toPath().resolve("hopefully-made-up-dir");
     AppYamlProjectStageConfiguration invalidDockerDirConfig =
-        AppYamlProjectStageConfiguration.builder(appEngineDirectory, artifact, stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(artifact)
+            .stagingDirectory(stagingDirectory)
             .dockerDirectory(dockerDirectory)
             .build();
     assertFalse(Files.exists(dockerDirectory));
@@ -152,7 +158,10 @@ public class AppYamlProjectStagingTest {
   @Test
   public void testCopyDockerContext_noDocker() throws AppEngineException, IOException {
     AppYamlProjectStageConfiguration noDockerDirConfig =
-        AppYamlProjectStageConfiguration.builder(appEngineDirectory, artifact, stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(artifact)
+            .stagingDirectory(stagingDirectory)
             .build();
     AppYamlProjectStaging.copyDockerContext(noDockerDirConfig, copyService, "java");
 
@@ -242,7 +251,10 @@ public class AppYamlProjectStagingTest {
   @Test
   public void testCopyExtraFiles_nullConfig() throws AppEngineException, IOException {
     AppYamlProjectStageConfiguration nullExtraFilesConfig =
-        AppYamlProjectStageConfiguration.builder(appEngineDirectory, artifact, stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(artifact)
+            .stagingDirectory(stagingDirectory)
             .extraFilesDirectories(null)
             .build();
 
@@ -256,7 +268,10 @@ public class AppYamlProjectStagingTest {
     assertFalse(Files.exists(extraFilesDirectory));
 
     AppYamlProjectStageConfiguration badExtraFilesConfig =
-        AppYamlProjectStageConfiguration.builder(appEngineDirectory, artifact, stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(artifact)
+            .stagingDirectory(stagingDirectory)
             .extraFilesDirectories(ImmutableList.of(extraFilesDirectory))
             .build();
 
@@ -276,7 +291,10 @@ public class AppYamlProjectStagingTest {
     assertTrue(Files.isRegularFile(extraFilesDirectory));
 
     AppYamlProjectStageConfiguration badExtraFilesConfig =
-        AppYamlProjectStageConfiguration.builder(appEngineDirectory, artifact, stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(artifact)
+            .stagingDirectory(stagingDirectory)
             .extraFilesDirectories(ImmutableList.of(extraFilesDirectory))
             .build();
 
@@ -304,7 +322,10 @@ public class AppYamlProjectStagingTest {
     assertFalse(Files.exists(appEngineDirectory));
 
     AppYamlProjectStageConfiguration noAppYamlConfig =
-        AppYamlProjectStageConfiguration.builder(appEngineDirectory, artifact, stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(artifact)
+            .stagingDirectory(stagingDirectory)
             .build();
     try {
       AppYamlProjectStaging.copyAppEngineContext(noAppYamlConfig, copyService);

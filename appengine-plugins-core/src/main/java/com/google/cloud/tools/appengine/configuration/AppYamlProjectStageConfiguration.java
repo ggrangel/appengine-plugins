@@ -78,25 +78,46 @@ public class AppYamlProjectStageConfiguration {
     return stagingDirectory;
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Create a new builder for AppYamlProjectStageConfiguration.
+   *
+   * @deprecated Use newBuilder().appEngineDirectory(appEngineDirectory).artifact(artifact)
+   *     .stagingDirectory(stagingDirectory) instead.
+   */
+  @Deprecated
   public static Builder builder(Path appEngineDirectory, Path artifact, Path stagingDirectory) {
-    return new Builder(appEngineDirectory, artifact, stagingDirectory);
+    return new Builder()
+        .appEngineDirectory(appEngineDirectory)
+        .artifact(artifact)
+        .stagingDirectory(stagingDirectory);
   }
 
   public static final class Builder {
-    private Path appEngineDirectory;
+    @Nullable private Path appEngineDirectory;
     @Nullable private Path dockerDirectory;
     @Nullable private List<Path> extraFilesDirectories;
-    private Path artifact;
-    private Path stagingDirectory;
+    @Nullable private Path artifact;
+    @Nullable private Path stagingDirectory;
 
-    Builder(Path appEngineDirectory, Path artifact, Path stagingDirectory) {
-      Preconditions.checkNotNull(appEngineDirectory);
-      Preconditions.checkNotNull(artifact);
-      Preconditions.checkNotNull(stagingDirectory);
+    private Builder() {}
 
-      this.appEngineDirectory = appEngineDirectory;
-      this.artifact = artifact;
-      this.stagingDirectory = stagingDirectory;
+    public Builder appEngineDirectory(Path appEngineDirectory) {
+      this.appEngineDirectory = Preconditions.checkNotNull(appEngineDirectory);
+      return this;
+    }
+
+    public Builder artifact(Path artifact) {
+      this.artifact = Preconditions.checkNotNull(artifact);
+      return this;
+    }
+
+    public Builder stagingDirectory(Path stagingDirectory) {
+      this.stagingDirectory = Preconditions.checkNotNull(stagingDirectory);
+      return this;
     }
 
     public AppYamlProjectStageConfiguration.Builder dockerDirectory(
@@ -112,7 +133,12 @@ public class AppYamlProjectStageConfiguration {
     }
 
     /** Build a {@link AppYamlProjectStageConfiguration}. */
+    @SuppressWarnings("NullAway")
     public AppYamlProjectStageConfiguration build() {
+      Preconditions.checkState(appEngineDirectory != null, "No AppEngine directory supplied");
+      Preconditions.checkState(stagingDirectory != null, "No staging directory supplied");
+      Preconditions.checkState(artifact != null, "No artifact supplied");
+
       return new AppYamlProjectStageConfiguration(
           this.appEngineDirectory,
           this.dockerDirectory,

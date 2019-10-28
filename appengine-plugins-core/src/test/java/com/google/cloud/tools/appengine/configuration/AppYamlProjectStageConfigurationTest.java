@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,16 +31,48 @@ public class AppYamlProjectStageConfigurationTest {
 
   @Before
   public void setUp() {
-    // todo should we check these are not the same and
+    // todo should the constructor check these are not the same and
     // files are files and directories are directories?
-    // should we use paths instead?
     configuration =
-        AppYamlProjectStageConfiguration.builder(file, file, file).dockerDirectory(file).build();
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(file)
+            .artifact(file)
+            .stagingDirectory(file)
+            .dockerDirectory(file)
+            .build();
   }
 
   @Test
-  public void testDockerNotRequired() {
-    AppYamlProjectStageConfiguration.builder(file, file, file).build();
+  public void testArtifactRequired() {
+    try {
+      AppYamlProjectStageConfiguration.builder()
+          .appEngineDirectory(file)
+          .stagingDirectory(file)
+          .build();
+      Assert.fail("allowed missing artifact path");
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("No artifact supplied", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testStagingDirectoryRequired() {
+    try {
+      AppYamlProjectStageConfiguration.builder().appEngineDirectory(file).artifact(file).build();
+      Assert.fail("allowed missing artifact path");
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("No staging directory supplied", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testAppEngineDirectoryRequired() {
+    try {
+      AppYamlProjectStageConfiguration.builder().stagingDirectory(file).artifact(file).build();
+      Assert.fail("allowed missing artifact path");
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("No AppEngine directory supplied", ex.getMessage());
+    }
   }
 
   @Test

@@ -127,13 +127,24 @@ public class AppEngineWebXmlProjectStageConfiguration {
     return runtime;
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Create a new builder for AppEngineWebXmlProjectStageConfiguration.
+   *
+   * @deprecated Use
+   *     newBuilder().sourceDirectory(sourceDirectory).stagingDirectory(stagingDirectory) instead.
+   */
+  @Deprecated
   public static Builder builder(Path sourceDirectory, Path stagingDirectory) {
-    return new Builder(sourceDirectory, stagingDirectory);
+    return new Builder().sourceDirectory(sourceDirectory).stagingDirectory(stagingDirectory);
   }
 
   public static final class Builder {
-    private Path sourceDirectory;
-    private Path stagingDirectory;
+    @Nullable private Path sourceDirectory;
+    @Nullable private Path stagingDirectory;
     @Nullable private Path dockerfile;
     @Nullable private Boolean enableQuickstart;
     @Nullable private Boolean disableUpdateCheck;
@@ -144,14 +155,6 @@ public class AppEngineWebXmlProjectStageConfiguration {
     @Nullable private Boolean enableJarClasses;
     @Nullable private Boolean disableJarJsps;
     @Nullable private String runtime;
-
-    Builder(Path sourceDirectory, Path stagingDirectory) {
-      Preconditions.checkNotNull(sourceDirectory);
-      Preconditions.checkNotNull(stagingDirectory);
-
-      this.sourceDirectory = sourceDirectory;
-      this.stagingDirectory = stagingDirectory;
-    }
 
     public Builder dockerfile(@Nullable Path dockerfile) {
       this.dockerfile = dockerfile;
@@ -203,8 +206,22 @@ public class AppEngineWebXmlProjectStageConfiguration {
       return this;
     }
 
+    public Builder sourceDirectory(Path sourceDirectory) {
+      this.sourceDirectory = Preconditions.checkNotNull(sourceDirectory);
+      return this;
+    }
+
+    public Builder stagingDirectory(Path stagingDirectory) {
+      this.stagingDirectory = Preconditions.checkNotNull(stagingDirectory);
+      return this;
+    }
+
     /** Build a {@link AppEngineWebXmlProjectStageConfiguration}. */
+    @SuppressWarnings("NullAway")
     public AppEngineWebXmlProjectStageConfiguration build() {
+      Preconditions.checkState(sourceDirectory != null, "No source directory supplied");
+      Preconditions.checkState(stagingDirectory != null, "No staging directory supplied");
+
       return new AppEngineWebXmlProjectStageConfiguration(
           this.sourceDirectory,
           this.stagingDirectory,

@@ -53,7 +53,7 @@ public class DeployProjectConfigurationConfiguration {
   }
 
   public static Builder builder(Path appEngineDirectory) {
-    return new Builder(appEngineDirectory);
+    return new Builder(Preconditions.checkNotNull(appEngineDirectory));
   }
 
   public static final class Builder {
@@ -62,9 +62,7 @@ public class DeployProjectConfigurationConfiguration {
     @Nullable private String server;
 
     private Builder(Path appEngineDirectory) {
-      Preconditions.checkNotNull(appEngineDirectory);
-
-      this.appEngineDirectory = appEngineDirectory;
+      this.appEngineDirectory = Preconditions.checkNotNull(appEngineDirectory);
     }
 
     public DeployProjectConfigurationConfiguration.Builder projectId(@Nullable String projectId) {
@@ -79,6 +77,8 @@ public class DeployProjectConfigurationConfiguration {
 
     /** Build a {@link DeployProjectConfigurationConfiguration}. */
     public DeployProjectConfigurationConfiguration build() {
+      Preconditions.checkState(appEngineDirectory != null, "No AppEngine directory supplied");
+
       return new DeployProjectConfigurationConfiguration(
           this.appEngineDirectory, this.projectId, this.server);
     }

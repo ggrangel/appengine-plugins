@@ -44,7 +44,7 @@ public class CloudSdkDownloader {
   }
 
   /**
-   * Downloads/installs/updates the Cloud SDK
+   * Downloads/installs/updates the Cloud SDK.
    *
    * @return The cloud SDK installation directory
    */

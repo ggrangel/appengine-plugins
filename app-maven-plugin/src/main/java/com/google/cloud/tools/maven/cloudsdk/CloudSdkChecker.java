@@ -25,7 +25,7 @@ import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkVersionFileE
 public class CloudSdkChecker {
 
   /**
-   * Validates the cloud SDK installation
+   * Validates the cloud SDK installation.
    *
    * @param cloudSdk CloudSdk with a configured sdk home directory
    */

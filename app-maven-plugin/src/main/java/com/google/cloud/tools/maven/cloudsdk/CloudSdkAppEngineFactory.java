@@ -56,42 +56,42 @@ public class CloudSdkAppEngineFactory {
     this.mojo = mojo;
   }
 
-  /** Constructs an object used for auth */
+  /** Constructs an object used for auth. */
   public Auth auth() {
     return getGcloud().newAuth(newDefaultProcessHandler());
   }
 
-  /** Constructs an object used for appengine-web.xml based staging */
+  /** Constructs an object used for appengine-web.xml based staging. */
   public AppEngineWebXmlProjectStaging appengineWebXmlStaging() {
     return getAppCfg().newStaging(newDefaultProcessHandler());
   }
 
-  /** Constructs an object used for app.yaml based staging */
+  /** Constructs an object used for app.yaml based staging. */
   public AppYamlProjectStaging appYamlStaging() {
     return new AppYamlProjectStaging();
   }
 
-  /** Constructs an object used for deployment */
+  /** Constructs an object used for deployment. */
   public Deployment deployment() {
     return getGcloud().newDeployment(newDefaultProcessHandler());
   }
 
-  /** Constructs a dev server for the run goal */
+  /** Constructs a dev server for the run goal. */
   public DevServer devServerRunSync() {
     return getDevServers().newDevAppServer(newDefaultProcessHandler());
   }
 
-  /** Constructs a dev server in async mode */
+  /** Constructs a dev server in async mode. */
   public DevServer devServerRunAsync(int startSuccessTimeout) {
     return getDevServers().newDevAppServer(newDevAppServerAsyncHandler(startSuccessTimeout));
   }
 
-  /** Constructs a dev server for the stop goal */
+  /** Constructs a dev server for the stop goal. */
   public DevServer devServerStop() {
     return getDevServers().newDevAppServer(newDefaultProcessHandler());
   }
 
-  /** Constructs an object used for the genRepoInfoFile goal */
+  /** Constructs an object used for the genRepoInfoFile goal. */
   public GenRepoInfoFile genRepoInfoFile() {
     return getGcloud().newGenRepoInfo(newDefaultProcessHandler());
   }

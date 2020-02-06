@@ -5,4 +5,9 @@
 <suppressions>
   <!-- Suppress paragraph validation in copyright header -->
   <suppress files=".*\.java" checks="JavadocParagraph" lines="1-12"/>
+
+  <!-- clash with google java format -->
+  <suppress files=".*\.java" checks="SingleLineJavadoc"/>
+  <suppress files=".*\.java" checks="Indentation"/>
+  <suppress files=".*\.java" checks="RightCurly"/>
 </suppressions>

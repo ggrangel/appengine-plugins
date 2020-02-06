@@ -19,7 +19,7 @@ package com.google.cloud.tools.maven.deploy;
 import com.google.cloud.tools.maven.stage.AbstractStageMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-/** Mojo configuration for Deploy with Staging inherited */
+/** Mojo configuration for Deploy with Staging inherited. */
 public abstract class AbstractDeployMojo extends AbstractStageMojo {
 
   /**
@@ -60,7 +60,7 @@ public abstract class AbstractDeployMojo extends AbstractStageMojo {
   @Parameter(alias = "deploy.version", property = "app.deploy.version")
   private String version;
 
-  /** The Google Cloud Platform project Id to use for this invocation */
+  /** The Google Cloud Platform project Id to use for this invocation. */
   @Deprecated
   @Parameter(alias = "deploy.project", property = "app.deploy.project")
   protected String project;

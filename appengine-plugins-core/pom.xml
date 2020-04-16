@@ -17,7 +17,7 @@
 
   <organization>
     <name>Google LLC</name>
-    <url>http://www.google.com</url>
+    <url>https://www.google.com</url>
   </organization>
 
   <licenses>
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>28.1-jre</version>
+      <version>28.2-jre</version>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>

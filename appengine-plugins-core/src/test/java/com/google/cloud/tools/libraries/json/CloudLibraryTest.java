@@ -37,7 +37,6 @@ public final class CloudLibraryTest {
   private static final String DOCUMENTATION = "http://documentation";
   private static final String DESCRIPTION = "My example API";
   private static final String TRANSPORT = "grpc";
-  private static final String ICON = "http://icon";
   private static final String CLIENT_NAME = "My API Client";
   private static final String CLIENT_LANGUAGE = "java";
   private static final String CLIENT_SITE = "http://client-site";
@@ -65,7 +64,6 @@ public final class CloudLibraryTest {
     assertEquals(DOCUMENTATION, library.getDocumentation());
     assertEquals(DESCRIPTION, library.getDescription());
     assertEquals(TRANSPORT, Iterables.getOnlyElement(library.getTransports()));
-    assertEquals(ICON, library.getIcon());
 
     assertEquals(CLIENT_NAME, client.getName());
     assertEquals(CLIENT_LANGUAGE, client.getLanguage());
@@ -164,7 +162,7 @@ public final class CloudLibraryTest {
   private static String createFullyPopulatedJson() {
     return String.format(
         "{name:%s,id:%s,serviceName:%s,serviceRoles:[%s],documentation:%s,description:%s,"
-            + "transports:[%s],icon:%s,clients:[{name:%s,language:%s,site:%s,apireference:%s,"
+            + "transports:[%s],clients:[{name:%s,language:%s,site:%s,apireference:%s,"
             + "infotip:%s,launchStage:%s,source:%s,languageLevel:%s,mavenCoordinates:{groupId:%s,"
             + "artifactId:%s,version:%s}}]}",
         wrap(NAME),
@@ -174,7 +172,6 @@ public final class CloudLibraryTest {
         wrap(DOCUMENTATION),
         wrap(DESCRIPTION),
         wrap(TRANSPORT),
-        wrap(ICON),
         wrap(CLIENT_NAME),
         wrap(CLIENT_LANGUAGE),
         wrap(CLIENT_SITE),

@@ -14,7 +14,6 @@
     "documentation": "https://cloud.google.com/bigquery/docs/reference/libraries",
     "description": "Google's fully managed, petabyte scale, serverless data warehouse for analytics",
     "transports": ["http"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/bigquery.svg",
     "clients": [
       {
       "name": "Cloud Java Client for BigQuery",
@@ -40,7 +39,6 @@
     "documentation": "https://cloud.google.com/bigquery/docs/transfer-service-overview",
     "description": "The BigQuery Data Transfer Service automates data movement from Software as a Service (SaaS) applications such as Google AdWords and DoubleClick on a scheduled, managed basis.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/bigquery.svg",
     "clients": [
       {
       "name": "Cloud Java Client for BigQuery Data Transfer",
@@ -150,7 +148,6 @@
     "documentation": "https://cloud.google.com/dlp/docs/reference/libraries",
     "description": "The DLP API enables clients to detect the presence of Personally Identifiable Information (PII) and other privacy-sensitive data in user-supplied, unstructured data streams such as text blocks and images.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/dlp.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Data Loss Prevention API",
@@ -183,7 +180,6 @@
     "documentation": "https://cloud.google.com/datastore/docs/reference/libraries",
     "description": "Cloud Datastore is a NoSQL key-value database built for automatic scaling.",
     "transports": ["http"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/datastore.svg",
     "clients": [
       {
       "name": "Cloud Datastore Client Library for Java",
@@ -215,7 +211,6 @@
     "transports": [
       "http"
     ],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/dns.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Google DNS Engine API",
@@ -273,7 +268,6 @@
     "documentation": "https://cloud.google.com/kms/docs/",
     "description": "Cloud KMS allows you to keep encryption keys in one central cloud service, for direct use by other cloud resources and applications.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/kms.svg",
     "clients": [
       {
       "name": "A Java client for the Google Cloud Key Management Service (KMS) API.",
@@ -299,7 +293,6 @@
     "documentation": "https://cloud.google.com/natural-language/docs/reference/libraries",
     "description": "The Cloud Natural Language API provides natural language understanding technologies including sentiment analysis, entity analysis, and syntax analysis.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/natural-language.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Cloud Natural Language API",
@@ -357,7 +350,6 @@
     "documentation": "https://cloud.google.com/pubsub/docs/reference/libraries",
     "description": "Cloud Pub/Sub provides reliable, many-to-many, asynchronous messaging between applications. Publisher applications can send messages to a topic and other applications can subscribe to that topic to receive the messages.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/pubsub.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Cloud Pub/Sub API",
@@ -499,7 +491,6 @@
     "documentation": "https://cloud.google.com/spanner/docs/reference/libraries",
     "description": "Cloud Spanner is a fully managed, relational database service built for transactional consistency, high availability, and global scale.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/spanner.svg",
     "clients": [
       {
       "name": "Java Client for Cloud Spanner",
@@ -556,7 +547,6 @@
     "documentation": "https://cloud.google.com/storage/docs/reference/libraries",
     "description": "Unified BLOB storage for developers and enterprises, from live data serving to data analytics/ML to data archiving.",
     "transports": ["http"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/storage.svg",
     "clients": [
       {
       "name": "Cloud Storage Client Library for Java",
@@ -614,7 +604,6 @@
     "documentation": "https://cloud.google.com/tasks/docs/",
     "description": "Cloud Tasks is a fully managed service that allows you to manage the execution, dispatch and delivery of a large number of distributed tasks. Using Cloud Tasks, you can asynchronously perform work outside of a user request.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/cloud-tasks.svg",
     "clients": [
       {
       "name": "A Java client for the Google Cloud Tasks API.",
@@ -778,7 +767,6 @@
     "documentation": "https://cloud.google.com/kubernetes-engine/docs/",
     "description": "Kubernetes Engine is a managed, production-ready environment for deploying containerized applications.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/kubernetes-engine.svg",
     "clients": [
       {
       "name": "Java client to the Google Kubernetes Engine API.",
@@ -868,7 +856,6 @@
     "documentation": "https://cloud.google.com/error-reporting/reference/",
     "description": "Stackdriver Error Reporting counts, analyzes and aggregates the crashes in your running cloud services.",
     "transports": ["http"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/stackdriver.svg",
     "clients": [
       {
       "name": "Java Client Libraries for Stackdriver Error Reporting",
@@ -900,7 +887,6 @@
     "documentation": "https://cloud.google.com/logging/docs/reference/libraries",
     "description": "Stackdriver Logging enables you to store, search, analyze, monitor, and alert on log data and events from Google Cloud Platform and Amazon Web Services in real-time.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/logging.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Stackdriver Logging API.",
@@ -934,7 +920,6 @@
     "transports": [
       "grpc"
     ],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/stackdriver.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Stackdriver Monitoring API",
@@ -964,7 +949,6 @@
     "documentation": "https://cloud.google.com/trace/docs/reference/",
     "description": "A distributed tracing system that collects latency data from App Engine applications.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/trace.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Stackdriver Trace API",
@@ -989,7 +973,6 @@
     "documentation": "https://cloud.google.com/text-to-speech/",
     "description": "Google Cloud Text-to-Speech synthesizes natural-sounding speech with 30 voices, available in multiple languages and variants.",
     "transports": ["grpc"],
-    "icon": "https://cloud.google.com/_static/images/cloud/products/logos/svg/speech-api.svg",
     "clients": [
       {
       "name": "Java Client Libraries for the Google Cloud Text-to-Speech API",

@@ -28,7 +28,6 @@ public final class CloudLibrary {
   @Nullable private List<String> serviceRoles;
   @Nullable private String documentation;
   @Nullable private String description;
-  @Nullable private String icon;
   @Nullable private List<String> transports;
   @Nullable private List<CloudLibraryClient> clients;
 
@@ -69,12 +68,6 @@ public final class CloudLibrary {
   @Nullable
   public String getDescription() {
     return description;
-  }
-
-  /** Returns a URL to the icon for this library. */
-  @Nullable
-  public String getIcon() {
-    return icon;
   }
 
   /** Returns the list of supported transports for this library (e.g. http, grpc, etc.). */

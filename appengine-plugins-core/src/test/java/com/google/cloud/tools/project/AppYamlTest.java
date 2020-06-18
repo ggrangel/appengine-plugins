@@ -78,7 +78,25 @@ public class AppYamlTest {
 
   @Test
   public void testGetEntrypoint_nullBecauseWrongType() throws AppEngineException {
-    InputStream appYaml = asStream("runtime: [goose, moose]\np2: v2");
+    InputStream appYaml = asStream("entrypoint: [goose, moose]\np2: v2");
+    Assert.assertNull(AppYaml.parse(appYaml).getRuntime());
+  }
+
+  @Test
+  public void testGetEntrypoint_nullBecauseNull() throws AppEngineException {
+    InputStream appYaml = asStream("entrypoint: null\np2: v2");
+    Assert.assertNull(AppYaml.parse(appYaml).getRuntime());
+  }
+
+  @Test
+  public void testGetEntrypoint_nullBecauseNothing() throws AppEngineException {
+    InputStream appYaml = asStream("entrypoint:\np2: v2");
+    Assert.assertNull(AppYaml.parse(appYaml).getRuntime());
+  }
+
+  @Test
+  public void testGetEntrypoint_nullBecauseEmptyList() throws AppEngineException {
+    InputStream appYaml = asStream("entrypoint: []\np2: v2");
     Assert.assertNull(AppYaml.parse(appYaml).getRuntime());
   }
 

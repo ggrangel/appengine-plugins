@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.appengine.operations;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -44,7 +47,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Test the {@link AppYamlProjectStaging} functionality. */
@@ -73,7 +75,7 @@ public class AppYamlProjectStagingTest {
         ImmutableList.of(
             temporaryFolder.newFolder().toPath(), temporaryFolder.newFolder().toPath());
     stagingDirectory = temporaryFolder.newFolder().toPath();
-    artifact = temporaryFolder.newFile("artifact").toPath();
+    artifact = temporaryFolder.newFile("artifact.jar").toPath();
 
     dockerFile = dockerDirectory.resolve("Dockerfile");
     Files.createFile(dockerFile);
@@ -96,26 +98,79 @@ public class AppYamlProjectStagingTest {
         StandardOpenOption.CREATE_NEW);
 
     // mock to watch internal calls
-    AppYamlProjectStaging mock = Mockito.mock(AppYamlProjectStaging.class);
-    Mockito.doCallRealMethod().when(mock).stageArchive(config);
+    AppYamlProjectStaging mock = mock(AppYamlProjectStaging.class);
+    doCallRealMethod().when(mock).stageArchive(config);
 
     mock.stageArchive(config);
     verify(mock).stageFlexibleArchive(config, "test_runtime");
   }
 
   @Test
-  public void testStageArchive_standardPath() throws IOException, AppEngineException {
+  public void testStageArchive_java11StandardPath() throws IOException, AppEngineException {
     Files.write(
         appEngineDirectory.resolve("app.yaml"),
         "runtime: java11\n".getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE_NEW);
 
     // mock to watch internal calls
-    AppYamlProjectStaging mock = Mockito.mock(AppYamlProjectStaging.class);
-    Mockito.doCallRealMethod().when(mock).stageArchive(config);
+    AppYamlProjectStaging mock = mock(AppYamlProjectStaging.class);
+    doCallRealMethod().when(mock).stageArchive(config);
 
     mock.stageArchive(config);
     verify(mock).stageStandardArchive(config);
+  }
+
+  @Test
+  public void testStageArchive_java11StandardBinaryPath() throws IOException, AppEngineException {
+    config =
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(temporaryFolder.newFile("myscript.sh").toPath())
+            .stagingDirectory(stagingDirectory)
+            .extraFilesDirectories(extraFilesDirectories)
+            .build();
+
+    Files.write(
+        appEngineDirectory.resolve("app.yaml"),
+        "runtime: java11\nentrypoint: anything\n".getBytes(StandardCharsets.UTF_8),
+        StandardOpenOption.CREATE_NEW);
+
+    // mock to watch internal calls
+    AppYamlProjectStaging mock = mock(AppYamlProjectStaging.class);
+    doCallRealMethod().when(mock).stageArchive(config);
+
+    mock.stageArchive(config);
+    verify(mock).stageStandardBinary(config);
+  }
+
+  @Test
+  public void testStageArchive_java11BinaryWithoutEntrypoint()
+      throws IOException, AppEngineException {
+    Path nonJarArtifact = temporaryFolder.newFile("myscript.sh").toPath();
+    config =
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(nonJarArtifact)
+            .stagingDirectory(stagingDirectory)
+            .extraFilesDirectories(extraFilesDirectories)
+            .build();
+
+    Files.write(
+        appEngineDirectory.resolve("app.yaml"),
+        "runtime: java11\n".getBytes(StandardCharsets.UTF_8),
+        StandardOpenOption.CREATE_NEW);
+
+    AppYamlProjectStaging testStaging = new AppYamlProjectStaging();
+
+    try {
+      testStaging.stageArchive(config);
+      fail();
+    } catch (AppEngineException ex) {
+      assertEquals(
+          "Cannot process application with runtime: java11. A custom entrypoint must be defined in your app.yaml for non-jar artifact: "
+              + nonJarArtifact.toString(),
+          ex.getMessage());
+    }
   }
 
   @Test
@@ -131,7 +186,7 @@ public class AppYamlProjectStagingTest {
       testStaging.stageArchive(config);
       fail();
     } catch (AppEngineException ex) {
-      Assert.assertEquals("Cannot process application with runtime: moose", ex.getMessage());
+      assertEquals("Cannot process application with runtime: moose", ex.getMessage());
     }
   }
 
@@ -279,7 +334,7 @@ public class AppYamlProjectStagingTest {
       AppYamlProjectStaging.copyExtraFiles(badExtraFilesConfig, copyService);
       fail();
     } catch (AppEngineException ex) {
-      Assert.assertEquals(
+      assertEquals(
           "Extra files directory does not exist. Location: " + extraFilesDirectory,
           ex.getMessage());
     }
@@ -302,7 +357,7 @@ public class AppYamlProjectStagingTest {
       AppYamlProjectStaging.copyExtraFiles(badExtraFilesConfig, copyService);
       fail();
     } catch (AppEngineException ex) {
-      Assert.assertEquals(
+      assertEquals(
           "Extra files location is not a directory. Location: " + extraFilesDirectory,
           ex.getMessage());
     }
@@ -370,8 +425,10 @@ public class AppYamlProjectStagingTest {
   public void testFindRuntime_malformedAppYaml() throws IOException {
 
     Path file = appEngineDirectory.resolve("app.yaml");
-    Files.createFile(file);
-    Files.write(file, ": m a l f o r m e d !".getBytes(StandardCharsets.UTF_8));
+    Files.write(
+        file,
+        ": m a l f o r m e d !".getBytes(StandardCharsets.UTF_8),
+        StandardOpenOption.CREATE_NEW);
 
     try {
       AppYamlProjectStaging.findRuntime(config);
@@ -382,27 +439,47 @@ public class AppYamlProjectStagingTest {
   }
 
   @Test
+  public void testHasCustomEntrypoint_true() throws IOException, AppEngineException {
+    Path file = appEngineDirectory.resolve("app.yaml");
+    Files.write(
+        file,
+        "entrypoint: custom custom".getBytes(StandardCharsets.UTF_8),
+        StandardOpenOption.CREATE_NEW);
+
+    assertTrue(AppYamlProjectStaging.hasCustomEntrypoint(config));
+  }
+
+  @Test
+  public void testHasCustomEntrypoint_false() throws IOException, AppEngineException {
+    Path file = appEngineDirectory.resolve("app.yaml");
+    Files.write(
+        file, "runtime: java".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
+
+    Assert.assertFalse(AppYamlProjectStaging.hasCustomEntrypoint(config));
+  }
+
+  @Test
   public void testCopyArtifactJarClasspath_noClasspath() throws IOException {
     AppYamlProjectStaging.copyArtifactJarClasspath(
-        AppYamlProjectStageConfiguration.builder(
-                appEngineDirectory,
-                Paths.get("src/test/resources/jars/libs/simpleLib.jar"),
-                stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(Paths.get("src/test/resources/jars/libs/simpleLib.jar"))
+            .stagingDirectory(stagingDirectory)
             .build(),
         copyService);
 
     verifyNoInteractions(copyService);
 
-    Assert.assertEquals(0, handler.getLogs().size());
+    assertEquals(0, handler.getLogs().size());
   }
 
   @Test
   public void testCopyArtifactJarClasspath_withClasspathEntries() throws IOException {
     AppYamlProjectStaging.copyArtifactJarClasspath(
-        AppYamlProjectStageConfiguration.builder(
-                appEngineDirectory,
-                Paths.get("src/test/resources/jars/complexLib.jar"),
-                stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(Paths.get("src/test/resources/jars/complexLib.jar"))
+            .stagingDirectory(stagingDirectory)
             .build(),
         copyService);
 
@@ -412,16 +489,16 @@ public class AppYamlProjectStagingTest {
             stagingDirectory.resolve("libs/simpleLib.jar"));
     verifyNoMoreInteractions(copyService);
 
-    Assert.assertEquals(0, handler.getLogs().size());
+    assertEquals(0, handler.getLogs().size());
   }
 
   @Test
   public void testCopyArtifactJarClasspath_withMissingClasspathEntries() throws IOException {
     AppYamlProjectStaging.copyArtifactJarClasspath(
-        AppYamlProjectStageConfiguration.builder(
-                appEngineDirectory,
-                Paths.get("src/test/resources/jars/complexLibMissingEntryManifest.jar"),
-                stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(Paths.get("src/test/resources/jars/complexLibMissingEntryManifest.jar"))
+            .stagingDirectory(stagingDirectory)
             .build(),
         copyService);
 
@@ -433,9 +510,9 @@ public class AppYamlProjectStagingTest {
 
     // check for warning about missing jars
     List<LogRecord> logs = handler.getLogs();
-    Assert.assertEquals(1, logs.size());
-    Assert.assertEquals(Level.WARNING, logs.get(0).getLevel());
-    Assert.assertEquals(
+    assertEquals(1, logs.size());
+    assertEquals(Level.WARNING, logs.get(0).getLevel());
+    assertEquals(
         "Could not copy 'Class-Path' jar: "
             + Paths.get("src/test/resources/jars/libs/missing.jar")
             + " referenced in MANIFEST.MF",
@@ -451,10 +528,10 @@ public class AppYamlProjectStagingTest {
     Files.createFile(simpleLibTarget);
 
     AppYamlProjectStaging.copyArtifactJarClasspath(
-        AppYamlProjectStageConfiguration.builder(
-                appEngineDirectory,
-                Paths.get("src/test/resources/jars/complexLib.jar"),
-                stagingDirectory)
+        AppYamlProjectStageConfiguration.builder()
+            .appEngineDirectory(appEngineDirectory)
+            .artifact(Paths.get("src/test/resources/jars/complexLib.jar"))
+            .stagingDirectory(stagingDirectory)
             .build(),
         copyService);
 
@@ -463,9 +540,9 @@ public class AppYamlProjectStagingTest {
 
     // check for warning about overwriting jars
     List<LogRecord> logs = handler.getLogs();
-    Assert.assertEquals(1, logs.size());
-    Assert.assertEquals(Level.FINE, logs.get(0).getLevel());
-    Assert.assertEquals(
+    assertEquals(1, logs.size());
+    assertEquals(Level.FINE, logs.get(0).getLevel());
+    assertEquals(
         "Overwriting 'Class-Path' jar: "
             + simpleLibTarget
             + " with "
@@ -482,20 +559,20 @@ public class AppYamlProjectStagingTest {
     Path srcDir = root.resolve("srcDir");
     Files.createDirectory(srcDir);
     Path srcFile = srcDir.resolve("srcFile");
-    Files.createFile(srcFile);
-    Files.write(srcFile, "some content".getBytes(StandardCharsets.UTF_8));
+    Files.write(
+        srcFile, "some content".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
 
     Path destDir = root.resolve("destDir");
     Files.createDirectory(destDir);
     Path destFile = destDir.resolve("destFile");
     Files.createFile(destFile);
 
-    Assert.assertTrue(Files.exists(destDir));
-    Assert.assertTrue(Files.exists(destFile));
+    assertTrue(Files.exists(destDir));
+    assertTrue(Files.exists(destFile));
 
     copier.copyFileAndReplace(srcFile, destFile);
 
-    Assert.assertArrayEquals(Files.readAllBytes(srcFile), Files.readAllBytes(destFile));
+    assertArrayEquals(Files.readAllBytes(srcFile), Files.readAllBytes(destFile));
   }
 
   @Test
@@ -506,8 +583,8 @@ public class AppYamlProjectStagingTest {
     Path srcDir = root.resolve("srcDir");
     Files.createDirectory(srcDir);
     Path srcFile = srcDir.resolve("srcFile");
-    Files.createFile(srcFile);
-    Files.write(srcFile, "some content".getBytes(StandardCharsets.UTF_8));
+    Files.write(
+        srcFile, "some content".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
 
     Path destDir = root.resolve("destDir");
     Path destFile = destDir.resolve("destFile");
@@ -517,6 +594,6 @@ public class AppYamlProjectStagingTest {
 
     copier.copyFileAndReplace(srcFile, destFile);
 
-    Assert.assertArrayEquals(Files.readAllBytes(srcFile), Files.readAllBytes(destFile));
+    assertArrayEquals(Files.readAllBytes(srcFile), Files.readAllBytes(destFile));
   }
 }

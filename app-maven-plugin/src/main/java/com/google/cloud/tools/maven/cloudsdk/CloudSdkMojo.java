@@ -42,6 +42,10 @@ public abstract class CloudSdkMojo extends AbstractMojo {
   @Parameter(property = "serviceAccountKeyFile", required = false)
   private File serviceAccountKeyFile;
 
+  /** Optional parameter to configure the gcloud logging verbosity level. */
+  @Parameter(property = "gcloud.verbosity")
+  private String verbosity;
+
   @Parameter(defaultValue = "${plugin}", readonly = true)
   protected PluginDescriptor pluginDescriptor;
 
@@ -74,6 +78,10 @@ public abstract class CloudSdkMojo extends AbstractMojo {
 
   public Path getServiceAccountKeyFile() {
     return (serviceAccountKeyFile == null) ? null : serviceAccountKeyFile.toPath();
+  }
+
+  public String getVerbosity() {
+    return verbosity;
   }
 
   public CloudSdkAppEngineFactory getAppEngineFactory() {

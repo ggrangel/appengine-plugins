@@ -26,9 +26,11 @@ import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Install an SDK component. */
@@ -58,18 +60,38 @@ public class SdkComponentInstaller {
   public void installComponent(
       SdkComponent component, ProgressListener progressListener, ConsoleListener consoleListener)
       throws InterruptedException, CommandExitException, CommandExecutionException {
+    installComponents(Collections.singletonList(component), progressListener, consoleListener);
+  }
 
-    progressListener.start("Installing " + component.toString(), ProgressListener.UNKNOWN);
+  /**
+   * Install components.
+   *
+   * @param components list of components to install
+   * @param progressListener listener to action progress feedback
+   * @param consoleListener listener to process console feedback
+   */
+  public void installComponents(
+      List<SdkComponent> components,
+      ProgressListener progressListener,
+      ConsoleListener consoleListener)
+      throws InterruptedException, CommandExitException, CommandExecutionException {
+
+    String message =
+        "Installing "
+            + components.stream().map(SdkComponent::toString).collect(Collectors.joining(", "));
+    progressListener.start(message, ProgressListener.UNKNOWN);
 
     Map<String, String> environment = null;
     if (pythonCopier != null) {
       environment = pythonCopier.copyPython();
     }
 
+    List<String> command = new ArrayList<>();
+    Collections.addAll(command, gcloudPath.toString(), "components", "install");
+    components.forEach(component -> command.add(component.toString()));
+    command.add("--quiet");
+
     Path workingDirectory = gcloudPath.getRoot();
-    List<String> command =
-        Arrays.asList(
-            gcloudPath.toString(), "components", "install", component.toString(), "--quiet");
     commandRunner.run(command, workingDirectory, environment, consoleListener);
     progressListener.done();
   }

@@ -105,7 +105,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>4.4.0</version>
+      <version>5.5.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -244,7 +244,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.7</version>
+        <version>0.8.10</version>
         <executions>
           <execution>
             <id>initialize</id>
@@ -329,12 +329,12 @@
                 <path>
                   <groupId>com.google.errorprone</groupId>
                   <artifactId>error_prone_core</artifactId>
-                  <version>2.11.0</version>
+                  <version>2.22.0</version>
                 </path>
                 <path>
                   <groupId>com.uber.nullaway</groupId>
                   <artifactId>nullaway</artifactId>
-                  <version>0.7.8</version>
+                  <version>0.10.14</version>
                 </path>
               </annotationProcessorPaths>
               <fork>true</fork>
@@ -420,6 +420,15 @@
       <activation>
         <jdk>1.8</jdk>
       </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.mockito</groupId>
+          <artifactId>mockito-core</artifactId>
+          <!-- keep 4.x for JDK 8 tests as 5.x is for JDK 11+ -->
+          <version>4.11.0</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
       <build>
         <plugins>
           <plugin>

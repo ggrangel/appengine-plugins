@@ -107,9 +107,24 @@ public class AppYamlProjectStagingTest {
 
   @Test
   public void testStageArchive_java11StandardPath() throws IOException, AppEngineException {
+    stageArchive_gen2StandardPath("java11");
+  }
+
+  @Test
+  public void testStageArchive_java17StandardPath() throws IOException, AppEngineException {
+    stageArchive_gen2StandardPath("java17");
+  }
+
+  @Test
+  public void testStageArchive_java21StandardPath() throws IOException, AppEngineException {
+    stageArchive_gen2StandardPath("java21");
+  }
+
+  private void stageArchive_gen2StandardPath(String runtime)
+      throws IOException, AppEngineException {
     Files.write(
         appEngineDirectory.resolve("app.yaml"),
-        "runtime: java11\n".getBytes(StandardCharsets.UTF_8),
+        ("runtime: " + runtime + "\n").getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE_NEW);
 
     // mock to watch internal calls
@@ -122,6 +137,21 @@ public class AppYamlProjectStagingTest {
 
   @Test
   public void testStageArchive_java11StandardBinaryPath() throws IOException, AppEngineException {
+    stageArchive_gen2StandardBinaryPath("java11");
+  }
+
+  @Test
+  public void testStageArchive_java17StandardBinaryPath() throws IOException, AppEngineException {
+    stageArchive_gen2StandardBinaryPath("java17");
+  }
+
+  @Test
+  public void testStageArchive_java21StandardBinaryPath() throws IOException, AppEngineException {
+    stageArchive_gen2StandardBinaryPath("java21");
+  }
+
+  private void stageArchive_gen2StandardBinaryPath(String runtime)
+      throws IOException, AppEngineException {
     config =
         AppYamlProjectStageConfiguration.builder()
             .appEngineDirectory(appEngineDirectory)
@@ -132,7 +162,7 @@ public class AppYamlProjectStagingTest {
 
     Files.write(
         appEngineDirectory.resolve("app.yaml"),
-        "runtime: java11\nentrypoint: anything\n".getBytes(StandardCharsets.UTF_8),
+        ("runtime: " + runtime + "\nentrypoint: anything\n").getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE_NEW);
 
     // mock to watch internal calls
@@ -145,6 +175,20 @@ public class AppYamlProjectStagingTest {
 
   @Test
   public void testStageArchive_java11BinaryWithoutEntrypoint() throws IOException {
+    stageArchive_gen2BinaryWithoutEntrypoint("java11");
+  }
+
+  @Test
+  public void testStageArchive_java17BinaryWithoutEntrypoint() throws IOException {
+    stageArchive_gen2BinaryWithoutEntrypoint("java17");
+  }
+
+  @Test
+  public void testStageArchive_java21BinaryWithoutEntrypoint() throws IOException {
+    stageArchive_gen2BinaryWithoutEntrypoint("java21");
+  }
+
+  private void stageArchive_gen2BinaryWithoutEntrypoint(String runtime) throws IOException {
     Path nonJarArtifact = temporaryFolder.newFile("myscript.sh").toPath();
     config =
         AppYamlProjectStageConfiguration.builder()
@@ -156,7 +200,7 @@ public class AppYamlProjectStagingTest {
 
     Files.write(
         appEngineDirectory.resolve("app.yaml"),
-        "runtime: java11\n".getBytes(StandardCharsets.UTF_8),
+        ("runtime: " + runtime + "\n").getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE_NEW);
 
     AppYamlProjectStaging testStaging = new AppYamlProjectStaging();
@@ -166,8 +210,10 @@ public class AppYamlProjectStagingTest {
       fail();
     } catch (AppEngineException ex) {
       assertEquals(
-          "Cannot process application with runtime: java11/java17. A custom entrypoint must be defined in your app.yaml for non-jar artifact: "
-              + nonJarArtifact.toString(),
+          "Cannot process application with runtime: "
+              + runtime
+              + ". A custom entrypoint must be defined in your app.yaml for non-jar artifact: "
+              + config.getArtifact().toString(),
           ex.getMessage());
     }
   }

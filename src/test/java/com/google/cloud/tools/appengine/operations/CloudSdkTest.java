@@ -26,7 +26,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.tools.appengine.operations.cloudsdk.AppEngineJavaComponentsNotInstalledException;
 import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkNotFoundException;
 import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkOutOfDateException;
 import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkResolver;
@@ -128,12 +127,6 @@ public class CloudSdkTest {
     String version = "136.0.0";
     writeVersionFile(version);
     assertEquals(version, sdk.getVersion().toString());
-  }
-
-  @Test
-  public void testValidateAppEngineJavaComponents()
-      throws AppEngineJavaComponentsNotInstalledException, CloudSdkNotFoundException {
-    new CloudSdk.Builder().build().validateAppEngineJavaComponents();
   }
 
   @Test

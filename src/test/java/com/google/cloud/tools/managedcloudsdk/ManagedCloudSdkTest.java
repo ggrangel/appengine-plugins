@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.managedcloudsdk;
 
+import com.google.cloud.tools.appengine.operations.CloudSdk;
+import com.google.cloud.tools.appengine.operations.cloudsdk.AppEngineJavaComponentsNotInstalledException;
+import com.google.cloud.tools.appengine.operations.cloudsdk.CloudSdkNotFoundException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExecutionException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandExitException;
 import com.google.cloud.tools.managedcloudsdk.command.CommandRunner;
@@ -45,7 +48,7 @@ public class ManagedCloudSdkTest {
 
   @Rule public TemporaryFolder tempDir = new TemporaryFolder();
 
-  private static final String FIXED_VERSION = "377.0.0";
+  private static final String FIXED_VERSION = "447.0.0";
   private static final Map<String, String> EMPTY_MAP = Collections.emptyMap();
   private final MessageCollector testListener = new MessageCollector();
   private final ProgressListener testProgressListener = new NullProgressListener();
@@ -108,7 +111,8 @@ public class ManagedCloudSdkTest {
   public void testManagedCloudSdk_latest()
       throws UnsupportedOsException, ManagedSdkVerificationException,
           ManagedSdkVersionMismatchException, InterruptedException, CommandExecutionException,
-          CommandExitException, IOException, SdkInstallerException {
+          CommandExitException, IOException, SdkInstallerException, CloudSdkNotFoundException,
+          AppEngineJavaComponentsNotInstalledException {
     ManagedCloudSdk testSdk =
         new ManagedCloudSdk(Version.LATEST, userHome, OsInfo.getSystemOsInfo());
 
@@ -135,6 +139,8 @@ public class ManagedCloudSdkTest {
     testSdk
         .newComponentInstaller()
         .installComponent(testComponent, testProgressListener, testListener);
+
+    new CloudSdk.Builder().sdkPath(testSdk.getSdkHome()).build().validateAppEngineJavaComponents();
 
     Assert.assertTrue(testSdk.isInstalled());
     Assert.assertTrue(testSdk.hasComponent(testComponent));

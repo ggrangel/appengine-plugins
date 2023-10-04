@@ -43,7 +43,7 @@ group = "com.google.cloud.tools"
 dependencies {
   implementation(localGroovy())
   implementation(gradleApi())
-  api("com.google.cloud.tools:appengine-plugins-core:0.9.9")
+  api("com.google.cloud.tools:appengine-plugins-core:0.10.0")
 
   testImplementation("commons-io:commons-io:2.11.0")
   testImplementation("junit:junit:4.13.2")
@@ -75,6 +75,18 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs = options.compilerArgs + listOf(
       "-Xlint:all"
     )
+}
+
+// Gradle 6 needs a special treatment for Guava 31+; otherwise you get "... However we
+// cannot choose between the following variants..." error.
+// https://github.com/google/guava/releases/tag/v32.1.0
+sourceSets.all {
+  configurations.getByName(runtimeClasspathConfigurationName) {
+    attributes.attribute(Attribute.of("org.gradle.jvm.environment", String::class.java), "standard-jvm")
+  }
+  configurations.getByName(compileClasspathConfigurationName) {
+    attributes.attribute(Attribute.of("org.gradle.jvm.environment", String::class.java), "standard-jvm")
+  }
 }
 
 /* TESTING */

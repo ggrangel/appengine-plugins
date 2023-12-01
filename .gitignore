@@ -17,4 +17,6 @@ target/
 .metadata/*
 .DS_Store
 .checkstyle
+app-gradle-plugin/.gradle/
+app-gradle-plugin/build/
 

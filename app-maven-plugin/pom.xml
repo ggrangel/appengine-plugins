@@ -11,38 +11,6 @@
   <description>
     This Maven plugin provides goals to build and deploy Google App Engine applications.
   </description>
-  <url>https://github.com/GoogleCloudPlatform/app-maven-plugin</url>
-
-  <licenses>
-    <license>
-      <name>The Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-
-  <developers>
-    <developer>
-      <id>joaomartins</id>
-      <name>João Martins</name>
-      <email>joaomartins@google.com</email>
-      <organization>Google</organization>
-      <organizationUrl>http://www.google.com</organizationUrl>
-    </developer>
-    <developer>
-      <id>appu</id>
-      <name>Appu Goundan</name>
-      <email>appu@google.com</email>
-      <organization>Google</organization>
-      <organizationUrl>http://www.google.com</organizationUrl>
-    </developer>
-    <developer>
-      <id>meltsufin</id>
-      <name>Mike Eltsufin</name>
-      <email>meltsufin@google.com</email>
-      <organization>Google</organization>
-      <organizationUrl>http://www.google.com</organizationUrl>
-    </developer>
-  </developers>
 
   <scm>
     <connection>scm:git:https://github.com/GoogleCloudPlatform/app-maven-plugin.git
@@ -73,6 +41,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.google.cloud.tools</groupId>
+      <artifactId>appengine-plugins-core</artifactId>
+      <version>0.10.1-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
       <version>${maven.version}</version>
@@ -87,12 +61,6 @@
       <artifactId>maven-plugin-annotations</artifactId>
       <version>3.4</version>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.cloud.tools</groupId>
-      <artifactId>appengine-plugins-core</artifactId>
-      <version>0.10.0</version>
     </dependency>
 
     <dependency>

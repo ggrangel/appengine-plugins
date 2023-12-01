@@ -10,7 +10,7 @@
   <description>
     A library for client side software that manages App Engine programs.
   </description>
-  <url>https://github.com/GoogleCloudPlatform/appengine-plugins-core/</url>
+  <url>https://github.com/GoogleCloudPlatform/appengine-plugins</url>
 
   <organization>
     <name>Google LLC</name>
@@ -49,11 +49,11 @@
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/GoogleCloudPlatform/appengine-plugins-core.git
+    <connection>scm:git:https://github.com/GoogleCloudPlatform/appengine-plugins.git
     </connection>
-    <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/appengine-plugins-core.git
+    <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/appengine-plugins.git
     </developerConnection>
-    <url>https://github.com/GoogleCloudPlatform/appengine-plugins-core</url>
+    <url>https://github.com/GoogleCloudPlatform/appengine-plugins</url>
   </scm>
 
   <properties>

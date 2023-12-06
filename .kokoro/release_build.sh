@@ -5,7 +5,7 @@ set -e
 # Display commands to stderr.
 set -x
 
-cd github/appengine-plugins-core
+cd github/appengine-plugins
 
 # Use GCP Maven Mirror
 mkdir -p ${HOME}/.m2

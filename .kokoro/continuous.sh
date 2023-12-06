@@ -5,7 +5,7 @@ set -e
 # Display commands to stderr.
 set -x
 
-cd github/appengine-plugins-core
+cd github/appengine-plugins
 
 unset JAVA_TOOL_OPTIONS
 update-java-alternatives -s /usr/lib/jvm/java-1.8.0-openjdk-amd64

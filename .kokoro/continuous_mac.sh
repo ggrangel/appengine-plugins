@@ -7,7 +7,7 @@ set -x
 
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-8-latest/Contents/Home
 
-cd github/appengine-plugins-core
+cd github/appengine-plugins
 
 # Use GCP Maven Mirror
 mkdir -p ${HOME}/.m2

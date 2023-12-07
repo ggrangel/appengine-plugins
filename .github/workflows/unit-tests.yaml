@@ -17,12 +17,13 @@ jobs:
       CLOUDSDK_CORE_DISABLE_USAGE_REPORTING: true
       CLOUDSDK_CORE_DISABLE_PROMPTS: true
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-      - uses: actions/cache@v2
+          distribution: temurin
+      - uses: google-github-actions/setup-gcloud@v1.1.1
+      - uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}

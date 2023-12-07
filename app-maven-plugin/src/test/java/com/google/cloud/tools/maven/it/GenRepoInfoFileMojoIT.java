@@ -24,7 +24,7 @@ import org.apache.maven.it.Verifier;
 import org.junit.Test;
 
 /** {@link GenRepoInfoFileMojo} integration tests. */
-public class GenRepoInfoFileMojoIntegrationTest extends AbstractMojoIntegrationTest {
+public class GenRepoInfoFileMojoIT extends AbstractMojoIT {
   @Test
   public void testGenerate() throws IOException, VerificationException {
     Verifier verifier = new StandardVerifier("testGenRepoInfoFile");

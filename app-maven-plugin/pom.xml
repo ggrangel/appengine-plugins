@@ -279,11 +279,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.2</version>
-        <configuration>
-          <excludes>
-            <exclude>**/*IntegrationTest.java</exclude>
-          </excludes>
-        </configuration>
       </plugin>
 
       <!-- Integration Testing -->
@@ -292,13 +287,10 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>3.2.2</version>
         <configuration>
-          <includes>
-            <include>**/*IntegrationTest.java</include>
-          </includes>
           <excludes>
-            <exclude>**/*Deploy*MojoIntegrationTest.java</exclude>
-            <exclude>**/*GenRepoInfoFileMojoIntegrationTest.java</exclude>
-            <exclude>**/*StageMojoIntegrationTest.java</exclude>
+            <exclude>**/*Deploy*MojoIT.java</exclude>
+            <exclude>**/*GenRepoInfoFileMojoIT.java</exclude>
+            <exclude>**/*StageMojoIT.java</exclude>
           </excludes>
         </configuration>
         <executions>

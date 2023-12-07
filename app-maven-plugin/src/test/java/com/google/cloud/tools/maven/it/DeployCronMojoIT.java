@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.maven.it;
 
-public class DeployDosMojoIntegrationTest extends AbstractSingleYamlDeployIntegrationTest {
+public class DeployCronMojoIT extends AbstractSingleYamlDeployIT {
 
   @Override
   protected String getExpectedLogMessage() {
-    return "DoS protection has been updated.";
+    return "Cron jobs have been updated.";
   }
 
   @Override
   protected String getDeployGoal() {
-    return "deployDos";
+    return "deployCron";
   }
 }

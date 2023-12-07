@@ -34,7 +34,7 @@ import org.apache.maven.it.Verifier;
 import org.junit.Before;
 import org.junit.Test;
 
-public class RunAsyncMojoIntegrationTest extends AbstractMojoIntegrationTest {
+public class RunAsyncMojoIT extends AbstractMojoIT {
 
   private static final String DEV_APP_SERVER_STARTED = "INFO:oejs.Server:main: Started";
   private int serverPort;

@@ -25,7 +25,7 @@ import org.apache.maven.it.Verifier;
 import org.apache.maven.it.util.ResourceExtractor;
 import org.junit.Test;
 
-public class AbstractStageMojoIntegrationTest extends AbstractMojoIntegrationTest {
+public class AbstractStageMojoIT extends AbstractMojoIT {
 
   @Test
   public void testStageStandard() throws IOException, VerificationException {

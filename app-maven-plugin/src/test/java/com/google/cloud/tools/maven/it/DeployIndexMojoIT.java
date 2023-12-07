@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.maven.it;
 
-public class DeployCronMojoIntegrationTest extends AbstractSingleYamlDeployIntegrationTest {
+public class DeployIndexMojoIT extends AbstractSingleYamlDeployIT {
 
   @Override
   protected String getExpectedLogMessage() {
-    return "Cron jobs have been updated.";
+    return "Indexes are being rebuilt. This may take a moment.";
   }
 
   @Override
   protected String getDeployGoal() {
-    return "deployCron";
+    return "deployIndex";
   }
 }

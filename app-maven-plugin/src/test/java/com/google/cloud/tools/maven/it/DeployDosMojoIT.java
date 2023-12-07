@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.maven.it;
 
-public class DeployQueueMojoIntegrationTest extends AbstractSingleYamlDeployIntegrationTest {
+public class DeployDosMojoIT extends AbstractSingleYamlDeployIT {
 
   @Override
   protected String getExpectedLogMessage() {
-    return "Task queues have been updated.";
+    return "DoS protection has been updated.";
   }
 
   @Override
   protected String getDeployGoal() {
-    return "deployQueue";
+    return "deployDos";
   }
 }

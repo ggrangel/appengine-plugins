@@ -40,7 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(JUnitParamsRunner.class)
-public class AbstractRunMojoIntegrationTest extends AbstractMojoIntegrationTest {
+public class AbstractRunMojoIT extends AbstractMojoIT {
 
   private int serverPort;
 

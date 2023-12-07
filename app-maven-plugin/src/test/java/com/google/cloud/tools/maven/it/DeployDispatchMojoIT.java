@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.maven.it;
 
-public class DeployIndexMojoIntegrationTest extends AbstractSingleYamlDeployIntegrationTest {
+public class DeployDispatchMojoIT extends AbstractSingleYamlDeployIT {
 
   @Override
   protected String getExpectedLogMessage() {
-    return "Indexes are being rebuilt. This may take a moment.";
+    return "Custom routings have been updated.";
   }
 
   @Override
   protected String getDeployGoal() {
-    return "deployIndex";
+    return "deployDispatch";
   }
 }

@@ -43,4 +43,4 @@ jobs:
           export PATH="${HOME}/google-cloud-sdk/bin:${PATH}"
 
           gcloud components install app-engine-java --quiet
-          ./mvnw -B -U --fail-at-end -DskipITs clean verify -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss:SSS
+          ./mvnw -B -U --fail-at-end -DskipITs clean install -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss:SSS

@@ -29,7 +29,7 @@ import org.apache.maven.it.Verifier;
 import org.junit.Before;
 import org.junit.Test;
 
-public class StopMojoIT extends AbstractMojoIT {
+public class StopMojoIntegrationTest extends AbstractMojoIntegrationTest {
 
   private int serverPort;
 

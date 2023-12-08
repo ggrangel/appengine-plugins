@@ -26,7 +26,7 @@ import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Test;
 
-public class DeployAllMojoIT extends AbstractMojoIT {
+public class DeployAllMojoIntegrationTest extends AbstractMojoIntegrationTest {
 
   @Test
   public void testDeployAllStandard()

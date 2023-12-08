@@ -24,7 +24,7 @@ import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Test;
 
-public abstract class AbstractSingleYamlDeployIT extends AbstractMojoIT {
+public abstract class AbstractSingleYamlDeployIntegrationTest extends AbstractMojoIntegrationTest {
 
   @Test
   public void testDeployStandard() throws IOException, VerificationException {

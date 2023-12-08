@@ -26,7 +26,7 @@ import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.junit.BeforeClass;
 
-public abstract class AbstractMojoIT {
+public abstract class AbstractMojoIntegrationTest {
 
   private static boolean doneInstallPlugin = false;
 

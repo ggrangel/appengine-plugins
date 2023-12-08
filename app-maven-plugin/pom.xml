@@ -283,7 +283,7 @@
         <configuration>
           <skip>${skipSurefire}</skip>
           <excludes>
-            <exclude>**/*IntegrationTest*</exclude>
+            <exclude>com/google/cloud/tools/maven/it/*</exclude>
           </excludes>
         </configuration>
       </plugin>

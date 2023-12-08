@@ -282,9 +282,7 @@
         <version>3.2.2</version>
         <configuration>
           <skip>${skipSurefire}</skip>
-          <excludes>
-            <exclude>com/google/cloud/tools/maven/it/*</exclude>
-          </excludes>
+          <excludesFile>surefireExcludes.txt</excludesFile>
         </configuration>
       </plugin>
 

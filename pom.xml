@@ -27,42 +27,55 @@
           <skip>true</skip>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.1.1</version>
-        <executions>
-          <execution>
-            <id>test</id>
-            <phase>test</phase>
-            <configuration>
-              <executable>./gradlew</executable>
-              <arguments>
-                <argument>test</argument>
-                <argument>-i</argument>
-              </arguments>
-              <workingDirectory>app-gradle-plugin</workingDirectory>
-            </configuration>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>install</id>
-            <phase>install</phase>
-            <configuration>
-              <executable>./gradlew</executable>
-              <arguments>
-                <argument>install</argument>
-              </arguments>
-              <workingDirectory>app-gradle-plugin</workingDirectory>
-            </configuration>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>exec-gradle</id>
+      <activation>
+        <jdk>(, 1.11]</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.1</version>
+            <executions>
+              <execution>
+                <id>test</id>
+                <phase>test</phase>
+                <configuration>
+                  <executable>./gradlew</executable>
+                  <arguments>
+                    <argument>test</argument>
+                    <argument>-i</argument>
+                  </arguments>
+                  <workingDirectory>app-gradle-plugin</workingDirectory>
+                </configuration>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>install</id>
+                <phase>install</phase>
+                <configuration>
+                  <executable>./gradlew</executable>
+                  <arguments>
+                    <argument>install</argument>
+                  </arguments>
+                  <workingDirectory>app-gradle-plugin</workingDirectory>
+                </configuration>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

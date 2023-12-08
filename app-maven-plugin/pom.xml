@@ -24,6 +24,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.version>3.9.1</maven.version>
+    <skipSurefire>false</skipSurefire>
   </properties>
 
   <repositories>
@@ -280,6 +281,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.2</version>
         <configuration>
+          <skip>${skipSurefire}</skip>
           <excludes>
             <exclude>**/*IntegrationTest*</exclude>
           </excludes>

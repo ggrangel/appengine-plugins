@@ -282,7 +282,9 @@
         <version>3.2.2</version>
         <configuration>
           <skip>${skipSurefire}</skip>
-          <excludesFile>surefireExcludes.txt</excludesFile>
+          <excludes>
+            <exclude>**/*IntegrationTest.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
 

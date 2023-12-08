@@ -281,7 +281,7 @@
         <version>3.2.2</version>
         <configuration>
           <excludes>
-            <exclude>**/it/*IntegrationTest.java</exclude>
+            <exclude>**/*IntegrationTest*</exclude>
           </excludes>
         </configuration>
       </plugin>
@@ -293,12 +293,12 @@
         <version>3.2.2</version>
         <configuration>
           <includes>
-            <include>**/it/*IntegrationTest.java</include>
+            <include>**/*IntegrationTest*</include>
           </includes>
           <excludes>
-            <exclude>**/it/*Deploy*MojoIntegrationTest.java</exclude>
-            <exclude>**/it/*GenRepoInfoFileMojoIntegrationTest.java</exclude>
-            <exclude>**/it/*StageMojoIntegrationTest.java</exclude>
+            <exclude>**/*Deploy*MojoIntegrationTest*</exclude>
+            <exclude>**/*GenRepoInfoFileMojoIntegrationTest*</exclude>
+            <exclude>**/*StageMojoIntegrationTest*</exclude>
           </excludes>
         </configuration>
         <executions>

@@ -4,13 +4,50 @@
 
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>appengine-maven-plugin</artifactId>
-  <version>2.5.1-SNAPSHOT</version><!-- {x-version-update:app-maven-plugin:current} -->
+  <version>2.5.1</version><!-- {x-version-update:app-maven-plugin:current} -->
   <packaging>maven-plugin</packaging>
 
   <name>App Engine Maven Plugin</name>
   <description>
     This Maven plugin provides goals to build and deploy Google App Engine applications.
   </description>
+  <url>https://github.com/GoogleCloudPlatform/appengine-plugins/tree/main/app-maven-plugin</url>
+
+  <organization>
+    <name>Google LLC</name>
+    <url>https://www.google.com</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>joaomartins</id>
+      <name>João Martins</name>
+      <email>joaomartins@google.com</email>
+      <organization>Google</organization>
+      <organizationUrl>http://www.google.com</organizationUrl>
+    </developer>
+    <developer>
+      <id>appu</id>
+      <name>Appu Goundan</name>
+      <email>appu@google.com</email>
+      <organization>Google</organization>
+      <organizationUrl>http://www.google.com</organizationUrl>
+    </developer>
+    <developer>
+      <id>meltsufin</id>
+      <name>Mike Eltsufin</name>
+      <email>meltsufin@google.com</email>
+      <organization>Google</organization>
+      <organizationUrl>http://www.google.com</organizationUrl>
+    </developer>
+  </developers>
 
   <scm>
     <connection>scm:git:https://github.com/GoogleCloudPlatform/app-maven-plugin.git
@@ -55,7 +92,7 @@
     <dependency>
       <groupId>com.google.cloud.tools</groupId>
       <artifactId>appengine-plugins-core</artifactId>
-      <version>0.10.1-SNAPSHOT</version><!-- {x-version-update:appengine-plugins-core:current} -->
+      <version>0.10.1</version><!-- {x-version-update:appengine-plugins-core:current} -->
     </dependency>
 
     <dependency>

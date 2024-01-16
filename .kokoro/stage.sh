@@ -64,4 +64,15 @@ else
   echo "AUTORELEASE_PR environment variable is not set (probably testing something). Not promoting the staged repository."
 fi
 
-popd
+# release app-gradle-plugin
+GRADLE_SETTING_FILE=$(realpath .)/app-gradle-plugin/gradle.properties
+create_gradle_properties_file "${GRADLE_SETTING_FILE}"
+pushd app-gradle-plugin
+if [[ -n "${AUTORELEASE_PR}" ]]; then
+  ./gradlew publishMavenJavaPublicationToMavenRepository
+  echo "Successfully finished './gradlew publishMavenJavaPublicationToMavenRepository'"
+else
+  ./gradlew publishMavenJavaPublicationToMavenLocal
+fi
+popd # app-gradle-plugin
+popd # repository root

@@ -25,6 +25,8 @@ setup_environment_secrets() {
   mkdir "${GPG_HOMEDIR}"
   mv "${KOKORO_KEYSTORE_DIR}"/70247_maven-gpg-pubkeyring "${GPG_HOMEDIR}"/pubring.gpg
   mv "${KOKORO_KEYSTORE_DIR}"/70247_maven-gpg-keyring "${GPG_HOMEDIR}"/secring.gpg
+  GPG_KEY_ID=$(echo -n "$(gpg --with-colons "${GPG_HOMEDIR}"/pubring.gpg | awk -F':' '/pub/{ print $5 }')")
+  export GPG_KEY_ID
   SONATYPE_USERNAME=$(cat "${KOKORO_KEYSTORE_DIR}"/70247_sonatype-credentials | cut -f1 -d'|')
   export SONATYPE_USERNAME
   SONATYPE_PASSWORD=$(cat "${KOKORO_KEYSTORE_DIR}"/70247_sonatype-credentials | cut -f2 -d'|')
@@ -51,4 +53,15 @@ create_settings_xml_file() {
     </server>
   </servers>
 </settings>" > "$1"
+}
+
+create_gradle_properties_file() {
+  echo "
+signing.gnupg.executable=gpg
+signing.gnupg.homeDir=${GPG_HOMEDIR}
+signing.gnupg.keyName=${GPG_KEY_ID}
+signing.gnupg.passphrase=${GPG_PASSPHRASE}
+
+ossrhUsername=${SONATYPE_USERNAME}
+ossrhPassword=${SONATYPE_PASSWORD}" > $1
 }

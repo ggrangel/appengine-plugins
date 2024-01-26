@@ -141,6 +141,14 @@ release {
   }
 }
 
+// disable gradlePlugin auto publishing to avoid duplicate uploads,
+// see https://github.com/gradle/gradle/issues/10384 for more info.
+gradlePlugin { isAutomatedPublishing = false }
+
+tasks.withType<GenerateModuleMetadata> {
+  enabled = false
+}
+
 publishing {
   publications {
     create<MavenPublication>("mavenJava") {

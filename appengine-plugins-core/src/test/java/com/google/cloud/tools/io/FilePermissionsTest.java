@@ -96,7 +96,10 @@ public class FilePermissionsTest {
   public void testDirectoryCannotBeCreatedDueToUnwritableParent() throws IOException {
     Path dir = Files.createDirectory(Paths.get(parent.toString(), "child"));
     Assume.assumeTrue(dir.toFile().setWritable(false)); // On windows this isn't true
+    // In Linux, the root user can create a file in a non-writable directory
+    Assume.assumeFalse("root".equals(System.getProperty("user.name")));
     dir.toFile().setWritable(false);
+
     try {
       FilePermissions.verifyDirectoryCreatable(Paths.get(dir.toString(), "bar"));
       Assert.fail("Can create directory in non-writable parent");

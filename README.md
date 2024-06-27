@@ -1,13 +1,20 @@
-![experimental](https://img.shields.io/badge/stability-experimental-red.svg)
+This repository hosts the Google App Engine Maven and Gradle plugins.
+
+User documents:
+
+- [App Engine Maven Plugin](https://cloud.google.com/appengine/docs/standard/java-gen2/using-maven)
+- [App Engine Gradle Plugin](https://cloud.google.com/appengine/docs/standard/java-gen2/using-gradle)
 
 # Google App Engine Plugins Core Library
+
+![experimental](https://img.shields.io/badge/stability-experimental-red.svg)
 
 IMPORTANT:
 This library is used by Google internal plugin development teams to share App Engine
 related code. Its use for any other purpose is highly discouraged and unsupported.
 Visit our [App Engine documentation](https://cloud.google.com/appengine/docs/admin-api/)
 for more information on Google supported clients for App Engine administration.
- 
+
 # Requirements
 
 This library requires Java 1.8 or higher to run.

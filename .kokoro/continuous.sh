@@ -8,7 +8,7 @@ set -x
 sudo /opt/google-cloud-sdk/bin/gcloud components update --quiet
 sudo /opt/google-cloud-sdk/bin/gcloud components install app-engine-java --quiet
 
-cd github/appengine-plugins
+cd git/appengine-plugins
 
 # Use GCP Maven Mirror
 mkdir -p ${HOME}/.m2

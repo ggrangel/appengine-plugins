@@ -3,7 +3,7 @@
 REM Use Java 8 for build
 echo %JAVA_HOME%
 
-cd github/appengine-plugins
+cd git/appengine-plugins
 
 if not exist "%HOME%\.m2" mkdir "%HOME%\.m2"
 copy settings.xml "%HOME%\.m2"

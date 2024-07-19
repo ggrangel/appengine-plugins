@@ -23,7 +23,7 @@ tar -xzf apache-maven-3.5.0-bin.tar.gz
 M2_HOME="$(pwd)"/apache-maven-3.5.0
 PATH=$PATH:$M2_HOME/bin
 
-cd github/appengine-plugins
+cd git/appengine-plugins
 
 # Use GCP Maven Mirror
 mkdir -p ${HOME}/.m2
